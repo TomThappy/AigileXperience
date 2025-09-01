@@ -42,6 +42,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 ```bash
 # Install dependencies
 npm install
@@ -52,6 +53,7 @@ brew install gh jq  # or apt-get install gh jq
 ```
 
 ### 1. Backend Setup (Render)
+
 ```bash
 export RENDER_API_KEY="your_render_key"
 export OPENAI_API_KEY="your_openai_key"     # or
@@ -61,12 +63,14 @@ warp run "AigileXperience Render" "1) Backend auf Render provisionieren/aktualis
 ```
 
 ### 2. Get Backend URL
+
 ```bash
 warp run "AigileXperience Render" "3) Backend URL anzeigen"
 # Copy the URL for next step
 ```
 
 ### 3. Frontend Deployment
+
 ```bash
 export BACKEND_URL="https://your-backend.onrender.com"
 warp run "AigileXperience Deploy" "2) Frontend Vercel – Direct Deploy"
@@ -75,6 +79,7 @@ warp run "AigileXperience Deploy" "2) Frontend Vercel – Direct Deploy"
 ## 🎯 Production Pipeline
 
 ### Full Orchestrated Deployment
+
 For production-ready deployments with AI code review:
 
 ```bash
@@ -87,6 +92,7 @@ warp run "AigileXperience Orchestrator" "1) Full Orchestration (PR → CodeRabbi
 ```
 
 **What it does:**
+
 - ✅ Creates automated PR with your changes
 - 🤖 Triggers CodeRabbit AI review
 - 🔄 Auto-merges when checks pass
@@ -94,6 +100,7 @@ warp run "AigileXperience Orchestrator" "1) Full Orchestration (PR → CodeRabbi
 - 🧪 Runs E2E smoke tests
 
 ### Quick Deploy (Skip PR workflow)
+
 ```bash
 warp run "AigileXperience Orchestrator" "2) Quick Deploy"
 ```
@@ -101,12 +108,14 @@ warp run "AigileXperience Orchestrator" "2) Quick Deploy"
 ## 🧪 Testing
 
 ### E2E Production Testing
+
 ```bash
 export PRODUCTION_URL="https://your-app.vercel.app"
 warp run "AigileXperience Orchestrator" "3) E2E Production Test"
 ```
 
 ### Local Development
+
 ```bash
 npm run dev  # Starts frontend:3000 + backend:3001
 ```
@@ -114,6 +123,7 @@ npm run dev  # Starts frontend:3000 + backend:3001
 ## 🛠️ Configuration
 
 ### Backend Environment (apps/backend/.env)
+
 ```env
 # LLM Provider (choose one or both)
 OPENAI_API_KEY=sk-proj-...
@@ -126,6 +136,7 @@ USE_ASSUMPTIONS_LLM=true
 ```
 
 ### Warp Workflows Available
+
 - **AigileXperience Ops**: Dev setup, building, testing
 - **AigileXperience Render**: Backend deployment
 - **AigileXperience Deploy**: Frontend deployment
@@ -135,12 +146,14 @@ USE_ASSUMPTIONS_LLM=true
 ## 🚀 Advanced Features
 
 ### CodeRabbit Integration
+
 ```bash
 # Setup CodeRabbit AI reviews
 warp run "AigileXperience Orchestrator" "4) Setup CodeRabbit + Branch Protection"
 ```
 
 ### Best Pipeline Configuration
+
 ```bash
 warp run "AigileXperience Best-Pipeline" "Set Backend ENV (best models)"
 warp run "AigileXperience Best-Pipeline" "Test assume_llm"

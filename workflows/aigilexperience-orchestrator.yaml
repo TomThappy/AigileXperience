@@ -13,19 +13,19 @@ commands:
     command: |
       set -euo pipefail
       : "${BACKEND_URL:?Bitte BACKEND_URL setzen}"
-      
+
       echo "▶️ Quick Deploy ohne PR-Workflow"
-      
+
       # Best-Pipeline ENV sicherstellen
       cd apps/backend && cp -n .env.example .env
       grep -q '^MODEL_ANALYZE=' .env || echo "MODEL_ANALYZE=claude-3-5-sonnet-20240620" >> .env
       grep -q '^MODEL_REFINE=' .env || echo "MODEL_REFINE=gpt-4o" >> .env
       grep -q '^USE_ASSUMPTIONS_LLM=' .env || echo "USE_ASSUMPTIONS_LLM=true" >> .env
       cd ../..
-      
+
       # Build & Deploy
       npm run build --workspaces --if-present
-      
+
       # Vercel Deploy
       vercel link --project AigileXperience --yes --confirm || true
       for ENV in production preview; do
@@ -34,7 +34,7 @@ commands:
         echo -n "$BACKEND_URL/api/venture/generate" | vercel env add NEXT_PUBLIC_API_URL $ENV
         echo -n "$BACKEND_URL/api/venture/recalc" | vercel env add NEXT_PUBLIC_API_RECALC_URL $ENV
       done
-      
+
       URL=$(vercel --prod --confirm | tail -n1 | sed 's/.*https/https/')
       echo "🌐 Live: $URL"
 

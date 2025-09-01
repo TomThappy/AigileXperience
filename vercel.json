@@ -4,6 +4,5 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "buildCommand": "npm run -w apps/frontend build",
-  "outputDirectory": "apps/frontend/.next",
-  "routes": [{ "src": "/(.*)", "dest": "/apps/frontend/$1" }]
+  "outputDirectory": "apps/frontend/.next"
 }

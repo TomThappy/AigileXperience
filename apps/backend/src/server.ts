@@ -13,6 +13,15 @@ await ventureRoutes(app);
 const { recalcRoutes } = await import("./routes/recalc.js");
 await recalcRoutes(app);
 
+// --- health endpoint for Render ---
+app.get("/health", async (req, reply) => {
+  try {
+    return reply.send({ status: "ok", uptime: process.uptime() });
+  } catch (e) {
+    reply.code(500).send({ status: "error" });
+  }
+});
+
 const port = Number(process.env.PORT) || 3001;
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);
