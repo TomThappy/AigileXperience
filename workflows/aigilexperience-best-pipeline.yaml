@@ -1,0 +1,14 @@
+name: AigileXperience Best-Pipeline
+commands:
+  - name: Set Backend ENV (best models)
+    command: |
+      cd apps/backend && cp -n .env.example .env
+      sed -i.bak 's/^MODEL_ANALYZE=.*/MODEL_ANALYZE=claude-3-5-sonnet-20240620/' .env
+      sed -i.bak 's/^MODEL_REFINE=.*/MODEL_REFINE=gpt-4o/' .env
+      sed -i.bak 's/^USE_ASSUMPTIONS_LLM=.*/USE_ASSUMPTIONS_LLM=true/' .env
+      echo "👉 Bitte OPENAI_API_KEY und/oder ANTHROPIC_API_KEY in apps/backend/.env setzen."
+  - name: Test assume_llm
+    command: |
+      curl -s -X POST ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/venture/generate} \
+      -H "Content-Type: application/json" \
+      -d '{"project_title":"HappyNest","elevator_pitch":"HappyNest ist das digitale Zuhause …","mode":"assume_llm"}' | jq '.deck_meta, .slides[0]'

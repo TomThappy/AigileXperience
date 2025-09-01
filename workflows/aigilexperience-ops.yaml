@@ -34,7 +34,13 @@ commands:
     command: npm run dev
 
   - name: 3) Backend Dry-Run Test
-    command: curl -s -X POST http://localhost:3001/api/venture/generate -H "Content-Type: application/json" -d '{"project_title":"Demo","elevator_pitch":"Demo pitch ...","mode":"dry"}' | jq .
+    command: |
+      curl -s -X POST http://localhost:3001/api/venture/generate \
+        -H "Content-Type: application/json" \
+        -d '{"project_title":"Demo","elevator_pitch":"Demo pitch ...","mode":"dry"}' | jq .
 
   - name: 4) Backend Live+Assume Test
-    command: curl -s -X POST http://localhost:3001/api/venture/generate -H "Content-Type: application/json" -d '{"project_title":"HappyNest","elevator_pitch":"HappyNest ist das digitale Zuhause …","mode":"assume"}' | jq '.deck_meta, .slides[0], .warnings'
+    command: |
+      curl -s -X POST http://localhost:3001/api/venture/generate \
+        -H "Content-Type: application/json" \
+        -d '{"project_title":"HappyNest","elevator_pitch":"HappyNest ist das digitale Zuhause …","mode":"assume"}' | jq '.deck_meta, .slides[0], .warnings'

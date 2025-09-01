@@ -1,33 +1,45 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 
-type Provider = "openai" | "anthropic";
+export type Provider = "openai" | "anthropic";
+type ChatOptions = { model?: string; temperature?: number };
 
-const provider: Provider = process.env.ANTHROPIC_API_KEY
-  ? "anthropic"
-  : "openai";
+function pickProvider(model?: string): Provider {
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  if (model?.startsWith("claude") && hasAnthropic) return "anthropic";
+  if (hasOpenAI) return "openai";
+  if (hasAnthropic) return "anthropic";
+  throw new Error("No LLM provider configured");
+}
 
-export async function completePrompt(prompt: string): Promise<string> {
-  if (
-    process.env.MODEL_NAME?.startsWith("claude") &&
-    provider === "anthropic"
-  ) {
+export async function chatComplete(prompt: string, opts: ChatOptions = {}): Promise<string> {
+  const model = opts.model || process.env.MODEL_NAME || "gpt-4o-mini";
+  const temp = opts.temperature ?? 0.2;
+  const provider = pickProvider(model);
+
+  if (provider === "anthropic") {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
     const res = await client.messages.create({
-      model: process.env.MODEL_NAME || "claude-3-5-sonnet-20240620",
+      model,
       max_tokens: 4000,
-      temperature: 0.2,
-      messages: [{ role: "user", content: prompt }],
+      temperature: temp,
+      messages: [{ role: "user", content: prompt }]
     });
     const txt = res.content?.[0]?.type === "text" ? res.content[0].text : "";
     return txt.trim();
   } else {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
     const res = await client.chat.completions.create({
-      model: process.env.MODEL_NAME || "gpt-4o-mini",
-      temperature: 0.2,
-      messages: [{ role: "user", content: prompt }],
+      model,
+      temperature: temp,
+      messages: [{ role: "user", content: prompt }]
     });
     return (res.choices?.[0]?.message?.content || "").trim();
   }
+}
+
+// Legacy function for backward compatibility
+export async function completePrompt(prompt: string): Promise<string> {
+  return chatComplete(prompt);
 }

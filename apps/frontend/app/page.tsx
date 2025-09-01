@@ -37,7 +37,7 @@ export default function Home() {
     );
   }
 
-  async function runPipeline(mode: "live" | "assume") {
+  async function runPipeline(mode: "live" | "assume" | "assume_llm") {
     setDeck(null);
     setLoadingStep(1);
     // Step 1: Analyze (LLM skeleton)
@@ -47,18 +47,18 @@ export default function Home() {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          project_title: project,
-          elevator_pitch: pitch,
-          mode: "live",
-        }),
+          body: JSON.stringify({
+            project_title: project,
+            elevator_pitch: pitch,
+            mode: mode === "assume_llm" ? "live" : "live",
+          }),
       },
     );
     let d: Deck = await res.json();
     setLoadingStep(2);
 
-    if (mode === "assume") {
-      // Step 2: Fill with best assumptions (server-side deterministic)
+    if (mode === "assume" || mode === "assume_llm") {
+      // Step 2: Fill with best assumptions (server-side deterministic + optional LLM refinement)
       res = await fetch(
         process.env.NEXT_PUBLIC_API_URL ||
           "http://localhost:3001/api/venture/generate",
@@ -68,7 +68,7 @@ export default function Home() {
           body: JSON.stringify({
             project_title: project,
             elevator_pitch: pitch,
-            mode: "assume",
+            mode: mode,
           }),
         },
       );
@@ -180,6 +180,12 @@ export default function Home() {
                 className="rounded bg-gray-900 text-white px-3 py-2"
               >
                 Live + Assumptions
+              </button>
+              <button
+                onClick={() => runPipeline("assume_llm")}
+                className="rounded bg-indigo-700 text-white px-3 py-2"
+              >
+                Live + Assumptions + LLM-Feinschliff
               </button>
             </div>
           </div>
