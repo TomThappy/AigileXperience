@@ -57,18 +57,31 @@ JSON
       echo "- Setze im Vercel Projekt die ENV Variablen entsprechend (NEXT_PUBLIC_API_URL, NEXT_PUBLIC_API_RECALC_URL)."
       echo "- Merge der PR → Vercel produziert Preview/Production Deploys."
 
-  - name: 2) Frontend Vercel – sofortiger Build (optional, lokal)
+  - name: 2) Frontend Vercel – Direct Deploy (mit Backend URL)
     command: |
       set -euo pipefail
+      : "${BACKEND_URL:?Bitte BACKEND_URL setzen, z.B.: export BACKEND_URL=https://aigilexperience-backend.onrender.com}"
+      
       if ! command -v vercel >/dev/null 2>&1; then
         echo "❌ vercel CLI nicht gefunden. Installiere mit: npm i -g vercel"
         exit 1
       fi
-      cd apps/frontend
-      echo "➡️ vercel login (falls nötig) und vercel link (Projekt wählen/erstellen)"
-      vercel --version
-      echo "ℹ️ Falls nicht verlinkt: 'vercel link' ausführen."
-      echo "▶️ Build Preview auslösen"
-      vercel --confirm
-      echo "▶️ Production Deploy auslösen"
-      vercel --prod --confirm
+      
+      echo "▶️ Vercel Projekt linken/erstellen"
+      vercel link --project AigileXperience --yes || true
+      
+      echo "▶️ Environment Variables setzen"
+      vercel env rm NEXT_PUBLIC_API_URL production --yes 2>/dev/null || true
+      vercel env rm NEXT_PUBLIC_API_RECALC_URL production --yes 2>/dev/null || true
+      echo -n "$BACKEND_URL/api/venture/generate" | vercel env add NEXT_PUBLIC_API_URL production
+      echo -n "$BACKEND_URL/api/venture/recalc" | vercel env add NEXT_PUBLIC_API_RECALC_URL production
+      
+      echo "▶️ Preview Environment auch setzen"
+      echo -n "$BACKEND_URL/api/venture/generate" | vercel env add NEXT_PUBLIC_API_URL preview 2>/dev/null || true
+      echo -n "$BACKEND_URL/api/venture/recalc" | vercel env add NEXT_PUBLIC_API_RECALC_URL preview 2>/dev/null || true
+      
+      echo "▶️ Production Deploy"
+      vercel --prod --yes
+      
+      echo "✅ Deployment abgeschlossen! URL siehe oben."
+      echo "💡 Tipp: 'vercel env pull apps/frontend/.env.local' um ENVs lokal zu spiegeln"
