@@ -1,0 +1,18 @@
+name: AigileXperience Upgrade
+commands:
+  - name: Backend .env vorbereiten
+    command: cd apps/backend && cp -n .env.example .env && sed -i.bak 's/MODEL_NAME=.*/MODEL_NAME=gpt-4o-mini/' .env && echo "Bitte OPENAI_API_KEY oder ANTHROPIC_API_KEY in apps/backend/.env setzen."
+  - name: Dev starten (FE+BE)
+    command: npm run dev
+  - name: Dry-Run Test
+    command: >
+      curl -s -X POST http://localhost:3001/api/venture/generate 
+      -H "Content-Type: application/json" 
+      -d '{"project_title":"Demo","elevator_pitch":"Demo pitch ...","mode":"dry"}' 
+      | jq .
+  - name: Live+Assume Test
+    command: >
+      curl -s -X POST http://localhost:3001/api/venture/generate 
+      -H "Content-Type: application/json" 
+      -d '{"project_title":"HappyNest","elevator_pitch":"HappyNest ist das digitale Zuhause …","mode":"assume"}' 
+      | jq '.deck_meta, .slides[0], .assumptions'

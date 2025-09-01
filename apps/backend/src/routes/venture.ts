@@ -16,7 +16,7 @@ export async function ventureRoutes(fastify: FastifyInstance) {
         audience: z.string().optional(),
         geo_focus: z.string().optional(),
         time_horizon: z.string().optional(),
-        mode: z.enum(["live", "dry"]).default("live"),
+        mode: z.enum(["live", "dry", "assume"]).default("live"),
       });
       const body = Body.parse(req.body);
 
@@ -46,6 +46,15 @@ export async function ventureRoutes(fastify: FastifyInstance) {
         time_horizon: body.time_horizon,
       });
       deck.deck_meta.project_name = body.project_title;
+
+      if (body.mode === "assume") {
+        const { applyBestAssumptions } = await import(
+          "../pipeline/autoAssumptions.js"
+        );
+        const assumed = applyBestAssumptions(deck);
+        return reply.send(assumed);
+      }
+
       return reply.send(deck);
     },
   );

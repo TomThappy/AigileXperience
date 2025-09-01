@@ -10,6 +10,8 @@ await app.register(cors, { origin: true });
 await app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
 
 await ventureRoutes(app);
+const { recalcRoutes } = await import("./routes/recalc.js");
+await recalcRoutes(app);
 
 const port = Number(process.env.PORT) || 3001;
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {

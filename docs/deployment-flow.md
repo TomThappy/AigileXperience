@@ -8,5 +8,4 @@
 
 _Autogen-Hinweis: wird von scripts/generate_docs.cjs aktualisiert._
 
-
 _Aktualisiert: 2025-09-01T09:58:17.349Z_
