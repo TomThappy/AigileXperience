@@ -1,2 +1,4 @@
 dist
 node_modules
+workflows/aigilexperience-deploy.yaml
+workflows/aigilexperience-render.yaml
