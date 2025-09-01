@@ -6,3 +6,5 @@ workflows/aigilexperience-deploy.yaml
 workflows/aigilexperience-render.yaml
 workflows/aigilexperience-deploy.yaml
 workflows/aigilexperience-render.yaml
+workflows/aigilexperience-deploy.yaml
+workflows/aigilexperience-render.yaml
