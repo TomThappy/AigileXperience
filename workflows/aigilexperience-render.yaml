@@ -1,0 +1,28 @@
+name: AigileXperience Render
+commands:
+  - name: 1) Backend auf Render provisionieren/aktualisieren (+ Deploy)
+    command: |
+      set -euo pipefail
+      : "${RENDER_API_KEY:?Bitte RENDER_API_KEY als Env setzen (Warp Session Env oder OS Env)}"
+      bash scripts/render_backend.sh
+
+  - name: 2) Backend: Deploy erneut triggern
+    command: |
+      set -euo pipefail
+      : "${RENDER_API_KEY:?Bitte RENDER_API_KEY als Env setzen}"
+      API="https://api.render.com/v1"
+      NAME="${RENDER_SERVICE_NAME:-aigilexperience-backend}"
+      SID=$(curl -s -H "Authorization: Bearer $RENDER_API_KEY" "$API/services?limit=200" | jq -r --arg NAME "$NAME" '.[] | select(.name==$NAME) | .id' | head -n1)
+      [[ -z "$SID" || "$SID" == "null" ]] && { echo "❌ Service nicht gefunden"; exit 1; }
+      curl -s -X POST "$API/services/$SID/deploys" -H "Authorization: Bearer $RENDER_API_KEY" | jq .
+      echo "✅ Deploy ausgelöst."
+
+  - name: 3) Backend URL anzeigen
+    command: |
+      set -euo pipefail
+      : "${RENDER_API_KEY:?Bitte RENDER_API_KEY als Env setzen}"
+      API="https://api.render.com/v1"
+      NAME="${RENDER_SERVICE_NAME:-aigilexperience-backend}"
+      INFO=$(curl -s -H "Authorization: Bearer $RENDER_API_KEY" "$API/services?limit=200" | jq -r --arg NAME "$NAME" '.[] | select(.name==$NAME)')
+      URL=$(echo "$INFO" | jq -r '.serviceDetails.url // .url // empty')
+      echo "🌐 Backend URL: ${URL:-(noch nicht verfügbar)}"

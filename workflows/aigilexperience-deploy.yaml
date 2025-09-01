@@ -1,0 +1,74 @@
+name: AigileXperience Deploy
+commands:
+  - name: 1) Frontend Vercel-Setup (Branch, Files, ENV, PR)
+    command: |
+      set -euo pipefail
+      test -d .git || { echo "❌ Kein Git-Repo gefunden."; exit 1; }
+      test -d apps/frontend || { echo "❌ apps/frontend fehlt."; exit 1; }
+
+      BR="deploy/vercel-setup"
+      echo "▶️ Git: Branch $BR anlegen"
+      git checkout -B "$BR"
+
+      echo "▶️ Vercel Projektdatei anlegen"
+      cat > vercel.json <<'JSON'
+{
+  "version": 2,
+  "builds": [
+    { "src": "apps/frontend/next.config.mjs", "use": "@vercel/next" }
+  ],
+  "env": {},
+  "framework": "nextjs"
+}
+JSON
+
+      echo "▶️ Frontend ENV (Production-URLs konfigurieren)"
+      # Passe diese URLs auf deine Backend-Deployments an.
+      mkdir -p apps/frontend
+      if ! grep -q "NEXT_PUBLIC_API_URL" apps/frontend/.env.local.example 2>/dev/null; then
+        echo "NEXT_PUBLIC_API_URL=https://<DEIN-BACKEND>/api/venture/generate" >> apps/frontend/.env.local.example
+      fi
+      if ! grep -q "NEXT_PUBLIC_API_RECALC_URL" apps/frontend/.env.local.example 2>/dev/null; then
+        echo "NEXT_PUBLIC_API_RECALC_URL=https://<DEIN-BACKEND>/api/venture/recalc" >> apps/frontend/.env.local.example
+      fi
+
+      echo "▶️ README Hinweis zu Deploy"
+      awk 'BEGIN{add=1} {print} END{
+        print "\n## Deploy (Vercel)\n- Frontend: Vercel (via GitHub connect)\n- Backend: externe URL (Render/Fly/etc.) in apps/frontend/.env.local.example eintragen\n"
+      }' README.md > /tmp/README.md && mv /tmp/README.md README.md
+
+      echo "▶️ Änderungen committen"
+      git add vercel.json apps/frontend/.env.local.example README.md
+      git commit -m "chore(deploy): add Vercel config + FE env examples"
+
+      echo "▶️ Push & PR erstellen"
+      CURRENT_REMOTE=$(git remote | head -n1)
+      git push -u "$CURRENT_REMOTE" "$BR"
+
+      if command -v gh >/dev/null 2>&1; then
+        gh pr create --fill --title "Vercel Frontend Setup" --body "Vercel deploy config + FE env; bitte Vercel-GitHub-App verbinden und ENV im Vercel-Projekt setzen."
+        echo "✅ PR erstellt. Bitte PR prüfen; CodeRabbit reviewt automatisch, falls App installiert ist."
+      else
+        echo "ℹ️ gh CLI nicht gefunden – öffne GitHub manuell und erstelle eine PR von $BR → main."
+      fi
+
+      echo "⚠️ WICHTIG:"
+      echo "- Stelle sicher, dass die Vercel GitHub App auf dieses Repo installiert ist."
+      echo "- Setze im Vercel Projekt die ENV Variablen entsprechend (NEXT_PUBLIC_API_URL, NEXT_PUBLIC_API_RECALC_URL)."
+      echo "- Merge der PR → Vercel produziert Preview/Production Deploys."
+
+  - name: 2) Frontend Vercel – sofortiger Build (optional, lokal)
+    command: |
+      set -euo pipefail
+      if ! command -v vercel >/dev/null 2>&1; then
+        echo "❌ vercel CLI nicht gefunden. Installiere mit: npm i -g vercel"
+        exit 1
+      fi
+      cd apps/frontend
+      echo "➡️ vercel login (falls nötig) und vercel link (Projekt wählen/erstellen)"
+      vercel --version
+      echo "ℹ️ Falls nicht verlinkt: 'vercel link' ausführen."
+      echo "▶️ Build Preview auslösen"
+      vercel --confirm
+      echo "▶️ Production Deploy auslösen"
+      vercel --prod --confirm

@@ -1,0 +1,40 @@
+name: AigileXperience Ops
+commands:
+  - name: 1) Anleitung automatisch ausführen (Setup → Build → Tests)
+    command: |
+      set -euo pipefail
+      echo "▶️ Backend .env vorbereiten"
+      cd apps/backend
+      cp -n .env.example .env || true
+      if ! grep -q "^MODEL_NAME=" .env; then echo "MODEL_NAME=gpt-4o-mini" >> .env; fi
+      cd ../../
+
+      echo "ℹ️  Öffne 'apps/backend/.env' und trage OPENAI_API_KEY=... oder ANTHROPIC_API_KEY=... ein."
+      echo "   (Du kannst diesen Schritt auch später vor 'Live' machen.)"
+
+      echo "▶️ Dependencies installieren (Root-Workspaces)"
+      npm install
+
+      echo "▶️ Builds prüfen (FE+BE)"
+      npm run -w apps/backend build
+      npm run -w apps/frontend build
+
+      echo "✅ Setup & Build ok."
+      echo "▶️ Kurztests (Backend API Dry/Assume sofern BE läuft)"
+      # Falls Backend gleich mitgestartet werden soll, nutze unten das Dev-Kommando.
+      if nc -z localhost 3001 2>/dev/null; then
+        curl -s -X POST http://localhost:3001/api/venture/generate -H "Content-Type: application/json" -d '{"project_title":"Demo","elevator_pitch":"Demo pitch ...","mode":"dry"}' | jq . | sed -e 's/^/[dry] /'
+        curl -s -X POST http://localhost:3001/api/venture/generate -H "Content-Type: application/json" -d '{"project_title":"HappyNest","elevator_pitch":"HappyNest ist das digitale Zuhause …","mode":"assume"}' | jq '.deck_meta.assumptions' | sed -e 's/^/[assume] /'
+      else
+        echo "ℹ️ Backend läuft nicht – starte es mit: warp run \"AigileXperience Ops\" \"2) Dev starten (FE+BE)\""
+      fi
+      echo "✅ Anleitung abgeschlossen."
+
+  - name: 2) Dev starten (FE+BE)
+    command: npm run dev
+
+  - name: 3) Backend Dry-Run Test
+    command: curl -s -X POST http://localhost:3001/api/venture/generate -H "Content-Type: application/json" -d '{"project_title":"Demo","elevator_pitch":"Demo pitch ...","mode":"dry"}' | jq .
+
+  - name: 4) Backend Live+Assume Test
+    command: curl -s -X POST http://localhost:3001/api/venture/generate -H "Content-Type: application/json" -d '{"project_title":"HappyNest","elevator_pitch":"HappyNest ist das digitale Zuhause …","mode":"assume"}' | jq '.deck_meta, .slides[0], .warnings'
