@@ -31,16 +31,28 @@ ${JSON.stringify(deck, null, 2)}
 
   const out = await chatComplete(user, {
     model: process.env.MODEL_REFINE || "gpt-4o",
-    temperature: 0.2
+    temperature: 0.2,
   });
 
-  const json = out.trim().replace(/^```json/g, "").replace(/^```/g, "").replace(/```$/g, "");
+  const json = out
+    .trim()
+    .replace(/^```json/g, "")
+    .replace(/^```/g, "")
+    .replace(/```$/g, "");
   const parsed = DeckSchema.safeParse(JSON.parse(json));
   if (!parsed.success) {
-    throw new Error("Refine LLM output invalid: " + JSON.stringify(parsed.error.format(), null, 2));
+    throw new Error(
+      "Refine LLM output invalid: " +
+        JSON.stringify(parsed.error.format(), null, 2),
+    );
   }
   const refined = parsed.data;
   // Hinweis in assumptions
-  refined.deck_meta.assumptions = Array.from(new Set([...(refined.deck_meta.assumptions||[]), "Refined by LLM: " + (process.env.MODEL_REFINE || "gpt-4o")]));
+  refined.deck_meta.assumptions = Array.from(
+    new Set([
+      ...(refined.deck_meta.assumptions || []),
+      "Refined by LLM: " + (process.env.MODEL_REFINE || "gpt-4o"),
+    ]),
+  );
   return refined;
 }

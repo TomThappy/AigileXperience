@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { MarketBar, UseOfFundsPie, KPILine } from "../components/Charts";
 
 type Slide = { id: string; type: string; title?: string; key_points: string[] };
@@ -21,6 +21,7 @@ export default function Home() {
   const [deck, setDeck] = useState<Deck | null>(null);
   const [loadingStep, setLoadingStep] = useState<0 | 1 | 2 | 3>(0); // 1 Analyze, 2 Assume, 3 Render
   const [overrides, setOverrides] = useState<Record<string, any>>({});
+  const [isPending, startTransition] = useTransition();
 
   function Step({ n, label }: { n: 1 | 2 | 3; label: string }) {
     const active = loadingStep === n;
@@ -47,11 +48,11 @@ export default function Home() {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            project_title: project,
-            elevator_pitch: pitch,
-            mode: mode === "assume_llm" ? "live" : "live",
-          }),
+        body: JSON.stringify({
+          project_title: project,
+          elevator_pitch: pitch,
+          mode: mode === "assume_llm" ? "live" : "live",
+        }),
       },
     );
     let d: Deck = await res.json();
@@ -75,8 +76,10 @@ export default function Home() {
       d = await res.json();
     }
     setLoadingStep(3);
-    setDeck(d);
-    setLoadingStep(0);
+    startTransition(() => {
+      setDeck(d);
+      setLoadingStep(0);
+    });
   }
 
   async function recalc() {
@@ -91,7 +94,7 @@ export default function Home() {
       },
     );
     const d = await res.json();
-    setDeck(d);
+    startTransition(() => setDeck(d));
   }
 
   // Extract simple chart inputs from deck

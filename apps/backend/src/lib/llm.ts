@@ -13,7 +13,10 @@ function pickProvider(model?: string): Provider {
   throw new Error("No LLM provider configured");
 }
 
-export async function chatComplete(prompt: string, opts: ChatOptions = {}): Promise<string> {
+export async function chatComplete(
+  prompt: string,
+  opts: ChatOptions = {},
+): Promise<string> {
   const model = opts.model || process.env.MODEL_NAME || "gpt-4o-mini";
   const temp = opts.temperature ?? 0.2;
   const provider = pickProvider(model);
@@ -24,7 +27,7 @@ export async function chatComplete(prompt: string, opts: ChatOptions = {}): Prom
       model,
       max_tokens: 4000,
       temperature: temp,
-      messages: [{ role: "user", content: prompt }]
+      messages: [{ role: "user", content: prompt }],
     });
     const txt = res.content?.[0]?.type === "text" ? res.content[0].text : "";
     return txt.trim();
@@ -33,7 +36,7 @@ export async function chatComplete(prompt: string, opts: ChatOptions = {}): Prom
     const res = await client.chat.completions.create({
       model,
       temperature: temp,
-      messages: [{ role: "user", content: prompt }]
+      messages: [{ role: "user", content: prompt }],
     });
     return (res.choices?.[0]?.message?.content || "").trim();
   }
