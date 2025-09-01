@@ -2,55 +2,54 @@
 
 ```yaml
 - generic [active] [ref=e1]:
-    - link "Skip to content":
-        - /url: "#geist-skip-nav"
-    - generic [ref=e2]:
-        - banner [ref=e3]:
-            - link "Vercel logo":
-                - /url: /home
-                - button "Vercel Logo":
-                    - img "Vercel Logo"
-            - navigation [ref=e4]:
-                - navigation [ref=e5]:
-                    - link "Sign Up" [ref=e6] [cursor=pointer]:
-                        - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Ffrontend-dgr9wky9e-thomas-projects-05f128ad.vercel.app%252F%26nonce%3D5fba9ea0e16307c0573ae1209831e372aaa58594100adde081cb5c1b45fcb57e
-                        - paragraph [ref=e8] [cursor=pointer]: Sign Up
-        - main [ref=e9]:
-            - generic [ref=e10]:
-                - heading "Log in to Vercel" [level=1] [ref=e13]
-                - generic [ref=e14]:
-                    - generic [ref=e15]:
-                        - textbox "Email Address" [ref=e17]
-                        - button "Continue with Email" [ref=e19] [cursor=pointer]:
-                            - generic [ref=e20] [cursor=pointer]: Continue with Email
-                    - generic [ref=e21]:
-                        - button "Continue with Google" [ref=e22] [cursor=pointer]:
-                            - img [ref=e24] [cursor=pointer]
-                            - generic [ref=e30] [cursor=pointer]: Continue with Google
-                        - button "Continue with GitHub" [ref=e31] [cursor=pointer]:
-                            - img [ref=e33] [cursor=pointer]
-                            - generic [ref=e37] [cursor=pointer]: Continue with GitHub
-                        - button "Continue with SAML SSO" [ref=e39] [cursor=pointer]:
-                            - img [ref=e41] [cursor=pointer]
-                            - generic [ref=e43] [cursor=pointer]: Continue with SAML SSO
-                        - button "Continue with Passkey" [ref=e44] [cursor=pointer]:
-                            - img [ref=e46] [cursor=pointer]
-                            - generic [ref=e48] [cursor=pointer]: Continue with Passkey
-                        - button "Show other options" [ref=e49] [cursor=pointer]:
-                            - generic [ref=e50] [cursor=pointer]: Show other options
-                - paragraph [ref=e51]:
-                    - text: Don't have an account?
-                    - link "Sign Up" [ref=e52] [cursor=pointer]:
-                        - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%3A%2F%2Ffrontend-dgr9wky9e-thomas-projects-05f128ad.vercel.app%2F%26nonce%3D5fba9ea0e16307c0573ae1209831e372aaa58594100adde081cb5c1b45fcb57e
-            - generic [ref=e55]:
-                - link "Terms" [ref=e56] [cursor=pointer]:
-                    - /url: /legal/terms
-                - link "Privacy Policy" [ref=e57] [cursor=pointer]:
-                    - /url: /legal/privacy-policy
-    - alert [ref=e58]
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - link "Vercel logo":
+        - /url: /home
+        - button "Vercel Logo":
+          - img "Vercel Logo"
+      - navigation [ref=e4]:
+        - navigation [ref=e5]:
+          - link "Sign Up" [ref=e6] [cursor=pointer]:
+            - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Faigilexperience-bfekftvdj-thomas-projects-05f128ad.vercel.app%252F%26nonce%3Db5c6b6eef9c51ed57ecfb113a2bed92968f6cab49cf508ba1285c208d90a7fc3
+            - paragraph [ref=e8] [cursor=pointer]: Sign Up
+    - main [ref=e9]:
+      - generic [ref=e10]:
+        - heading "Log in to Vercel" [level=1] [ref=e13]
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - textbox "Email Address" [disabled] [ref=e17]
+            - button "Continue with Email" [disabled] [ref=e19]:
+              - generic [ref=e20]: Continue with Email
+          - generic [ref=e21]:
+            - button "Continue with Google" [disabled] [ref=e22]:
+              - img [ref=e24]
+              - generic [ref=e30]: Continue with Google
+            - button "Continue with GitHub" [disabled] [ref=e31]:
+              - generic [ref=e48]: Continue with GitHub
+            - button "Continue with SAML SSO" [disabled] [ref=e50]:
+              - img [ref=e52]
+              - generic [ref=e54]: Continue with SAML SSO
+            - button "Continue with Passkey" [disabled] [ref=e55]:
+              - img [ref=e57]
+              - generic [ref=e59]: Continue with Passkey
+            - button "Show other options" [ref=e60] [cursor=pointer]:
+              - generic [ref=e61] [cursor=pointer]: Show other options
+        - paragraph [ref=e62]:
+          - text: Don't have an account?
+          - link "Sign Up" [ref=e63] [cursor=pointer]:
+            - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%3A%2F%2Faigilexperience-bfekftvdj-thomas-projects-05f128ad.vercel.app%2F%26nonce%3Db5c6b6eef9c51ed57ecfb113a2bed92968f6cab49cf508ba1285c208d90a7fc3
+      - generic [ref=e66]:
+        - link "Terms" [ref=e67] [cursor=pointer]:
+          - /url: /legal/terms
+        - link "Privacy Policy" [ref=e68] [cursor=pointer]:
+          - /url: /legal/privacy-policy
+  - alert [ref=e69]
+  - generic:
     - generic:
+      - generic:
         - generic:
-            - generic:
-                - generic:
-                    - img
+          - img
 ```
