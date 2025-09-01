@@ -13,7 +13,7 @@
     "format": "prettier -w .",
     "docs:gen": "node scripts/generate_docs.cjs",
     "docs:open": "open docs/README.md || xdg-open docs/README.md",
-    "prepare": "husky"
+    "prepare": "if [ -z \"$CI\" ] && [ -z \"$VERCEL\" ]; then husky; fi"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
