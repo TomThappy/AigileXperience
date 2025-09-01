@@ -1,0 +1,14 @@
+language: de
+reviews:
+  enabled: true
+  auto_review: true
+  path_filters:
+    - "apps/**"
+    - "packages/**"
+    - "docs/**"
+rules:
+  - "Nutze Zod-Schemas als Contract-Quelle."
+  - "Kein LLM-Call in Tests/CI ohne 'dry' Mode."
+  - "Commit messages: Conventional Commits."
+merge:
+  strategy: "squash"

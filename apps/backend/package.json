@@ -1,0 +1,28 @@
+{
+  "name": "@aigilexperience/backend",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1",
+    "@fastify/cors": "^8.4.2",
+    "@fastify/rate-limit": "^8.0.0",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5",
+    "lru-cache": "^11.0.1",
+    "hasha": "^5.2.2",
+    "openai": "^4.57.0",
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@aigilexperience/common": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}

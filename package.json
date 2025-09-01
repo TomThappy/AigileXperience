@@ -1,0 +1,27 @@
+{
+  "name": "aigilexperience",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -w apps/frontend build && npm run -w apps/backend build",
+    "dev": "concurrently -n FRONTEND,BACKEND -c green,cyan \"npm run -w apps/frontend dev\" \"npm run -w apps/backend dev\"",
+    "test": "npm run -w apps/frontend test && npm run -w apps/backend test",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "docs:gen": "node scripts/generate_docs.cjs",
+    "docs:open": "open docs/README.md || xdg-open docs/README.md",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "eslint": "^9.10.0",
+    "prettier": "^3.3.3",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.9",
+    "@commitlint/cli": "^19.4.0",
+    "@commitlint/config-conventional": "^19.4.0"
+  }
+}
