@@ -1,1 +1,19 @@
-.vercel
+# dependencies
+node_modules/
+apps/*/node_modules/
+packages/*/node_modules/
+# builds
+dist/
+apps/*/dist/
+.next/
+apps/frontend/.next/
+# env
+.env
+*.env
+apps/*/.env
+# logs
+npm-debug.log*
+yarn-*.log*
+pnpm-debug.log*
+# misc
+.DS_Store
