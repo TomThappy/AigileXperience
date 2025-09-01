@@ -1,0 +1,25 @@
+name: AigileXperience – Deploy (Auto Pipeline)
+commands:
+  - name: "Deploy: Auto Pipeline (Prod)"
+    command: |
+      # Optional ENV anpassen:
+      # export BACKEND_URL="https://aigilexperience-backend.onrender.com"
+      # export VERCEL_PROJECT="frontend"
+      # export ALIAS_DOMAIN="aigilexperience.vercel.app"
+      bash scripts/deploy_auto_pipeline.sh
+
+  - name: "Vercel: Redeploy only"
+    command: |
+      # Redeploy ohne Commit (nützlich nach ENV-Änderung im Dashboard)
+      command -v vercel >/dev/null || npm i -g vercel@latest
+      vercel --prod --confirm
+
+  - name: "Render: Health & Logs"
+    command: |
+      export BACKEND_URL="${BACKEND_URL:-https://aigilexperience-backend.onrender.com}"
+      echo "Health:"; (curl -fsS "$BACKEND_URL/health" && echo) || echo "not ready"
+      if command -v render >/dev/null; then
+        render logs aigilexperience-backend --tail 200 || true
+      else
+        echo "Installiere Render CLI: npm i -g render-cli && render login"
+      fi

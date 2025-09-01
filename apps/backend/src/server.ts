@@ -12,6 +12,10 @@ await app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
 await ventureRoutes(app);
 const { recalcRoutes } = await import("./routes/recalc.js");
 await recalcRoutes(app);
+const { default: autoV1 } = await import("./routes/auto_v1.js");
+await autoV1(app);
+const { default: autoRecalc } = await import("./routes/auto_recalc.js");
+await autoRecalc(app);
 
 // --- health endpoint for Render ---
 app.get("/health", async (req, reply) => {

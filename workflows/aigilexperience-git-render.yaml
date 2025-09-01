@@ -1,0 +1,15 @@
+name: AigileXperience – Git & Render
+commands:
+  - name: 1) Git Remote verbinden & pushen
+    command: |
+      export REPO_NAME="AigileXperience"
+      # optional: export GH_OWNER="dein-github-user-oder-org"
+      bash scripts/git_connect_and_render_check.sh
+
+  - name: 2) Render Health & Logs prüfen
+    command: |
+      # Passe die URL an, falls anders:
+      export BACKEND_URL="${BACKEND_URL:-https://aigilexperience-backend.onrender.com}"
+      # optional: export RENDER_SERVICE_NAME="aigilexperience-backend"
+      # optional: export RENDER_API_KEY="<dein-render-api-key>"
+      bash scripts/git_connect_and_render_check.sh

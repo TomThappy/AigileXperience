@@ -12,7 +12,10 @@
     "lint": "eslint .",
     "format": "prettier -w .",
     "docs:gen": "node scripts/generate_docs.cjs",
+    "docs:auto": "node scripts/generate_prompt_flow_auto.cjs",
     "docs:open": "open docs/README.md || xdg-open docs/README.md",
+    "deploy:auto": "./scripts/deploy_auto_pipeline.sh",
+    "deploy:full": "./scripts/deploy_auto_pipeline.sh",
     "prepare": "if [ -z \"$CI\" ] && [ -z \"$VERCEL\" ]; then husky; fi"
   },
   "devDependencies": {

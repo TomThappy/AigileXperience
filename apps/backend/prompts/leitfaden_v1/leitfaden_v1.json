@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "project_title": "",
+    "language": "de",
+    "target_audience": "Pre-Seed/Seed VCs",
+    "geo_focus": "EU/DACH",
+    "generated_at": "",
+    "version": "leitfaden_v1"
+  },
+  "sections": {
+    "problem": {
+      "title": "Problem",
+      "summary": "",
+      "status": "minimal",
+      "metrics": {},
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "solution": {
+      "title": "Lösung",
+      "summary": "",
+      "status": "minimal",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "team": {
+      "title": "Team",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "market": {
+      "title": "Markt",
+      "summary": "",
+      "status": "minimal",
+      "metrics": { "TAM": 0, "SAM": 0, "SOM": 0, "unit": "" },
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "business_model": {
+      "title": "Business Model",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "competition": {
+      "title": "Wettbewerb",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "gtm": {
+      "title": "Go-to-Market",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "status_quo": {
+      "title": "Status/Traction",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "financials": {
+      "title": "Finanzplanung",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "ask": {
+      "title": "Finanzierungsbedarf",
+      "summary": "",
+      "status": "pending",
+      "use_of_funds": { "Produkt": 0.45, "Wachstum": 0.35, "Team": 0.2 },
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "roadmap": {
+      "title": "Roadmap",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    },
+    "contact": {
+      "title": "Kontakt",
+      "summary": "",
+      "status": "pending",
+      "bullets": [],
+      "visuals": [],
+      "guideline_report": { "satisfied": [], "missing": [], "notes": "" },
+      "gaps": []
+    }
+  },
+  "assumption_log": []
+}
