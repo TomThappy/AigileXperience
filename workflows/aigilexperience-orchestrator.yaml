@@ -1,0 +1,63 @@
+name: AigileXperience Orchestrator
+commands:
+  - name: 1) Full Orchestration (PR → CodeRabbit → Auto-Merge → Deploy)
+    command: |
+      set -euo pipefail
+      : "${BACKEND_URL:?Bitte BACKEND_URL setzen: export BACKEND_URL=https://your-render-backend.onrender.com}"
+      echo "🚀 Starte vollständige Orchestrierung..."
+      echo "   Backend: $BACKEND_URL"
+      echo "   CodeRabbit Plan: ${CODERABBIT_PLAN:-false}"
+      bash scripts/orchestrate_deployment.sh
+
+  - name: 2) Quick Deploy (ohne PR/CodeRabbit - direkt zu Vercel)
+    command: |
+      set -euo pipefail
+      : "${BACKEND_URL:?Bitte BACKEND_URL setzen}"
+      
+      echo "▶️ Quick Deploy ohne PR-Workflow"
+      
+      # Best-Pipeline ENV sicherstellen
+      cd apps/backend && cp -n .env.example .env
+      grep -q '^MODEL_ANALYZE=' .env || echo "MODEL_ANALYZE=claude-3-5-sonnet-20240620" >> .env
+      grep -q '^MODEL_REFINE=' .env || echo "MODEL_REFINE=gpt-4o" >> .env
+      grep -q '^USE_ASSUMPTIONS_LLM=' .env || echo "USE_ASSUMPTIONS_LLM=true" >> .env
+      cd ../..
+      
+      # Build & Deploy
+      npm run build --workspaces --if-present
+      
+      # Vercel Deploy
+      vercel link --project AigileXperience --yes --confirm || true
+      for ENV in production preview; do
+        vercel env rm NEXT_PUBLIC_API_URL $ENV --yes 2>/dev/null || true
+        vercel env rm NEXT_PUBLIC_API_RECALC_URL $ENV --yes 2>/dev/null || true
+        echo -n "$BACKEND_URL/api/venture/generate" | vercel env add NEXT_PUBLIC_API_URL $ENV
+        echo -n "$BACKEND_URL/api/venture/recalc" | vercel env add NEXT_PUBLIC_API_RECALC_URL $ENV
+      done
+      
+      URL=$(vercel --prod --confirm | tail -n1 | sed 's/.*https/https/')
+      echo "🌐 Live: $URL"
+
+  - name: 3) E2E Production Test
+    command: |
+      : "${PRODUCTION_URL:?Bitte PRODUCTION_URL setzen: export PRODUCTION_URL=https://your-app.vercel.app}"
+      echo "🧪 E2E Test gegen Production: $PRODUCTION_URL"
+      E2E_BASE="$PRODUCTION_URL" npx playwright test apps/frontend/e2e/smoke.spec.ts --headed=false
+
+  - name: 4) Setup CodeRabbit + Branch Protection
+    command: |
+      echo "📋 CodeRabbit Setup Anleitung:"
+      echo ""
+      echo "1. GitHub Marketplace → CodeRabbit AI → Install"
+      echo "2. Repository Zugriff gewähren"
+      echo "3. Optional: Branch Protection einrichten:"
+      echo ""
+      echo "gh api -X PUT repos/:owner/:repo/branches/main/protection \\"
+      echo "  -f required_status_checks.strict=true \\"
+      echo "  -f required_pull_request_reviews.dismiss_stale_reviews=true \\"
+      echo "  -f enforce_admins=true \\"
+      echo "  -f restrictions= \\"
+      echo "  -F required_status_checks.contexts[]=\"CodeRabbit AI Review\""
+      echo ""
+      echo "4. Umgebungsvariablen für erweiterte Features:"
+      echo "   export CODERABBIT_PLAN=true  # für 'plan' Kommandos"
