@@ -9,7 +9,7 @@ const app = Fastify({ logger: true });
 await app.register(cors, {
   origin: [/\.vercel\.app$/, "https://aigilexperience.vercel.app"],
   methods: ["GET", "POST", "OPTIONS"],
-  credentials: false
+  credentials: false,
 });
 await app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
 
@@ -24,18 +24,23 @@ await autoRecalc(app);
 // --- health endpoint for Render ---
 app.get("/health", async (req, reply) => {
   try {
-    return reply.send({ 
-      status: "ok", 
+    return reply.send({
+      status: "ok",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
-      version: "2025-09-03-workspace-ia",
+      version: "2025-09-03-workspace-ia-fixed",
       env: {
         node: process.version,
-        platform: process.platform
-      }
+        platform: process.platform,
+      },
     });
   } catch (e) {
-    reply.code(500).send({ status: "error", error: e instanceof Error ? e.message : String(e) });
+    reply
+      .code(500)
+      .send({
+        status: "error",
+        error: e instanceof Error ? e.message : String(e),
+      });
   }
 });
 
