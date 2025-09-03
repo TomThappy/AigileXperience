@@ -1,0 +1,41 @@
+name: CodeRabbit Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  coderabbit-review:
+    name: CodeRabbit Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better analysis
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linting
+        run: npm run lint || true
+        
+      - name: Run type checking
+        run: npm run type-check || true
+        
+      - name: Generate documentation
+        run: npm run docs:gen || true
+
+      # CodeRabbit automatically analyzes PRs via GitHub App integration
+      # No additional steps needed if properly configured

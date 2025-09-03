@@ -9,7 +9,7 @@ import React from "react";
  */
 
 const modules = [
-  { href: "/workspaces/demo/dossier/elevator", label: "Venture Dossier" },
+  { href: "/auto", label: "Venture Dossier" },
   { href: "/strategy", label: "Strategie (bald)" },
   { href: "/roadmap", label: "Roadmap (bald)" },
   { href: "/backlog", label: "Backlog (bald)" },

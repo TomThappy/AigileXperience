@@ -39,7 +39,7 @@ export async function chatComplete(
       messages: [{ role: "user", content: prompt }],
     };
     // Only add temperature if model supports it
-    if (!model.includes('o1') && temp !== undefined) {
+    if (!model.includes("o1") && temp !== undefined) {
       chatParams.temperature = temp;
     }
     const res = await client.chat.completions.create(chatParams);

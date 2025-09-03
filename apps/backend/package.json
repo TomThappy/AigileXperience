@@ -7,6 +7,7 @@
     "dev": "tsx src/server.ts",
     "prebuild": "cd ../../packages/common && npm install && npm run build",
     "build": "tsc -p tsconfig.json",
+    "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

@@ -48,12 +48,14 @@
 - **Demo**: https://aigilexperience.vercel.app/workspaces/demo/dossier/elevator
 
 **Features:**
+
 - 🎯 **Stage Timeline**: Visual pipeline progress (S1→S2→S3→S4)
 - 📊 **Section Navigation**: Pill-based subnav between dossier sections
 - 💾 **Auto-Persistence**: LocalStorage sync across all sections
 - ⚡ **Progressive Loading**: Sections appear sequentially with animated status
 
 **Available Sections:**
+
 - `elevator` - Pipeline starter with input form
 - `executive` - Executive summary view
 - `problem` - Problem statement analysis

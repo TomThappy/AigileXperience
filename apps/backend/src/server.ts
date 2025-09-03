@@ -35,12 +35,10 @@ app.get("/health", async (req, reply) => {
       },
     });
   } catch (e) {
-    reply
-      .code(500)
-      .send({
-        status: "error",
-        error: e instanceof Error ? e.message : String(e),
-      });
+    reply.code(500).send({
+      status: "error",
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 });
 

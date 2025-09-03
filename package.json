@@ -9,6 +9,7 @@
     "build": "npm run -w apps/frontend build && npm run -w apps/backend build",
     "dev": "concurrently -n FRONTEND,BACKEND -c green,cyan \"npm run -w apps/frontend dev\" \"npm run -w apps/backend dev\"",
     "test": "npm run -w apps/frontend test && npm run -w apps/backend test",
+    "type-check": "npm run -w apps/frontend type-check && npm run -w apps/backend type-check",
     "lint": "eslint .",
     "format": "prettier -w .",
     "docs:gen": "node scripts/generate_docs.cjs",
