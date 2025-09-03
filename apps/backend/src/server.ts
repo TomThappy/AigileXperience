@@ -24,9 +24,18 @@ await autoRecalc(app);
 // --- health endpoint for Render ---
 app.get("/health", async (req, reply) => {
   try {
-    return reply.send({ status: "ok", uptime: process.uptime() });
+    return reply.send({ 
+      status: "ok", 
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      version: "2025-09-03-workspace-ia",
+      env: {
+        node: process.version,
+        platform: process.platform
+      }
+    });
   } catch (e) {
-    reply.code(500).send({ status: "error" });
+    reply.code(500).send({ status: "error", error: e instanceof Error ? e.message : String(e) });
   }
 });
 
