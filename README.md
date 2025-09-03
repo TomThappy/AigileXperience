@@ -9,7 +9,8 @@
 - 🤖 **Dual-LLM Pipeline**: Claude Sonnet for analysis + GPT-4o for refinement
 - 📊 **Interactive Charts**: Real-time TAM/SAM/SOM, Use-of-Funds, KPI visualization
 - 🎯 **Smart Assumptions**: Auto-fill missing data with industry-standard benchmarks
-- 📨 **Progressive UI**: SSR-safe rendering with loading skeletons
+- 📨 **Progressive UI**: Workspace-based IA with stage timeline visualization
+- 🏗️ **Modular Architecture**: AppShell with sidebar navigation and section-based dossiers
 - 🧪 **E2E Testing**: Playwright-powered production testing
 - 🚀 **Full CI/CD**: Automated deployment with AI code reviews
 
@@ -38,6 +39,33 @@
 1. **Live (LLM only)**: Basic AI analysis
 2. **Live + Assumptions**: AI + smart defaults
 3. **Live + Assumptions + LLM-Refinement**: Full pipeline with dual-model processing
+
+## 🏗️ Workspace IA
+
+### New Progressive Dossier Interface
+
+- **URL**: `/workspaces/[wsId]/dossier/[section]`
+- **Demo**: https://aigilexperience.vercel.app/workspaces/demo/dossier/elevator
+
+**Features:**
+- 🎯 **Stage Timeline**: Visual pipeline progress (S1→S2→S3→S4)
+- 📊 **Section Navigation**: Pill-based subnav between dossier sections
+- 💾 **Auto-Persistence**: LocalStorage sync across all sections
+- ⚡ **Progressive Loading**: Sections appear sequentially with animated status
+
+**Available Sections:**
+- `elevator` - Pipeline starter with input form
+- `executive` - Executive summary view
+- `problem` - Problem statement analysis
+- `solution` - Solution overview
+- `market` - Market analysis & TAM/SAM/SOM
+- `gtm` - Go-to-market strategy
+- `business` - Business model details
+- `financials` - Financial projections
+- `competition` - Competitive analysis
+- `roadmap` - Product roadmap
+- `team` - Team composition
+- `ask` - Funding requirements
 
 ## 🚀 Quick Start
 
