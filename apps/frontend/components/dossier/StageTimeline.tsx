@@ -1,5 +1,14 @@
 "use client";
+
+/**
+ * Pipeline stages for the venture dossier generation process
+ */
 export type Stage = "S1"|"S2"|"S3"|"S4";
+
+/**
+ * Visual timeline component showing the progress of the AI pipeline stages
+ * @param state - Current state of each pipeline stage
+ */
 export default function StageTimeline({ state }:{ state:Record<Stage,"idle"|"running"|"done"|"error"> }){
   const pill = (k:Stage,l:string)=>{
     const s=state[k];

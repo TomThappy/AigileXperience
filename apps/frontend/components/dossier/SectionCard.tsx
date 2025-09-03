@@ -1,5 +1,12 @@
 "use client";
 import React from "react";
+
+/**
+ * Status-aware card component for displaying dossier section content
+ * @param title - Section title (e.g., "Executive Summary")
+ * @param status - Current processing status of the section
+ * @param children - Section content to display
+ */
 export default function SectionCard({title, status, children}:{title:string; status:"pending"|"running"|"done"|"error"; children:React.ReactNode}){
   const badge = status==="done" ? "✅" : status==="running" ? "⏳" : status==="error" ? "⚠️" : "•";
   return (

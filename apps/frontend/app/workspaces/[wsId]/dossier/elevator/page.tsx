@@ -4,6 +4,10 @@ import Subnav from "@/components/layout/Subnav";
 import StageTimeline from "@/components/dossier/StageTimeline";
 import SectionCard from "@/components/dossier/SectionCard";
 
+/**
+ * Configuration for all venture dossier sections
+ * Each section represents a key component of a venture pitch
+ */
 const SECTIONS = [
   { key:"executive", label:"Executive Summary" },
   { key:"problem", label:"Problem" },

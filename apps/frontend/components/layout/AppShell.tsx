@@ -3,6 +3,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 
+/**
+ * Module configuration for the AigileXperience workspace navigation
+ * Each module represents a different aspect of venture development
+ */
+
 const modules = [
   { href: "/auto", label: "Venture Dossier" },
   { href: "/strategy", label: "Strategie (bald)" },
