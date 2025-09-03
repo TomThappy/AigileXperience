@@ -1,355 +1,96 @@
 "use client";
 import { useState } from "react";
+import Subnav from "@/components/layout/Subnav";
+import StageTimeline from "@/components/dossier/StageTimeline";
+import SectionCard from "@/components/dossier/SectionCard";
 
-type Section = {
-  title: string;
-  summary: string;
-  status?: string;
-  gaps?: string[];
-  visuals?: any[];
-  metrics?: any;
-  bullets?: string[];
-  guideline_report?: { satisfied: string[]; missing: string[]; notes: string };
-};
-type Dossier = {
-  meta: {
-    project_title: string;
-    language: string;
-    version: string;
-    recalc_at?: string;
-  };
-  sections: Record<string, Section>;
-  assumption_log?: Array<{
-    field: string;
-    value: any;
-    basis: string;
-    source: string;
-    version: string;
-    severity: string;
-    timestamp: string;
-  }>;
-};
+/**
+ * Configuration for all venture dossier sections
+ * Each section represents a key component of a venture pitch
+ */
+const SECTIONS = [
+  { key:"executive", label:"Executive Summary" },
+  { key:"problem", label:"Problem" },
+  { key:"solution", label:"Solution" },
+  { key:"market", label:"Market" },
+  { key:"gtm", label:"Go-to-Market" },
+  { key:"business", label:"Business Model" },
+  { key:"financials", label:"Financials" },
+  { key:"competition", label:"Competition" },
+  { key:"roadmap", label:"Roadmap" },
+  { key:"team", label:"Team" },
+  { key:"ask", label:"Ask" },
+];
 
-export default function AutoPage() {
-  const [title, setTitle] = useState("HappyNest");
-  const [pitch, setPitch] = useState("HappyNest ist das digitale Zuhause …");
-  const [data, setData] = useState<Dossier | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [ov, setOv] = useState<any>({});
+export default function AutoPage(){
+  const base = `/auto`;
+  const [title,setTitle]=useState("HappyNest");
+  const [pitch,setPitch]=useState("HappyNest ist das digitale Zuhause …");
+  const [error,setError]=useState<string|null>(null);
+  const [stages,setStages]=useState({S1:"idle",S2:"idle",S3:"idle",S4:"idle"} as any);
+  const [data,setData]=useState<any>(null);
+  const [secState,setSecState]=useState<Record<string,"pending"|"running"|"done"|"error">>(()=>Object.fromEntries(SECTIONS.map(s=>[s.key,"pending"])));
 
-  async function run() {
-    setLoading(true);
+  async function run(){
+    setError(null);
+    setStages({S1:"running",S2:"idle",S3:"idle",S4:"idle"});
+    setSecState(Object.fromEntries(SECTIONS.map(s=>[s.key,"pending"])));
     setData(null);
     const url = "/api/auto/run";
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ project_title: title, elevator_pitch: pitch }),
-    });
+    const res = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({project_title:title,elevator_pitch:pitch})});
+    if(!res.ok){ setStages((p:any)=>({...p,S1:"error"})); setError(`API ${res.status}`); return; }
+    setStages((p:any)=>({...p,S1:"done",S2:"running"}));
     const json = await res.json();
-    setData(json);
-    setLoading(false);
-  }
-
-  async function recalc() {
-    if (!data) return;
-    const url = "/api/auto/recalc";
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dossier: data, overrides: ov }),
-    });
-    const json = await res.json();
-    setData(json);
+    // Wir simulieren "progressives" Eintreffen, indem wir die Sections seriell setzen:
+    setData({ meta: json.meta, sections:{} });
+    const secOrder = ["executive","problem","solution","market","gtm","business","financials","competition","roadmap","team","ask"];
+    for (const k of secOrder){
+      setSecState(s=>({...s,[k]:"running"}));
+      // kleine Pause für UX (200ms)
+      // @ts-ignore
+      await new Promise(r=>setTimeout(r,200));
+      const content = json.sections?.[k] || null;
+      setData((prev:any)=> { const nxt={...prev, sections:{...prev.sections, [k]: content }}; try{localStorage.setItem("last_dossier", JSON.stringify(nxt));}catch{} return nxt; });
+      setSecState(s=>({...s,[k]: content ? "done":"pending"}));
+    }
+    setStages({S1:"done",S2:"done",S3:"done",S4:"idle"});
   }
 
   return (
-    <main className="max-w-6xl space-y-6">
-      <a href="/workspaces/demo/dossier/elevator" className="inline-block rounded bg-amber-500 text-white px-3 py-2 mb-3">Neue Dossier-Ansicht öffnen</a>
-      <h1 className="text-2xl font-bold">Auto (Leitfaden v1)</h1>
+    <div>
+      <Subnav base={base} items={[
+        {slug:"",label:"Elevator Pitch"},
+        {slug:"executive",label:"Executive"},
+        {slug:"problem",label:"Problem"},
+        {slug:"solution",label:"Solution"},
+        {slug:"market",label:"Market"},
+      ]}/>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold">Venture Dossier · Elevator Pitch</h1>
+        <StageTimeline state={stages}/>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-3">
           <label className="text-sm font-medium">Projekttitel</label>
-          <input
-            className="w-full border rounded p-2 bg-white"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <input className="w-full border rounded p-2 bg-white" value={title} onChange={e=>setTitle(e.target.value)} />
           <label className="text-sm font-medium">Elevator Pitch</label>
-          <textarea
-            className="w-full border rounded p-2 h-40 bg-white"
-            value={pitch}
-            onChange={(e) => setPitch(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={run}
-              className="rounded bg-purple-700 text-white px-3 py-2"
-            >
-              {loading ? "Erzeuge …" : "Generate (Auto)"}
-            </button>
-          </div>
-
-          <div className="mt-4 border rounded-xl p-4 bg-white shadow-sm space-y-2">
-            <div className="font-semibold">Overrides (prompt-sparend)</div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <label>
-                ARPU €/Monat
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="3.5"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        business_model: {
-                          ...(o.sections?.business_model || {}),
-                          pricing: {
-                            ...(o.sections?.business_model?.pricing || {}),
-                            arpu_month: Number(e.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                Free→Paid %
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="3"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        business_model: {
-                          ...(o.sections?.business_model || {}),
-                          pricing: {
-                            ...(o.sections?.business_model?.pricing || {}),
-                            free_to_paid: Number(e.target.value) / 100,
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                TAM (Familien)
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="12000000"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        market: {
-                          ...(o.sections?.market || {}),
-                          metrics: {
-                            ...(o.sections?.market?.metrics || {}),
-                            TAM: Number(e.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                SAM (Familien)
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="3600000"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        market: {
-                          ...(o.sections?.market || {}),
-                          metrics: {
-                            ...(o.sections?.market?.metrics || {}),
-                            SAM: Number(e.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                SOM (Familien)
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="360000"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        market: {
-                          ...(o.sections?.market || {}),
-                          metrics: {
-                            ...(o.sections?.market?.metrics || {}),
-                            SOM: Number(e.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                UseOfFunds Produkt %
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="45"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        ask: {
-                          ...(o.sections?.ask || {}),
-                          use_of_funds: {
-                            ...(o.sections?.ask?.use_of_funds || {}),
-                            Produkt: Number(e.target.value) / 100,
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                UseOfFunds Wachstum %
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="35"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        ask: {
-                          ...(o.sections?.ask || {}),
-                          use_of_funds: {
-                            ...(o.sections?.ask?.use_of_funds || {}),
-                            Wachstum: Number(e.target.value) / 100,
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-              <label>
-                UseOfFunds Team %
-                <input
-                  className="border rounded p-1 w-full mt-1"
-                  placeholder="20"
-                  onChange={(e) =>
-                    setOv((o: any) => ({
-                      ...o,
-                      sections: {
-                        ...(o.sections || {}),
-                        ask: {
-                          ...(o.sections?.ask || {}),
-                          use_of_funds: {
-                            ...(o.sections?.ask?.use_of_funds || {}),
-                            Team: Number(e.target.value) / 100,
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
-              </label>
-            </div>
-            <button
-              onClick={recalc}
-              className="rounded bg-indigo-600 text-white px-3 py-2"
-            >
-              Neu berechnen
-            </button>
-          </div>
+          <textarea className="w-full border rounded p-2 h-40 bg-white" value={pitch} onChange={e=>setPitch(e.target.value)} />
+          <button onClick={run} className="rounded bg-indigo-600 text-white px-3 py-2">Generate (Auto)</button>
+          {error && <p className="text-sm text-red-600">⚠️ {error}</p>}
         </div>
 
-        <div className="border rounded-xl p-4 bg-white shadow-sm">
-          <h2 className="font-semibold mb-2">Ergebnis</h2>
-          {!data && (
-            <p className="text-sm text-gray-500">Noch nichts erzeugt.</p>
-          )}
-          {data && (
-            <div className="space-y-4 text-sm">
-              <div className="text-xs text-gray-500">
-                Schema: {data.meta?.version} • Recalc:{" "}
-                {data.meta?.recalc_at ? "ja" : "nein"}
-              </div>
-              {Object.entries(data.sections || {}).map(([key, sec]) => (
-                <div key={key} className="border-t pt-2">
-                  <div className="font-semibold">{sec.title || key}</div>
-                  <p className="mt-1">{sec.summary}</p>
-                  {sec.guideline_report && (
-                    <div className="mt-2 grid md:grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <div className="font-semibold">Erfüllt</div>
-                        <ul className="list-disc pl-4">
-                          {(sec.guideline_report.satisfied || [])
-                            .slice(0, 6)
-                            .map((x, i) => (
-                              <li key={i}>{x}</li>
-                            ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <div className="font-semibold">Offen</div>
-                        <ul className="list-disc pl-4 text-orange-700">
-                          {(sec.guideline_report.missing || [])
-                            .slice(0, 6)
-                            .map((x, i) => (
-                              <li key={i}>{x}</li>
-                            ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                  {sec.metrics && (
-                    <pre className="bg-gray-50 p-2 rounded mt-2 overflow-auto">
-                      {JSON.stringify(sec.metrics, null, 2)}
-                    </pre>
-                  )}
-                  {!!sec.visuals?.length && (
-                    <pre className="bg-gray-50 p-2 rounded mt-2 overflow-auto">
-                      {JSON.stringify(sec.visuals, null, 2)}
-                    </pre>
-                  )}
-                </div>
-              ))}
-              {data.assumption_log && data.assumption_log.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mt-2">Assumptions (Log)</h3>
-                  <ul className="list-disc pl-5">
-                    {data.assumption_log.slice(0, 10).map((a, i) => (
-                      <li key={i}>
-                        <span className="font-medium">{a.field}:</span>{" "}
-                        {typeof a.value === "object"
-                          ? JSON.stringify(a.value)
-                          : String(a.value)}{" "}
-                        <span className="text-gray-500">[{a.basis}]</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+        <div className="space-y-3">
+          <div className="text-sm text-slate-500">Ergebnis</div>
+          {SECTIONS.map(s=>(
+            <SectionCard key={s.key} title={s.label} status={secState[s.key]}>
+              <pre className="bg-slate-50 p-2 rounded text-xs overflow-auto">
+                {JSON.stringify(data?.sections?.[s.key] ?? (secState[s.key]==="running"?"…":"—"), null, 2)}
+              </pre>
+            </SectionCard>
+          ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
