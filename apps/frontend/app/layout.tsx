@@ -1,13 +1,15 @@
 import "./globals.css";
+import AppShell from "@/components/layout/AppShell";
+
 export const metadata = { title: "AigileXperience" };
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const Right = <></>;
   return (
     <html lang="de">
-      <body className="min-h-screen bg-gray-50">{children}</body>
+      <body className="antialiased">
+        <AppShell right={Right}>{children}</AppShell>
+      </body>
     </html>
   );
 }

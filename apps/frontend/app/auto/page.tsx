@@ -40,8 +40,7 @@ export default function AutoPage() {
   async function run() {
     setLoading(true);
     setData(null);
-    const url =
-      process.env.NEXT_PUBLIC_AUTO_URL || "http://localhost:3001/api/auto/run";
+    const url = "/api/auto/run";
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,9 +53,7 @@ export default function AutoPage() {
 
   async function recalc() {
     if (!data) return;
-    const url =
-      process.env.NEXT_PUBLIC_AUTO_RECALC_URL ||
-      "http://localhost:3001/api/auto/recalc";
+    const url = "/api/auto/recalc";
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -67,19 +64,19 @@ export default function AutoPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl p-6 space-y-6">
+    <main className="max-w-6xl space-y-6">
       <h1 className="text-2xl font-bold">Auto (Leitfaden v1)</h1>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-3">
           <label className="text-sm font-medium">Projekttitel</label>
           <input
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 bg-white"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <label className="text-sm font-medium">Elevator Pitch</label>
           <textarea
-            className="w-full border rounded p-2 h-40"
+            className="w-full border rounded p-2 h-40 bg-white"
             value={pitch}
             onChange={(e) => setPitch(e.target.value)}
           />
@@ -92,7 +89,7 @@ export default function AutoPage() {
             </button>
           </div>
 
-          <div className="mt-4 border rounded p-3 bg-white space-y-2">
+          <div className="mt-4 border rounded-xl p-4 bg-white shadow-sm space-y-2">
             <div className="font-semibold">Overrides (prompt-sparend)</div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <label>
@@ -281,7 +278,7 @@ export default function AutoPage() {
           </div>
         </div>
 
-        <div className="border rounded p-3 bg-white">
+        <div className="border rounded-xl p-4 bg-white shadow-sm">
           <h2 className="font-semibold mb-2">Ergebnis</h2>
           {!data && (
             <p className="text-sm text-gray-500">Noch nichts erzeugt.</p>
