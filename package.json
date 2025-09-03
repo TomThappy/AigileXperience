@@ -16,7 +16,7 @@
     "docs:open": "open docs/README.md || xdg-open docs/README.md",
     "deploy:auto": "./scripts/deploy_auto_pipeline.sh",
     "deploy:full": "./scripts/deploy_auto_pipeline.sh",
-    "prepare": "if [ -z \"$CI\" ] && [ -z \"$VERCEL\" ]; then husky; fi"
+    "prepare": "[ -n \"$CI\" ] || [ -n \"$VERCEL\" ] || [ -n \"$RENDER\" ] || husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
