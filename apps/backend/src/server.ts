@@ -6,7 +6,11 @@ import "dotenv/config";
 
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: true });
+await app.register(cors, {
+  origin: [/\.vercel\.app$/, "https://aigilexperience.vercel.app"],
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: false
+});
 await app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
 
 await ventureRoutes(app);
