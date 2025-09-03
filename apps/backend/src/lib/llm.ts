@@ -33,11 +33,16 @@ export async function chatComplete(
     return txt.trim();
   } else {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-    const res = await client.chat.completions.create({
+    // Some models don't support temperature parameter
+    const chatParams: any = {
       model,
-      temperature: temp,
       messages: [{ role: "user", content: prompt }],
-    });
+    };
+    // Only add temperature if model supports it
+    if (!model.includes('o1') && temp !== undefined) {
+      chatParams.temperature = temp;
+    }
+    const res = await client.chat.completions.create(chatParams);
     return (res.choices?.[0]?.message?.content || "").trim();
   }
 }

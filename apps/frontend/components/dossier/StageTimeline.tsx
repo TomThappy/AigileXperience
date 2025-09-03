@@ -17,7 +17,7 @@ export default function StageTimeline({ state }:{ state:Record<Stage,"idle"|"run
   };
   return (
     <div className="flex gap-2 items-center">
-      {pill("S1","Analyse")}
+      {pill("S1","Analyze")}
       {pill("S2","Integration")}
       {pill("S3","Polish")}
       {pill("S4","Scoring")}
