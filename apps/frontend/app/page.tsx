@@ -142,8 +142,8 @@ export default function Home() {
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">AigileXperience</h1>
         <nav className="text-sm space-x-4">
-          <a className="hover:underline" href="#">
-            Venture Dossier
+          <a className="hover:underline bg-amber-500 text-white px-3 py-1 rounded" href="/workspaces/demo/dossier/elevator">
+            🚀 Neue Dossier-Ansicht
           </a>
           <a className="hover:underline opacity-60">Strategie (bald)</a>
           <a className="hover:underline opacity-60">Roadmap (bald)</a>
