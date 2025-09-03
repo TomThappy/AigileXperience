@@ -16,6 +16,7 @@ type Deck = {
 };
 
 export default function Home() {
+  // Test: Automated deployment pipeline
   const [project, setProject] = useState("HappyNest");
   const [pitch, setPitch] = useState("HappyNest ist das digitale Zuhause …");
   const [deck, setDeck] = useState<Deck | null>(null);

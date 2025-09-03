@@ -9,6 +9,7 @@ Die automatisierten Deployments benötigen folgende GitHub Secrets für die GitH
 Für das Backend-Deployment auf Render benötigst du:
 
 ### `RENDER_API_KEY`
+
 1. Gehe zu [Render Dashboard](https://dashboard.render.com/)
 2. Klicke auf dein Profil (rechts oben) → "Account Settings"
 3. Wähle "API Keys" aus
@@ -16,6 +17,7 @@ Für das Backend-Deployment auf Render benötigst du:
 5. Kopiere den Key
 
 ### `RENDER_SERVICE_ID`
+
 1. Gehe zu deinem Render Service
 2. In der URL findest du die Service ID: `https://dashboard.render.com/web/{SERVICE_ID}`
 3. Oder im Service Dashboard unter "Settings"
@@ -25,17 +27,20 @@ Für das Backend-Deployment auf Render benötigst du:
 Für das Frontend-Deployment auf Vercel benötigst du:
 
 ### `VERCEL_TOKEN`
+
 1. Gehe zu [Vercel Dashboard](https://vercel.com/dashboard)
 2. Klicke auf dein Profil → "Settings"
 3. Wähle "Tokens" aus
 4. Erstelle einen neuen Token mit Scope "Full Access"
 
 ### `VERCEL_ORG_ID`
+
 1. In deinem Vercel Dashboard
 2. Team Settings → "General"
 3. Kopiere die "Team ID"
 
 ### `VERCEL_PROJECT_ID`
+
 1. Gehe zu deinem Vercel Project
 2. Settings → "General"
 3. Kopiere die "Project ID"
@@ -68,11 +73,13 @@ CodeRabbit funktioniert automatisch über die GitHub App Integration:
 Nach der Konfiguration läuft folgender automatisierter Prozess:
 
 ### Bei Pull Requests:
+
 1. **CodeRabbit** analysiert den Code automatisch
 2. **GitHub Actions** führen Tests und Builds durch
 3. **Kein Deployment** (nur Testing)
 
 ### Bei Push zu `main`:
+
 1. **Tests und Builds** werden ausgeführt
 2. **Backend** wird automatisch auf Render deployed
 3. **Frontend** wird automatisch auf Vercel deployed
@@ -92,14 +99,17 @@ Um zu testen, ob alles funktioniert:
 ## Troubleshooting
 
 ### Deployment schlägt fehl:
+
 - Überprüfe die Secrets in GitHub
 - Schaue in die GitHub Actions Logs
 - Verifiziere Render/Vercel Service IDs
 
 ### CodeRabbit reviewt nicht:
+
 - Überprüfe die GitHub App Installation
 - Stelle sicher, dass das Repository ausgewählt ist
 
 ### Tests schlagen fehl:
+
 - Lokal testen: `npm test`
 - Dependencies aktualisieren: `npm install`

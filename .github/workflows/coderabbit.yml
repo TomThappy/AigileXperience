@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
-  
+
   # Allow manual trigger for testing
   workflow_dispatch:
 
@@ -18,22 +18,22 @@ jobs:
         with:
           # Fetch full history for better analysis
           fetch-depth: 0
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run linting
         run: npm run lint || true
-        
+
       - name: Run type checking
         run: npm run type-check || true
-        
+
       - name: Generate documentation
         run: npm run docs:gen || true
 
