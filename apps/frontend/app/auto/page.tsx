@@ -65,6 +65,7 @@ export default function AutoPage() {
 
   return (
     <main className="max-w-6xl space-y-6">
+      <a href="/workspaces/demo/dossier/elevator" className="inline-block rounded bg-amber-500 text-white px-3 py-2 mb-3">Neue Dossier-Ansicht öffnen</a>
       <h1 className="text-2xl font-bold">Auto (Leitfaden v1)</h1>
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-3">
