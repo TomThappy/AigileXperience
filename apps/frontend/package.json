@@ -8,7 +8,8 @@
     "build": "next build",
     "type-check": "tsc --noEmit",
     "start": "next start -p 3000",
-    "test": "vitest run"
+    "test": "echo 'No unit tests yet'",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "14.2.5",
