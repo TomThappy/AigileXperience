@@ -40,7 +40,7 @@ export async function runLeitfadenV1(input: In) {
     "\n\nSCHEMA (JSON only):\n" +
     `{"meta":{},"sections":{},"assumption_policy":"conservative_eu_2025"}`;
   const p1Out = await chatComplete(p1, {
-    model: process.env.MODEL_ANALYZE || "o3-mini",
+    model: process.env.MODEL_ANALYZE || "gpt-4o-mini",
     temperature: 0,
   });
   const p1Json = JSON.parse(strip(p1Out));
@@ -53,7 +53,7 @@ export async function runLeitfadenV1(input: In) {
     "\n\nP1_JSON:\n" +
     JSON.stringify(p1Json, null, 2);
   const p2Out = await chatComplete(p2, {
-    model: process.env.MODEL_ANALYZE || "o3-mini",
+    model: process.env.MODEL_ANALYZE || "gpt-4o-mini",
     temperature: 0,
   });
   const p2Json = JSON.parse(strip(p2Out));
@@ -78,7 +78,7 @@ export async function runLeitfadenV1(input: In) {
   const headers = {
     "x-trace-id": trace,
     "x-prompt-ver": "LF.P1.v1|LF.P2.v1|LF.P3.v1|LF.P3b.v1",
-    "x-model": `${process.env.MODEL_ANALYZE || "o3-mini"}+${process.env.MODEL_REFINE || "gpt-4o-mini"}`,
+    "x-model": `${process.env.MODEL_ANALYZE || "gpt-4o-mini"}+${process.env.MODEL_REFINE || "gpt-4o-mini"}`,
     "x-schema-ver": "leitfaden_v1",
     "x-stage": "P3b",
   };
