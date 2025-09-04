@@ -47,8 +47,8 @@ export async function chatComplete(
       model,
       messages: [{ role: "user", content: prompt }],
     };
-    // Only add temperature if model supports it (exclude o1-preview, o1-mini, gpt-4o-mini)
-    const supportsTemp = !model.startsWith("o1-") && model !== "gpt-4o-mini";
+    // Only add temperature if model supports it (exclude o1-*, o3-*, gpt-4o-mini)
+    const supportsTemp = !model.startsWith("o1-") && !model.startsWith("o3-") && model !== "gpt-4o-mini";
     if (supportsTemp && temp !== undefined) {
       chatParams.temperature = temp;
     }

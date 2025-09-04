@@ -11,7 +11,9 @@ export default async function autoV1(app: FastifyInstance) {
 
     try {
       const b = (req.body || {}) as any;
-      app.log.info(`[${traceId}] Request body: project_title=${!!b.project_title}, elevator_pitch=${!!b.elevator_pitch}`);
+      app.log.info(
+        `[${traceId}] Request body: project_title=${!!b.project_title}, elevator_pitch=${!!b.elevator_pitch}`,
+      );
 
       if (!b.project_title || !b.elevator_pitch) {
         app.log.warn(`[${traceId}] Missing required fields`);
@@ -23,13 +25,17 @@ export default async function autoV1(app: FastifyInstance) {
       app.log.info(`[${traceId}] Calling runLeitfadenV1...`);
       const { final, headers } = await runLeitfadenV1(b);
 
-      app.log.info(`[${traceId}] Pipeline completed successfully in ${Date.now() - startTime}ms`);
+      app.log.info(
+        `[${traceId}] Pipeline completed successfully in ${Date.now() - startTime}ms`,
+      );
 
       Object.entries(headers).forEach(([k, v]) => reply.header(k, v as any));
       return reply.send(final);
     } catch (error) {
       const duration = Date.now() - startTime;
-      app.log.error(`[${traceId}] Pipeline failed after ${duration}ms: ${error instanceof Error ? error.message : String(error)}`);
+      app.log.error(
+        `[${traceId}] Pipeline failed after ${duration}ms: ${error instanceof Error ? error.message : String(error)}`,
+      );
 
       return reply.code(500).send({
         error: "Internal server error",
