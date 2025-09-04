@@ -45,7 +45,7 @@ export class PipelineManager {
         inputs: ["pitch", "sources"],
         outputs: ["brief"],
         prompt_file: "20_extract_brief.md",
-        model_preference: "claude-3.5-sonnet",
+        model_preference: "gpt-4o",
       },
       {
         id: "problem",
@@ -54,7 +54,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.problem"],
         prompt_file: "30_problem.md",
-        model_preference: "claude-3.5-sonnet",
+        model_preference: "gpt-4o",
       },
       {
         id: "solution",
@@ -63,7 +63,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.solution"],
         prompt_file: "31_solution.md",
-        model_preference: "claude-3.5-sonnet",
+        model_preference: "gpt-4o",
       },
       {
         id: "market",
