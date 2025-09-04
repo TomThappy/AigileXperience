@@ -15,12 +15,12 @@ export default async function autoV2(app: FastifyInstance) {
 
     try {
       const body = req.body as any;
-      
+
       // Validate required fields
       if (!body.project_title || !body.elevator_pitch) {
         app.log.warn(`[${traceId}] Missing required fields`);
-        return reply.code(400).send({ 
-          error: "Missing required fields: project_title and elevator_pitch" 
+        return reply.code(400).send({
+          error: "Missing required fields: project_title and elevator_pitch",
         });
       }
 
@@ -32,7 +32,9 @@ export default async function autoV2(app: FastifyInstance) {
         geo: body.geo || "EU/DACH",
       };
 
-      app.log.info(`[${traceId}] Starting pipeline for: ${input.project_title}`);
+      app.log.info(
+        `[${traceId}] Starting pipeline for: ${input.project_title}`,
+      );
 
       const options = {
         skipCache: body.skip_cache === true,
@@ -44,7 +46,7 @@ export default async function autoV2(app: FastifyInstance) {
 
       if (result.success && result.data) {
         app.log.info(
-          `[${traceId}] Pipeline completed successfully in ${result.state.total_duration_ms}ms (${result.state.cache_hits} cache hits)`
+          `[${traceId}] Pipeline completed successfully in ${result.state.total_duration_ms}ms (${result.state.cache_hits} cache hits)`,
         );
 
         return reply.send({
@@ -55,7 +57,7 @@ export default async function autoV2(app: FastifyInstance) {
             duration_ms: result.state.total_duration_ms,
             cache_hits: result.state.cache_hits,
             steps_completed: Object.keys(result.state.steps).length,
-          }
+          },
         });
       } else {
         app.log.error(`[${traceId}] Pipeline failed: ${result.error}`);
@@ -66,11 +68,10 @@ export default async function autoV2(app: FastifyInstance) {
           state: result.state,
         });
       }
-
     } catch (error) {
       const duration = Date.now() - startTime;
       app.log.error(
-        `[${traceId}] Pipeline failed after ${duration}ms: ${error instanceof Error ? error.message : String(error)}`
+        `[${traceId}] Pipeline failed after ${duration}ms: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       return reply.code(500).send({
@@ -84,10 +85,10 @@ export default async function autoV2(app: FastifyInstance) {
   // Pipeline status endpoint
   app.get("/api/v2/dossier/status/:pipeline_id", async (req, reply) => {
     const { pipeline_id } = req.params as { pipeline_id: string };
-    
+
     try {
       const state = await pipelineManager.getState(pipeline_id);
-      
+
       if (!state) {
         return reply.code(404).send({ error: "Pipeline not found" });
       }
@@ -96,12 +97,15 @@ export default async function autoV2(app: FastifyInstance) {
         pipeline_id,
         state,
         progress: {
-          completed_steps: Object.values(state.steps).filter(s => s.status === "completed").length,
+          completed_steps: Object.values(state.steps).filter(
+            (s) => s.status === "completed",
+          ).length,
           total_steps: Object.keys(state.steps).length,
-          running_steps: Object.values(state.steps).filter(s => s.status === "running").map(s => s),
-        }
+          running_steps: Object.values(state.steps)
+            .filter((s) => s.status === "running")
+            .map((s) => s),
+        },
       });
-
     } catch (error) {
       return reply.code(500).send({
         error: "Failed to get pipeline status",
@@ -113,10 +117,10 @@ export default async function autoV2(app: FastifyInstance) {
   // Resume pipeline endpoint
   app.post("/api/v2/dossier/resume/:pipeline_id", async (req, reply) => {
     const { pipeline_id } = req.params as { pipeline_id: string };
-    
+
     try {
       const result = await pipelineManager.resume(pipeline_id);
-      
+
       if (result.success) {
         return reply.send({
           success: true,
@@ -128,7 +132,6 @@ export default async function autoV2(app: FastifyInstance) {
           message: result.error,
         });
       }
-
     } catch (error) {
       return reply.code(500).send({
         error: "Failed to resume pipeline",
@@ -144,12 +147,12 @@ export default async function autoV2(app: FastifyInstance) {
       version: "v2.0.0",
       timestamp: new Date().toISOString(),
       features: [
-        "evidence_harvester", 
-        "structured_sections", 
-        "intelligent_caching", 
+        "evidence_harvester",
+        "structured_sections",
+        "intelligent_caching",
         "parallel_processing",
-        "resume_capability"
-      ]
+        "resume_capability",
+      ],
     });
   });
 }

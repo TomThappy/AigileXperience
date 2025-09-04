@@ -4,11 +4,19 @@ import path from "node:path";
 
 export function createHash(data: any): string {
   const normalized = JSON.stringify(data, Object.keys(data).sort());
-  return crypto.createHash("sha256").update(normalized).digest("hex").substring(0, 16);
+  return crypto
+    .createHash("sha256")
+    .update(normalized)
+    .digest("hex")
+    .substring(0, 16);
 }
 
 export function createPitchHash(pitchText: string): string {
-  return crypto.createHash("sha256").update(pitchText.trim()).digest("hex").substring(0, 16);
+  return crypto
+    .createHash("sha256")
+    .update(pitchText.trim())
+    .digest("hex")
+    .substring(0, 16);
 }
 
 export async function ensureDir(dirPath: string): Promise<void> {
@@ -19,12 +27,17 @@ export async function ensureDir(dirPath: string): Promise<void> {
   }
 }
 
-export async function writeJsonFile(filePath: string, data: any): Promise<void> {
+export async function writeJsonFile(
+  filePath: string,
+  data: any,
+): Promise<void> {
   await ensureDir(path.dirname(filePath));
   await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
-export async function readJsonFile<T = any>(filePath: string): Promise<T | null> {
+export async function readJsonFile<T = any>(
+  filePath: string,
+): Promise<T | null> {
   try {
     const content = await fs.readFile(filePath, "utf-8");
     return JSON.parse(content);

@@ -15,23 +15,27 @@ Das V2-System transformiert einen Elevator Pitch schrittweise in ein strukturier
 ## Pipeline-Schritte
 
 ### Schritt 0: Input Processing
+
 - Input: `project_title`, `elevator_pitch`
 - Output: `pitch.json` mit Hash
 - Kein LLM erforderlich
 
 ### Schritt 1: Evidence Harvester
+
 - Input: `pitch.json`
 - Output: `sources.json`
 - LLM: GPT-4o (für Recherche)
 - Prompt: `10_evidence_harvester.md`
 
 ### Schritt 2: Brief Extraction
+
 - Input: `pitch.json`, `sources.json`
 - Output: `brief.json`
 - LLM: Claude 3.5 Sonnet (für Struktur)
 - Prompt: `20_extract_brief.md`
 
 ### Schritt 3: Dossier Sections (Parallel)
+
 - **Problem**: `30_problem.md` (Claude 3.5 Sonnet)
 - **Solution**: `31_solution.md` (Claude 3.5 Sonnet)
 - **Team**: `32_team.md` (Claude 3.5 Sonnet)
@@ -39,17 +43,20 @@ Das V2-System transformiert einen Elevator Pitch schrittweise in ein strukturier
 - **Business Model**: `34_business_model.md` (GPT-4o für Zahlen)
 
 ### Schritt 4: Validation
+
 - Input: Alle Sections
 - Output: `validation.json`
 - Script-basiert (deterministisch)
 
 ### Schritt 5: Investor Scoring
+
 - Input: Alle Sections + Brief
 - Output: `investor_score.json`
 - LLM: GPT-4o
 - Prompt: `90_investor_scoring.md`
 
 ### Schritt 6: Assembly
+
 - Input: Alle Artifacts
 - Output: `dossier.json`
 - Script-basiert
@@ -57,15 +64,17 @@ Das V2-System transformiert einen Elevator Pitch schrittweise in ein strukturier
 ## API Endpoints
 
 ### POST `/api/v2/dossier/generate`
+
 Hauptendpoint für die Dossier-Generierung.
 
 **Request:**
+
 ```json
 {
   "project_title": "HappyNest",
   "elevator_pitch": "Das digitale Zuhause für moderne Familien...",
   "language": "de",
-  "target": "Pre-Seed/Seed VCs", 
+  "target": "Pre-Seed/Seed VCs",
   "geo": "EU/DACH",
   "skip_cache": false,
   "parallel_limit": 2,
@@ -74,10 +83,13 @@ Hauptendpoint für die Dossier-Generierung.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
-  "data": { /* DossierData */ },
+  "data": {
+    /* DossierData */
+  },
   "meta": {
     "trace_id": "abc123",
     "duration_ms": 45000,
@@ -88,12 +100,15 @@ Hauptendpoint für die Dossier-Generierung.
 ```
 
 ### GET `/api/v2/dossier/status/:pipeline_id`
+
 Status-Abfrage für laufende Pipelines.
 
 ### POST `/api/v2/dossier/resume/:pipeline_id`
+
 Resume einer abgebrochenen Pipeline.
 
 ### GET `/api/v2/health`
+
 Health-Check für V2-System.
 
 ## Architektur
@@ -131,21 +146,24 @@ PipelineManager
 ## Usage
 
 ```typescript
-import { PipelineManager } from './v2/pipeline/PipelineManager.js';
+import { PipelineManager } from "./v2/pipeline/PipelineManager.js";
 
 const manager = new PipelineManager();
 
-const result = await manager.executePipeline({
-  project_title: "TestApp",
-  elevator_pitch: "Revolutionary mobile app...",
-  language: "en",
-  target: "Seed VCs",
-  geo: "US"
-}, {
-  skipCache: false,
-  parallelLimit: 2,
-  timeoutMs: 180000
-});
+const result = await manager.executePipeline(
+  {
+    project_title: "TestApp",
+    elevator_pitch: "Revolutionary mobile app...",
+    language: "en",
+    target: "Seed VCs",
+    geo: "US",
+  },
+  {
+    skipCache: false,
+    parallelLimit: 2,
+    timeoutMs: 180000,
+  },
+);
 
 if (result.success) {
   console.log("Dossier generated:", result.data);

@@ -4,6 +4,7 @@ import { writeJsonFile, readJsonFile } from "../utils/hash.js";
 import type { StepResult, PipelineStep } from "../types.js";
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 
 export class StepProcessor {
   private cache: CacheManager;
@@ -20,14 +21,14 @@ export class StepProcessor {
     skipCache = false,
   ): Promise<StepResult> {
     const startTime = Date.now();
-    
+
     console.log(`📋 Executing step: ${step.name}`);
 
     // Check cache first
     if (!skipCache) {
       const cacheKey = await this.cache.createStepCacheKey(step.id, inputs);
       const cached = await this.cache.get(cacheKey);
-      
+
       if (cached?.data) {
         console.log(`🎯 Cache hit for step: ${step.name}`);
         return {
@@ -42,7 +43,7 @@ export class StepProcessor {
 
     try {
       let result: any;
-      
+
       if (step.prompt_file) {
         // LLM-based step
         result = await this.executeLLMStep(step, inputs);
@@ -53,7 +54,7 @@ export class StepProcessor {
 
       const duration = Date.now() - startTime;
       const cacheKey = await this.cache.createStepCacheKey(step.id, inputs);
-      
+
       // Cache the result
       await this.cache.set(cacheKey, result, {
         step_id: step.id,
@@ -72,7 +73,7 @@ export class StepProcessor {
     } catch (error) {
       const duration = Date.now() - startTime;
       console.error(`❌ Step failed: ${step.name}`, error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -93,7 +94,7 @@ export class StepProcessor {
 
     const promptPath = path.join(this.promptsDir, step.prompt_file);
     let promptTemplate: string;
-    
+
     try {
       promptTemplate = await fs.readFile(promptPath, "utf-8");
     } catch (error) {
@@ -104,8 +105,9 @@ export class StepProcessor {
     let prompt = promptTemplate;
     for (const [key, value] of Object.entries(inputs)) {
       const placeholder = `<<${key.toUpperCase()}>>`;
-      const replacementValue = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-      prompt = prompt.replace(new RegExp(placeholder, 'g'), replacementValue);
+      const replacementValue =
+        typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      prompt = prompt.replace(new RegExp(placeholder, "g"), replacementValue);
     }
 
     // Add context data
@@ -125,7 +127,10 @@ export class StepProcessor {
     try {
       return JSON.parse(response.trim());
     } catch (parseError) {
-      console.error("Failed to parse LLM response as JSON:", response.substring(0, 500));
+      console.error(
+        "Failed to parse LLM response as JSON:",
+        response.substring(0, 500),
+      );
       throw new Error(`LLM response is not valid JSON: ${parseError}`);
     }
   }
@@ -149,9 +154,11 @@ export class StepProcessor {
 
   private processInput(inputs: Record<string, any>): any {
     const { project_title, elevator_pitch } = inputs;
-    
+
     if (!project_title || !elevator_pitch) {
-      throw new Error("Missing required fields: project_title or elevator_pitch");
+      throw new Error(
+        "Missing required fields: project_title or elevator_pitch",
+      );
     }
 
     return {
@@ -161,7 +168,11 @@ export class StepProcessor {
       },
       project_title,
       pitch_text: elevator_pitch,
-      pitch_hash: require("crypto").createHash("sha256").update(elevator_pitch.trim()).digest("hex").substring(0, 16),
+      pitch_hash: crypto
+        .createHash("sha256")
+        .update(elevator_pitch.trim())
+        .digest("hex")
+        .substring(0, 16),
     };
   }
 
@@ -184,16 +195,19 @@ export class StepProcessor {
     // Simple validation - in production this would be more comprehensive
     const sections = inputs.sections || {};
     const issues: string[] = [];
-    
+
     // Check business model consistency
     const bizModel = sections.business_model;
     if (bizModel?.data) {
-      const { arpu, gross_margin, churn_monthly, CAC, CLV, payback_months } = bizModel.data;
-      
+      const { arpu, gross_margin, churn_monthly, CAC, CLV, payback_months } =
+        bizModel.data;
+
       if (arpu && gross_margin && churn_monthly) {
         const expectedCLV = arpu * gross_margin * (1 / churn_monthly);
         if (CLV && Math.abs(CLV - expectedCLV) > expectedCLV * 0.1) {
-          issues.push(`CLV inconsistency: expected ~${expectedCLV.toFixed(2)}, got ${CLV}`);
+          issues.push(
+            `CLV inconsistency: expected ~${expectedCLV.toFixed(2)}, got ${CLV}`,
+          );
         }
       }
     }
@@ -201,7 +215,8 @@ export class StepProcessor {
     return {
       validation_passed: issues.length === 0,
       issues,
-      suggestions: issues.length > 0 ? ["Review unit economics calculations"] : [],
+      suggestions:
+        issues.length > 0 ? ["Review unit economics calculations"] : [],
     };
   }
 }

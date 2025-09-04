@@ -1,7 +1,12 @@
 import { CacheManager } from "../cache/CacheManager.js";
 import { StepProcessor } from "./StepProcessor.js";
 import { writeJsonFile } from "../utils/hash.js";
-import type { PipelineStep, PipelineState, PitchInput, DossierData } from "../types.js";
+import type {
+  PipelineStep,
+  PipelineState,
+  PitchInput,
+  DossierData,
+} from "../types.js";
 import path from "node:path";
 
 export class PipelineManager {
@@ -35,7 +40,7 @@ export class PipelineManager {
       },
       {
         id: "brief",
-        name: "Brief Extraction", 
+        name: "Brief Extraction",
         dependencies: ["input"],
         inputs: ["pitch", "sources"],
         outputs: ["brief"],
@@ -75,7 +80,7 @@ export class PipelineManager {
         dependencies: ["brief", "evidence", "market"],
         inputs: ["brief", "sources", "sections.market"],
         outputs: ["sections.business_model"],
-        prompt_file: "34_business_model.md", 
+        prompt_file: "34_business_model.md",
         model_preference: "gpt-4o",
       },
       {
@@ -98,7 +103,14 @@ export class PipelineManager {
         id: "assemble",
         name: "Final Assembly",
         dependencies: ["investor_score", "validate"],
-        inputs: ["pitch", "sources", "brief", "sections", "investor_score", "validation"],
+        inputs: [
+          "pitch",
+          "sources",
+          "brief",
+          "sections",
+          "investor_score",
+          "validation",
+        ],
         outputs: ["dossier"],
       },
     ];
@@ -110,9 +122,18 @@ export class PipelineManager {
       skipCache?: boolean;
       parallelLimit?: number;
       timeoutMs?: number;
-    } = {}
-  ): Promise<{ success: boolean; data?: DossierData; error?: string; state: PipelineState }> {
-    const { skipCache = false, parallelLimit = 3, timeoutMs = 300000 } = options;
+    } = {},
+  ): Promise<{
+    success: boolean;
+    data?: DossierData;
+    error?: string;
+    state: PipelineState;
+  }> {
+    const {
+      skipCache = false,
+      parallelLimit = 3,
+      timeoutMs = 300000,
+    } = options;
     const startTime = Date.now();
 
     console.log("🚀 Starting pipeline execution for:", input.project_title);
@@ -142,22 +163,25 @@ export class PipelineManager {
     try {
       // Execute steps in dependency order with limited parallelism
       const completed = new Set<string>();
-      
+
       while (completed.size < steps.length) {
-        const readySteps = steps.filter(step => 
-          !completed.has(step.id) && 
-          state.steps[step.id].status === "pending" &&
-          step.dependencies.every(dep => completed.has(dep))
+        const readySteps = steps.filter(
+          (step) =>
+            !completed.has(step.id) &&
+            state.steps[step.id].status === "pending" &&
+            step.dependencies.every((dep) => completed.has(dep)),
         );
 
         if (readySteps.length === 0) {
-          const remaining = steps.filter(step => !completed.has(step.id));
-          throw new Error(`Dependency deadlock. Remaining steps: ${remaining.map(s => s.id).join(", ")}`);
+          const remaining = steps.filter((step) => !completed.has(step.id));
+          throw new Error(
+            `Dependency deadlock. Remaining steps: ${remaining.map((s) => s.id).join(", ")}`,
+          );
         }
 
         // Execute up to parallelLimit steps concurrently
         const batch = readySteps.slice(0, parallelLimit);
-        const promises = batch.map(async step => {
+        const promises = batch.map(async (step) => {
           state.steps[step.id].status = "running";
           state.steps[step.id].started_at = new Date().toISOString();
 
@@ -173,13 +197,17 @@ export class PipelineManager {
             }
           }
 
-          const result = await this.stepProcessor.executeStep(step, stepInputs, skipCache);
-          
+          const result = await this.stepProcessor.executeStep(
+            step,
+            stepInputs,
+            skipCache,
+          );
+
           if (result.success) {
             state.steps[step.id].status = "completed";
             state.steps[step.id].duration_ms = result.duration_ms;
             state.steps[step.id].hash = result.hash;
-            
+
             if (result.cache_hit) {
               state.cache_hits++;
             }
@@ -208,7 +236,7 @@ export class PipelineManager {
         });
 
         const completedBatch = await Promise.all(promises);
-        completedBatch.forEach(stepId => completed.add(stepId));
+        completedBatch.forEach((stepId) => completed.add(stepId));
 
         // Check timeout
         if (Date.now() - startTime > timeoutMs) {
@@ -218,7 +246,9 @@ export class PipelineManager {
 
       state.total_duration_ms = Date.now() - startTime;
 
-      console.log(`✅ Pipeline completed in ${state.total_duration_ms}ms (${state.cache_hits} cache hits)`);
+      console.log(
+        `✅ Pipeline completed in ${state.total_duration_ms}ms (${state.cache_hits} cache hits)`,
+      );
 
       // Save final dossier
       const dossier = state.artifacts.dossier as DossierData;
@@ -233,12 +263,11 @@ export class PipelineManager {
         data: dossier,
         state,
       };
-
     } catch (error) {
       state.total_duration_ms = Date.now() - startTime;
-      
+
       console.error("❌ Pipeline failed:", error);
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
@@ -252,7 +281,9 @@ export class PipelineManager {
     return null;
   }
 
-  async resume(pipelineId: string): Promise<{ success: boolean; data?: DossierData; error?: string }> {
+  async resume(
+    pipelineId: string,
+  ): Promise<{ success: boolean; data?: DossierData; error?: string }> {
     // TODO: Implement resume functionality
     throw new Error("Resume not yet implemented");
   }

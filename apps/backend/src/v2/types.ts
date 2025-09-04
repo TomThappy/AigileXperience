@@ -96,14 +96,17 @@ export interface PipelineStep {
 }
 
 export interface PipelineState {
-  steps: Record<string, {
-    status: "pending" | "running" | "completed" | "failed";
-    started_at?: string;
-    completed_at?: string;
-    duration_ms?: number;
-    error?: string;
-    hash?: string;
-  }>;
+  steps: Record<
+    string,
+    {
+      status: "pending" | "running" | "completed" | "failed";
+      started_at?: string;
+      completed_at?: string;
+      duration_ms?: number;
+      error?: string;
+      hash?: string;
+    }
+  >;
   artifacts: Record<string, any>;
   cache_hits: number;
   total_duration_ms: number;
