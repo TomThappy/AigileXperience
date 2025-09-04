@@ -46,6 +46,7 @@ export async function chatComplete(
     const chatParams: any = {
       model,
       messages: [{ role: "user", content: prompt }],
+      max_tokens: 2000, // Limit tokens for faster response
     };
     // Only add temperature if model supports it (exclude o1-*, o3-*, gpt-4o-mini)
     const supportsTemp =

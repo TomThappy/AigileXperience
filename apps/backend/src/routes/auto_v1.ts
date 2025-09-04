@@ -6,6 +6,7 @@ export default async function autoV1(app: FastifyInstance) {
   app.post("/api/auto/run", async (req, reply) => {
     const startTime = Date.now();
     const traceId = crypto.randomUUID().substring(0, 8);
+    const TIMEOUT_MS = 25000; // 25 seconds to stay under Render's 30s limit
 
     app.log.info(`[${traceId}] AUTO/RUN Request received`);
 
@@ -22,8 +23,20 @@ export default async function autoV1(app: FastifyInstance) {
           .send({ error: "project_title and elevator_pitch are required" });
       }
 
-      app.log.info(`[${traceId}] Calling runLeitfadenV1...`);
-      const { final, headers } = await runLeitfadenV1(b);
+      app.log.info(`[${traceId}] Calling runLeitfadenV1 with ${TIMEOUT_MS}ms timeout...`);
+      
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`Request timeout after ${TIMEOUT_MS}ms`));
+        }, TIMEOUT_MS);
+      });
+
+      // Race between pipeline execution and timeout
+      const { final, headers } = await Promise.race([
+        runLeitfadenV1(b),
+        timeoutPromise
+      ]) as { final: any; headers: any };
 
       app.log.info(
         `[${traceId}] Pipeline completed successfully in ${Date.now() - startTime}ms`,
