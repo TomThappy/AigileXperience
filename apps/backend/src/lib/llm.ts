@@ -46,8 +46,14 @@ export async function chatComplete(
     const chatParams: any = {
       model,
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 2000, // Limit tokens for faster response
     };
+    
+    // Add appropriate token limit parameter based on model
+    if (model.startsWith("gpt-4o")) {
+      chatParams.max_completion_tokens = 2000; // For newer models
+    } else {
+      chatParams.max_tokens = 2000; // For older models
+    }
     // Only add temperature if model supports it (exclude o1-*, o3-*, gpt-4o-mini)
     const supportsTemp =
       !model.startsWith("o1-") &&

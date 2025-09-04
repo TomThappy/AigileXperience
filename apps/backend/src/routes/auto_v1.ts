@@ -23,8 +23,10 @@ export default async function autoV1(app: FastifyInstance) {
           .send({ error: "project_title and elevator_pitch are required" });
       }
 
-      app.log.info(`[${traceId}] Calling runLeitfadenV1 with ${TIMEOUT_MS}ms timeout...`);
-      
+      app.log.info(
+        `[${traceId}] Calling runLeitfadenV1 with ${TIMEOUT_MS}ms timeout...`,
+      );
+
       // Create timeout promise
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
@@ -33,10 +35,10 @@ export default async function autoV1(app: FastifyInstance) {
       });
 
       // Race between pipeline execution and timeout
-      const { final, headers } = await Promise.race([
+      const { final, headers } = (await Promise.race([
         runLeitfadenV1(b),
-        timeoutPromise
-      ]) as { final: any; headers: any };
+        timeoutPromise,
+      ])) as { final: any; headers: any };
 
       app.log.info(
         `[${traceId}] Pipeline completed successfully in ${Date.now() - startTime}ms`,
