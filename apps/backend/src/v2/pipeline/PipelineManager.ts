@@ -48,7 +48,7 @@ export class PipelineManager {
         inputs: ["pitch", "sources"],
         outputs: ["brief"],
         prompt_file: "20_extract_brief.md",
-        model_preference: "claude-3.5-sonnet", // Claude for structure/narrative
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for structure/narrative
       },
       {
         id: "problem",
@@ -57,7 +57,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.problem"],
         prompt_file: "30_problem.md",
-        model_preference: "claude-3.5-sonnet", // Claude for textual content
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "solution",
@@ -66,7 +66,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.solution"],
         prompt_file: "31_solution.md",
-        model_preference: "claude-3.5-sonnet", // Claude for textual content
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "team",
@@ -75,7 +75,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.team"],
         prompt_file: "32_team.md",
-        model_preference: "claude-3.5-sonnet", // Claude for textual content
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "market",
@@ -102,7 +102,7 @@ export class PipelineManager {
         inputs: ["brief", "sources", "sections.market"],
         outputs: ["sections.competition"],
         prompt_file: "35_competition.md",
-        model_preference: "claude-3.5-sonnet", // Claude for textual content
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "status_quo",
@@ -111,7 +111,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.status_quo"],
         prompt_file: "37_status_quo.md",
-        model_preference: "claude-3.5-sonnet", // Claude for textual content
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "gtm",

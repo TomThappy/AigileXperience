@@ -149,8 +149,10 @@ export default async function autoV2(app: FastifyInstance) {
       payload: req.body as Record<string, any>,
       headers: req.headers as Record<string, string>,
     });
-    
-    reply.code(injectedResponse.statusCode).type(injectedResponse.headers['content-type'] || 'application/json');
+
+    reply
+      .code(injectedResponse.statusCode)
+      .type(injectedResponse.headers["content-type"] || "application/json");
     return injectedResponse.payload;
   });
 
