@@ -28,14 +28,17 @@ export async function runLeitfadenV1(input: In) {
   const target = input.target_audience || "Pre-Seed/Seed VCs";
   const geo = input.geo_focus || "EU/DACH";
   const schema = read("prompts/leitfaden_v1/leitfaden_v1.json");
-  
-  console.log(`[${trace.substring(0, 8)}] Starting Leitfaden V1 pipeline with:`, {
-    project_title: input.project_title,
-    elevator_pitch: input.elevator_pitch?.substring(0, 100) + '...',
-    language,
-    target,
-    geo
-  });
+
+  console.log(
+    `[${trace.substring(0, 8)}] Starting Leitfaden V1 pipeline with:`,
+    {
+      project_title: input.project_title,
+      elevator_pitch: input.elevator_pitch?.substring(0, 100) + "...",
+      language,
+      target,
+      geo,
+    },
+  );
 
   // P1
   const p1 =

@@ -20,14 +20,14 @@ export async function chatComplete(
   const model = opts.model || process.env.MODEL_NAME || "gpt-4o-mini";
   const temp = opts.temperature ?? 0.2;
   const provider = pickProvider(model);
-  
-  console.log('🤖 ChatComplete called:', {
+
+  console.log("🤖 ChatComplete called:", {
     model,
     temperature: temp,
     provider,
     promptLength: prompt.length,
     hasOpenAI: !!process.env.OPENAI_API_KEY,
-    hasAnthropic: !!process.env.ANTHROPIC_API_KEY
+    hasAnthropic: !!process.env.ANTHROPIC_API_KEY,
   });
 
   if (provider === "anthropic") {
@@ -47,39 +47,42 @@ export async function chatComplete(
       model,
       messages: [{ role: "user", content: prompt }],
     };
-    // Only add temperature if model supports it (exclude o1-preview, o1-mini)
-    const supportsTemp = !model.startsWith("o1-");
+    // Only add temperature if model supports it (exclude o1-preview, o1-mini, gpt-4o-mini)
+    const supportsTemp = !model.startsWith("o1-") && model !== "gpt-4o-mini";
     if (supportsTemp && temp !== undefined) {
       chatParams.temperature = temp;
     }
-    
-    console.log('🔥 Making OpenAI API call:', {
+
+    console.log("🔥 Making OpenAI API call:", {
       model,
       supportsTemp,
       finalTemp: chatParams.temperature,
       apiKeyPresent: !!process.env.OPENAI_API_KEY,
       apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
-      params: { ...chatParams, messages: '[TRUNCATED]' }
+      params: { ...chatParams, messages: "[TRUNCATED]" },
     });
-    
+
     try {
       const res = await client.chat.completions.create(chatParams);
-      console.log('✅ OpenAI API call successful:', {
+      console.log("✅ OpenAI API call successful:", {
         model,
         usage: res.usage,
         choices: res.choices?.length,
-        responseLength: res.choices?.[0]?.message?.content?.length || 0
+        responseLength: res.choices?.[0]?.message?.content?.length || 0,
       });
       return (res.choices?.[0]?.message?.content || "").trim();
     } catch (apiError) {
-      console.error('❌ OpenAI API call failed:', {
+      console.error("❌ OpenAI API call failed:", {
         model,
-        error: apiError instanceof Error ? {
-          name: apiError.name,
-          message: apiError.message,
-          stack: apiError.stack?.split('\n').slice(0, 3)
-        } : String(apiError),
-        params: { ...chatParams, messages: '[TRUNCATED]' }
+        error:
+          apiError instanceof Error
+            ? {
+                name: apiError.name,
+                message: apiError.message,
+                stack: apiError.stack?.split("\n").slice(0, 3),
+              }
+            : String(apiError),
+        params: { ...chatParams, messages: "[TRUNCATED]" },
       });
       throw apiError;
     }
