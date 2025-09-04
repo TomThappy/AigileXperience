@@ -28,7 +28,7 @@ app.get("/health", async (req, reply) => {
       status: "ok",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
-      version: "2025-09-04-leitfaden-model-fix",
+      version: "2025-09-04-enhanced-logging",
       env: {
         node: process.version,
         platform: process.platform,
