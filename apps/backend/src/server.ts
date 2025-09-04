@@ -30,7 +30,7 @@ app.get("/health", async (req, reply) => {
       status: "ok",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
-      version: "2025-09-04-v2-spec-compliance",
+      version: "2025-09-04-v2-file-persistence",
       env: {
         node: process.version,
         platform: process.platform,

@@ -63,6 +63,9 @@ export class StepProcessor {
         duration_ms: duration,
       });
 
+      // Persist to files as per specification
+      await this.persistStepResult(step, result);
+
       console.log(`✅ Step completed: ${step.name} (${duration}ms)`);
 
       return {
@@ -117,7 +120,15 @@ export class StepProcessor {
       prompt = prompt.replace(new RegExp(placeholder, "g"), replacementValue);
     }
 
-    // Add context data
+    // Add context data and special processing per step
+    if (step.id === "evidence") {
+      // Evidence Harvester: Add standard topics from specification
+      const standardTopics = ["TAM", "ARPU", "CAC", "Churn", "Competitors", "Digital mediation efficacy", "Data privacy/regulatory"];
+      const region = inputs.geo || "EU/DE";
+      prompt = prompt.replace("<<TOPICS>>", JSON.stringify(standardTopics));
+      prompt = prompt.replace("<<REGION>>", region);
+    }
+    
     if (inputs.brief) {
       prompt += `\\n\\n## BRIEF DATA\\n${JSON.stringify(inputs.brief, null, 2)}`;
     }
@@ -181,6 +192,12 @@ export class StepProcessor {
       );
     }
 
+    // Generate pitch hash exactly as specified
+    const pitch_hash = crypto
+      .createHash("sha256")
+      .update(elevator_pitch.trim())
+      .digest("hex");
+
     return {
       meta: {
         version: "1.0",
@@ -188,11 +205,7 @@ export class StepProcessor {
       },
       project_title,
       pitch_text: elevator_pitch,
-      pitch_hash: crypto
-        .createHash("sha256")
-        .update(elevator_pitch.trim())
-        .digest("hex")
-        .substring(0, 16),
+      pitch_hash,
     };
   }
 
@@ -238,5 +251,77 @@ export class StepProcessor {
       suggestions:
         issues.length > 0 ? ["Review unit economics calculations"] : [],
     };
+  }
+
+  private async persistStepResult(step: PipelineStep, result: any): Promise<void> {
+    try {
+      let filePath: string;
+      
+      // File persistence as per specification
+      switch (step.id) {
+        case "input":
+          // Step 0: Save to examples/input/pitch.json
+          filePath = path.resolve(process.cwd(), "examples/input/pitch.json");
+          break;
+        case "evidence":
+          // Step 1: Save to examples/output/sources.json
+          filePath = path.resolve(process.cwd(), "examples/output/sources.json");
+          break;
+        case "brief":
+          // Step 2: Save to examples/output/brief.json
+          filePath = path.resolve(process.cwd(), "examples/output/brief.json");
+          break;
+        case "problem":
+        case "solution":
+        case "team":
+        case "market":
+        case "business_model":
+        case "competition":
+        case "status_quo":
+        case "gtm":
+        case "financial_plan":
+          // Step 3: Save each section separately
+          const sectionMap: Record<string, string> = {
+            problem: "30_problem",
+            solution: "31_solution", 
+            team: "32_team",
+            market: "33_market",
+            business_model: "34_business_model",
+            competition: "35_competition",
+            status_quo: "37_status_quo",
+            gtm: "36_go_to_market", 
+            financial_plan: "38_financial_plan"
+          };
+          filePath = path.resolve(process.cwd(), `examples/output/${sectionMap[step.id]}.json`);
+          break;
+        case "validate":
+          // Step 4: Save to examples/output/validated/
+          await fs.mkdir(path.resolve(process.cwd(), "examples/output/validated"), { recursive: true });
+          filePath = path.resolve(process.cwd(), "examples/output/validated/validation.json");
+          break;
+        case "investor_score":
+          // Step 5: Save to examples/output/investor_score.json
+          filePath = path.resolve(process.cwd(), "examples/output/investor_score.json");
+          break;
+        case "assemble":
+          // Step 6: Save with timestamp as per specification
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          filePath = path.resolve(process.cwd(), `examples/output/dossier_${timestamp}.json`);
+          break;
+        default:
+          return; // Skip persistence for unknown steps
+      }
+
+      // Ensure directory exists
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      
+      // Write JSON file
+      await writeJsonFile(filePath, result);
+      
+      console.log(`💾 Persisted ${step.id} result to: ${filePath}`);
+    } catch (error) {
+      console.warn(`⚠️  Failed to persist ${step.id} result:`, error);
+      // Don't fail the pipeline for persistence errors
+    }
   }
 }
