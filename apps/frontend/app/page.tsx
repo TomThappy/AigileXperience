@@ -7,7 +7,7 @@ export default function Home() {
 
   useEffect(() => {
     // Redirect to the new Workspace Dossier interface
-    router.replace('/workspaces/demo/dossier/elevator');
+    router.replace("/workspaces/demo/dossier/elevator");
   }, [router]);
 
   // Show loading spinner while redirecting
@@ -15,7 +15,9 @@ export default function Home() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Redirecting to Workspace Dossier...</p>
+        <p className="mt-4 text-gray-600">
+          Redirecting to Workspace Dossier...
+        </p>
       </div>
     </div>
   );
