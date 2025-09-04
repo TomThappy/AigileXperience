@@ -20,6 +20,8 @@ const { default: autoV1 } = await import("./routes/auto_v1.js");
 await autoV1(app);
 const { default: autoRecalc } = await import("./routes/auto_recalc.js");
 await autoRecalc(app);
+const { default: autoV2 } = await import("./routes/auto_v2.js");
+await autoV2(app);
 
 // --- health endpoint for Render ---
 app.get("/health", async (req, reply) => {
@@ -28,7 +30,7 @@ app.get("/health", async (req, reply) => {
       status: "ok",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
-      version: "2025-09-04-no-token-limits",
+      version: "2025-09-04-v2-pipeline-system",
       env: {
         node: process.version,
         platform: process.platform,
