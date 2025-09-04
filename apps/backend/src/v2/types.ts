@@ -95,8 +95,7 @@ export interface PipelineStep {
   model_preference?:
     | "gpt-4o"
     | "gpt-4"
-    | "claude-3.5-sonnet"
-    | "claude-3-5-sonnet-20241022";
+    | "claude-3-5-sonnet";
 }
 
 export interface PipelineState {
