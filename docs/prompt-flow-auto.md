@@ -1,9 +1,8 @@
 # Prompt Flow – Auto (Leitfaden v1)
 
-_Last updated: 2025-09-01 22:49_
+_Last updated: 2025-09-04 18:47_
 
 ## Pipeline
-
 - P1: Analyze & Map (o3-mini) → `p1_analyze.md`
 - P2: Best-Assumption Fill (o3-mini) → `p2_assume.md`
 - P3: Polish & Visuals (gpt-4o-mini) → `p3_polish.md`
@@ -11,7 +10,6 @@ _Last updated: 2025-09-01 22:49_
 - Schema: `leitfaden_v1.json`
 
 ## Response Headers
-
 x-trace-id, x-prompt-ver=LF.P1.v1|LF.P2.v1|LF.P3.v1|LF.P3b.v1, x-schema-ver=leitfaden_v1, x-model
 
 ## Prompts

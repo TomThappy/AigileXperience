@@ -212,7 +212,7 @@ export class PipelineManager {
 
     console.log("🚀 Starting pipeline execution for:", input.project_title);
     console.log("🆔 Pipeline ID:", pipelineId);
-    
+
     // Check for resume capability
     let resumeState = null;
     if (resumeFromCheckpoint) {
@@ -298,17 +298,30 @@ export class PipelineManager {
       let completed = new Set<string>();
       if (resumeState) {
         // Restore completed steps
-        for (const [stepId, stepState] of Object.entries(resumeState.pipeline_state.steps)) {
-          const typedStepState = stepState as { status: string; [key: string]: any };
-          if (typedStepState.status === 'completed' || typedStepState.status === 'skipped') {
+        for (const [stepId, stepState] of Object.entries(
+          resumeState.pipeline_state.steps,
+        )) {
+          const typedStepState = stepState as {
+            status: string;
+            [key: string]: any;
+          };
+          if (
+            typedStepState.status === "completed" ||
+            typedStepState.status === "skipped"
+          ) {
             completed.add(stepId);
             state.steps[stepId] = typedStepState as any;
           }
         }
         // Restore artifacts
-        state.artifacts = { ...state.artifacts, ...resumeState.pipeline_state.artifacts };
+        state.artifacts = {
+          ...state.artifacts,
+          ...resumeState.pipeline_state.artifacts,
+        };
         state.cache_hits = resumeState.pipeline_state.cache_hits || 0;
-        console.log(`🔄 Restored ${completed.size} completed steps from checkpoint`);
+        console.log(
+          `🔄 Restored ${completed.size} completed steps from checkpoint`,
+        );
       }
 
       // Execute steps in dependency order with limited parallelism
@@ -319,142 +332,150 @@ export class PipelineManager {
 
       try {
         while (completed.size < steps.length) {
-        const readySteps = steps.filter(
-          (step) =>
-            !completed.has(step.id) &&
-            state.steps[step.id].status === "pending" &&
-            step.dependencies.every((dep) => completed.has(dep)) &&
-            rebuildPlan.steps_to_rebuild.includes(step.id), // Only process steps that need rebuilding
-        );
+          const readySteps = steps.filter(
+            (step) =>
+              !completed.has(step.id) &&
+              state.steps[step.id].status === "pending" &&
+              step.dependencies.every((dep) => completed.has(dep)) &&
+              rebuildPlan.steps_to_rebuild.includes(step.id), // Only process steps that need rebuilding
+          );
 
-        // Mark skipped steps as completed immediately
-        for (const step of steps) {
-          if (
-            !completed.has(step.id) &&
-            rebuildPlan.steps_to_skip.includes(step.id) &&
-            step.dependencies.every((dep) => completed.has(dep))
-          ) {
-            state.steps[step.id].status = "skipped";
-            state.steps[step.id].duration_ms = 0;
-            state.cache_hits++;
+          // Mark skipped steps as completed immediately
+          for (const step of steps) {
+            if (
+              !completed.has(step.id) &&
+              rebuildPlan.steps_to_skip.includes(step.id) &&
+              step.dependencies.every((dep) => completed.has(dep))
+            ) {
+              state.steps[step.id].status = "skipped";
+              state.steps[step.id].duration_ms = 0;
+              state.cache_hits++;
 
-            // Load cached result for skipped steps
-            // TODO: Implement proper cache loading for skipped steps
-            for (const outputKey of step.outputs) {
-              if (outputKey.includes(".")) {
-                const [parent, child] = outputKey.split(".");
-                if (!state.artifacts[parent]) {
-                  state.artifacts[parent] = {};
+              // Load cached result for skipped steps
+              // TODO: Implement proper cache loading for skipped steps
+              for (const outputKey of step.outputs) {
+                if (outputKey.includes(".")) {
+                  const [parent, child] = outputKey.split(".");
+                  if (!state.artifacts[parent]) {
+                    state.artifacts[parent] = {};
+                  }
+                  state.artifacts[parent][child] = {}; // Placeholder
+                } else {
+                  state.artifacts[outputKey] = {}; // Placeholder
                 }
-                state.artifacts[parent][child] = {}; // Placeholder
+              }
+
+              completed.add(step.id);
+              console.log(`⏭️  Skipped ${step.name} (cached)`);
+            }
+          }
+
+          if (readySteps.length === 0) {
+            const remaining = steps.filter((step) => !completed.has(step.id));
+            throw new Error(
+              `Dependency deadlock. Remaining steps: ${remaining.map((s) => s.id).join(", ")}`,
+            );
+          }
+
+          // Execute up to parallelLimit steps concurrently
+          const batch = readySteps.slice(0, parallelLimit);
+          const promises = batch.map(async (step) => {
+            if (timeoutController.signal.aborted) {
+              throw new Error("Pipeline aborted due to timeout");
+            }
+
+            state.steps[step.id].status = "running";
+            state.steps[step.id].started_at = new Date().toISOString();
+
+            // Save checkpoint before starting critical steps
+            if (
+              [
+                "evidence",
+                "brief",
+                "market",
+                "business_model",
+                "investor_score",
+              ].includes(step.id)
+            ) {
+              await this.cache.saveCheckpoint(pipelineId, {
+                step_id: step.id,
+                pipeline_state: { ...state },
+                timestamp: new Date().toISOString(),
+                input_hash: this.cache.generatePitchHash(input),
+              });
+            }
+
+            // Prepare inputs for this step
+            const stepInputs: Record<string, any> = {};
+            for (const inputKey of step.inputs) {
+              if (inputKey.includes(".")) {
+                // Nested property like "sections.market"
+                const [parent, child] = inputKey.split(".");
+                stepInputs[inputKey] = state.artifacts[parent]?.[child];
               } else {
-                state.artifacts[outputKey] = {}; // Placeholder
+                stepInputs[inputKey] = state.artifacts[inputKey];
               }
             }
 
-            completed.add(step.id);
-            console.log(`⏭️  Skipped ${step.name} (cached)`);
-          }
-        }
+            const result = await this.stepProcessor.executeStep(
+              step,
+              stepInputs,
+              skipCache,
+            );
 
-        if (readySteps.length === 0) {
-          const remaining = steps.filter((step) => !completed.has(step.id));
-          throw new Error(
-            `Dependency deadlock. Remaining steps: ${remaining.map((s) => s.id).join(", ")}`,
-          );
-        }
+            if (result.success) {
+              state.steps[step.id].status = "completed";
+              state.steps[step.id].duration_ms = result.duration_ms;
+              state.steps[step.id].hash = result.hash;
 
-        // Execute up to parallelLimit steps concurrently
-        const batch = readySteps.slice(0, parallelLimit);
-        const promises = batch.map(async (step) => {
-          if (timeoutController.signal.aborted) {
-            throw new Error('Pipeline aborted due to timeout');
-          }
+              if (result.cache_hit) {
+                state.cache_hits++;
+              }
 
-          state.steps[step.id].status = "running";
-          state.steps[step.id].started_at = new Date().toISOString();
+              // Store outputs
+              for (const outputKey of step.outputs) {
+                if (outputKey.includes(".")) {
+                  // Nested property like "sections.problem"
+                  const [parent, child] = outputKey.split(".");
+                  if (!state.artifacts[parent]) {
+                    state.artifacts[parent] = {};
+                  }
+                  state.artifacts[parent][child] = result.data;
+                } else {
+                  state.artifacts[outputKey] = result.data;
+                }
+              }
+            } else {
+              state.steps[step.id].status = "failed";
+              state.steps[step.id].error = result.error;
+              throw new Error(`Step ${step.id} failed: ${result.error}`);
+            }
 
-          // Save checkpoint before starting critical steps
-          if (['evidence', 'brief', 'market', 'business_model', 'investor_score'].includes(step.id)) {
+            state.steps[step.id].completed_at = new Date().toISOString();
+            return step.id;
+          });
+
+          const completedBatch = await Promise.all(promises);
+          completedBatch.forEach((stepId) => completed.add(stepId));
+
+          // Periodic checkpoint save every 2 completed steps
+          if (completed.size % 2 === 0) {
             await this.cache.saveCheckpoint(pipelineId, {
-              step_id: step.id,
+              step_id: "batch_checkpoint",
               pipeline_state: { ...state },
               timestamp: new Date().toISOString(),
-              input_hash: this.cache.generatePitchHash(input)
+              input_hash: this.cache.generatePitchHash(input),
             });
           }
 
-          // Prepare inputs for this step
-          const stepInputs: Record<string, any> = {};
-          for (const inputKey of step.inputs) {
-            if (inputKey.includes(".")) {
-              // Nested property like "sections.market"
-              const [parent, child] = inputKey.split(".");
-              stepInputs[inputKey] = state.artifacts[parent]?.[child];
-            } else {
-              stepInputs[inputKey] = state.artifacts[inputKey];
-            }
+          // Check timeout via controller
+          if (timeoutController.signal.aborted) {
+            throw new Error(`Pipeline timeout after ${timeoutMs}ms`);
           }
-
-          const result = await this.stepProcessor.executeStep(
-            step,
-            stepInputs,
-            skipCache,
-          );
-
-          if (result.success) {
-            state.steps[step.id].status = "completed";
-            state.steps[step.id].duration_ms = result.duration_ms;
-            state.steps[step.id].hash = result.hash;
-
-            if (result.cache_hit) {
-              state.cache_hits++;
-            }
-
-            // Store outputs
-            for (const outputKey of step.outputs) {
-              if (outputKey.includes(".")) {
-                // Nested property like "sections.problem"
-                const [parent, child] = outputKey.split(".");
-                if (!state.artifacts[parent]) {
-                  state.artifacts[parent] = {};
-                }
-                state.artifacts[parent][child] = result.data;
-              } else {
-                state.artifacts[outputKey] = result.data;
-              }
-            }
-          } else {
-            state.steps[step.id].status = "failed";
-            state.steps[step.id].error = result.error;
-            throw new Error(`Step ${step.id} failed: ${result.error}`);
-          }
-
-          state.steps[step.id].completed_at = new Date().toISOString();
-          return step.id;
-        });
-
-        const completedBatch = await Promise.all(promises);
-        completedBatch.forEach((stepId) => completed.add(stepId));
-
-        // Periodic checkpoint save every 2 completed steps
-        if (completed.size % 2 === 0) {
-          await this.cache.saveCheckpoint(pipelineId, {
-            step_id: 'batch_checkpoint',
-            pipeline_state: { ...state },
-            timestamp: new Date().toISOString(),
-            input_hash: this.cache.generatePitchHash(input)
-          });
         }
-
-        // Check timeout via controller
-        if (timeoutController.signal.aborted) {
-          throw new Error(`Pipeline timeout after ${timeoutMs}ms`);
-        }
+      } finally {
+        clearTimeout(globalTimeout);
       }
-    } finally {
-      clearTimeout(globalTimeout);
-    }
 
       state.total_duration_ms = Date.now() - startTime;
 
@@ -487,11 +508,11 @@ export class PipelineManager {
 
       // Save error checkpoint for potential resume
       await this.cache.saveCheckpoint(pipelineId, {
-        step_id: 'error_state',
+        step_id: "error_state",
         pipeline_state: { ...state },
         timestamp: new Date().toISOString(),
         input_hash: this.cache.generatePitchHash(input),
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       const checkpointExists = await this.cache.loadCheckpoint(pipelineId);
@@ -514,9 +535,14 @@ export class PipelineManager {
   async resume(
     pipelineId: string,
     input?: PitchInput,
-  ): Promise<{ success: boolean; data?: DossierData; error?: string; state?: PipelineState }> {
+  ): Promise<{
+    success: boolean;
+    data?: DossierData;
+    error?: string;
+    state?: PipelineState;
+  }> {
     console.log(`🔄 Attempting to resume pipeline: ${pipelineId}`);
-    
+
     const checkpoint = await this.cache.loadCheckpoint(pipelineId);
     if (!checkpoint) {
       return {
@@ -531,7 +557,8 @@ export class PipelineManager {
       if (!artifacts.project_title || !artifacts.elevator_pitch) {
         return {
           success: false,
-          error: "Cannot resume: original input data not available in checkpoint",
+          error:
+            "Cannot resume: original input data not available in checkpoint",
         };
       }
 

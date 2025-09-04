@@ -92,7 +92,11 @@ export interface PipelineStep {
   inputs: string[];
   outputs: string[];
   prompt_file?: string;
-  model_preference?: "gpt-4o" | "gpt-4" | "claude-3.5-sonnet" | "claude-3-5-sonnet-20241022";
+  model_preference?:
+    | "gpt-4o"
+    | "gpt-4"
+    | "claude-3.5-sonnet"
+    | "claude-3-5-sonnet-20241022";
 }
 
 export interface PipelineState {

@@ -67,7 +67,11 @@ export class CacheManager {
     return crypto.createHash("sha256").update(pitchText.trim()).digest("hex");
   }
 
-  generatePitchHash(input: { project_title: string; elevator_pitch: string; [key: string]: any }): string {
+  generatePitchHash(input: {
+    project_title: string;
+    elevator_pitch: string;
+    [key: string]: any;
+  }): string {
     const hashInput = `${input.project_title}::${input.elevator_pitch}`;
     return this.createPitchHash(hashInput);
   }
@@ -75,33 +79,57 @@ export class CacheManager {
   createSourcesHash(sources: any[]): string {
     // Canonicalize sources for consistent hashing
     const sortedSources = sources
-      .map(source => ({ title: source.title, publisher: source.publisher, year: source.year }))
-      .sort((a, b) => `${a.title}_${a.publisher}`.localeCompare(`${b.title}_${b.publisher}`));
-    return crypto.createHash("sha256").update(JSON.stringify(sortedSources)).digest("hex");
+      .map((source) => ({
+        title: source.title,
+        publisher: source.publisher,
+        year: source.year,
+      }))
+      .sort((a, b) =>
+        `${a.title}_${a.publisher}`.localeCompare(`${b.title}_${b.publisher}`),
+      );
+    return crypto
+      .createHash("sha256")
+      .update(JSON.stringify(sortedSources))
+      .digest("hex");
   }
 
   createBriefHash(brief: any): string {
-    return crypto.createHash("sha256").update(JSON.stringify(brief)).digest("hex").substring(0, 16);
+    return crypto
+      .createHash("sha256")
+      .update(JSON.stringify(brief))
+      .digest("hex")
+      .substring(0, 16);
   }
 
-  createSectionKey(sectionName: string, briefHash: string, sourcesHash: string, promptVersion = "1.0"): string {
+  createSectionKey(
+    sectionName: string,
+    briefHash: string,
+    sourcesHash: string,
+    promptVersion = "1.0",
+  ): string {
     const keyData = `${sectionName}_${briefHash}_${sourcesHash}_${promptVersion}`;
     return `sec_${crypto.createHash("sha256").update(keyData).digest("hex").substring(0, 12)}`;
   }
 
-  createValidatedHash(allSectionHashes: Record<string, string>, validatorVersion = "1.0"): string {
+  createValidatedHash(
+    allSectionHashes: Record<string, string>,
+    validatorVersion = "1.0",
+  ): string {
     const sortedHashes = Object.keys(allSectionHashes)
       .sort()
-      .map(key => `${key}:${allSectionHashes[key]}`)
+      .map((key) => `${key}:${allSectionHashes[key]}`)
       .join("|");
     const hashInput = `${sortedHashes}_validator_${validatorVersion}`;
     return `validated_${crypto.createHash("sha256").update(hashInput).digest("hex").substring(0, 12)}`;
   }
 
-  createScoreKey(validatedSectionHashes: Record<string, string>, scoringPromptVersion = "1.0"): string {
+  createScoreKey(
+    validatedSectionHashes: Record<string, string>,
+    scoringPromptVersion = "1.0",
+  ): string {
     const sortedHashes = Object.keys(validatedSectionHashes)
       .sort()
-      .map(key => `${key}:${validatedSectionHashes[key]}`)
+      .map((key) => `${key}:${validatedSectionHashes[key]}`)
       .join("|");
     const keyInput = `${sortedHashes}_scoring_${scoringPromptVersion}`;
     return `score_${crypto.createHash("sha256").update(keyInput).digest("hex").substring(0, 12)}`;
@@ -113,7 +141,7 @@ export class CacheManager {
       input: `vd.input.v1.${pitchHash.substring(0, 8)}`,
       brief: `vd.brief.v1.${pitchHash.substring(0, 8)}${sourcesHash ? `.${sourcesHash.substring(0, 8)}` : ""}`,
       sections: `vd.sections.v1.${pitchHash.substring(0, 8)}`,
-      dossier: `vd.dossier.v1.${pitchHash.substring(0, 8)}`
+      dossier: `vd.dossier.v1.${pitchHash.substring(0, 8)}`,
     };
   }
 
@@ -124,7 +152,7 @@ export class CacheManager {
       pipeline_id: pipelineId,
       ...checkpointData,
       saved_at: new Date().toISOString(),
-      resumable: true
+      resumable: true,
     });
     console.log(`💾 Checkpoint saved for pipeline ${pipelineId}`);
   }
@@ -135,7 +163,10 @@ export class CacheManager {
       const checkpoint = await this.get(checkpointKey);
       return checkpoint;
     } catch (error) {
-      console.warn(`Failed to load checkpoint for pipeline ${pipelineId}:`, error);
+      console.warn(
+        `Failed to load checkpoint for pipeline ${pipelineId}:`,
+        error,
+      );
       return null;
     }
   }
