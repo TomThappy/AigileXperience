@@ -7,85 +7,89 @@ export default async function autoV2(app: FastifyInstance) {
   const pipelineManager = new PipelineManager();
 
   // Main pipeline execution endpoint
-  app.post("/api/v2/dossier/generate", {
-    config: {
-      timeout: 300000 // 5 minutes for this specific route
-    }
-  }, async (req, reply) => {
-    const startTime = Date.now();
-    const traceId = crypto.randomUUID().substring(0, 8);
+  app.post(
+    "/api/v2/dossier/generate",
+    {
+      config: {
+        timeout: 300000, // 5 minutes for this specific route
+      },
+    },
+    async (req, reply) => {
+      const startTime = Date.now();
+      const traceId = crypto.randomUUID().substring(0, 8);
 
-    app.log.info(`[${traceId}] V2/DOSSIER/GENERATE Request received`);
+      app.log.info(`[${traceId}] V2/DOSSIER/GENERATE Request received`);
 
-    try {
-      const body = req.body as any;
+      try {
+        const body = req.body as any;
 
-      // Validate required fields
-      if (!body.project_title || !body.elevator_pitch) {
-        app.log.warn(`[${traceId}] Missing required fields`);
-        return reply.code(400).send({
-          error: "Missing required fields: project_title and elevator_pitch",
-        });
-      }
+        // Validate required fields
+        if (!body.project_title || !body.elevator_pitch) {
+          app.log.warn(`[${traceId}] Missing required fields`);
+          return reply.code(400).send({
+            error: "Missing required fields: project_title and elevator_pitch",
+          });
+        }
 
-      const input: PitchInput = {
-        project_title: body.project_title,
-        elevator_pitch: body.elevator_pitch,
-        language: body.language || "de",
-        target: body.target || "Pre-Seed/Seed VCs",
-        geo: body.geo || "EU/DACH",
-      };
+        const input: PitchInput = {
+          project_title: body.project_title,
+          elevator_pitch: body.elevator_pitch,
+          language: body.language || "de",
+          target: body.target || "Pre-Seed/Seed VCs",
+          geo: body.geo || "EU/DACH",
+        };
 
-      app.log.info(
-        `[${traceId}] Starting pipeline for: ${input.project_title}`,
-      );
-
-      const options = {
-        skipCache: body.skip_cache === true,
-        parallelLimit: body.parallel_limit || 2,
-        timeoutMs: body.timeout_ms || 120000, // 2 minutes default for better UX
-        pipelineId: body.pipeline_id, // Allow external pipeline ID for resume
-      };
-
-      const result = await pipelineManager.executePipeline(input, options);
-
-      if (result.success && result.data) {
         app.log.info(
-          `[${traceId}] Pipeline completed successfully in ${result.state.total_duration_ms}ms (${result.state.cache_hits} cache hits)`,
+          `[${traceId}] Starting pipeline for: ${input.project_title}`,
         );
 
-        return reply.send({
-          success: true,
-          data: result.data,
-          meta: {
+        const options = {
+          skipCache: body.skip_cache === true,
+          parallelLimit: body.parallel_limit || 2,
+          timeoutMs: body.timeout_ms || 120000, // 2 minutes default for better UX
+          pipelineId: body.pipeline_id, // Allow external pipeline ID for resume
+        };
+
+        const result = await pipelineManager.executePipeline(input, options);
+
+        if (result.success && result.data) {
+          app.log.info(
+            `[${traceId}] Pipeline completed successfully in ${result.state.total_duration_ms}ms (${result.state.cache_hits} cache hits)`,
+          );
+
+          return reply.send({
+            success: true,
+            data: result.data,
+            meta: {
+              trace_id: traceId,
+              duration_ms: result.state.total_duration_ms,
+              cache_hits: result.state.cache_hits,
+              steps_completed: Object.keys(result.state.steps).length,
+            },
+          });
+        } else {
+          app.log.error(`[${traceId}] Pipeline failed: ${result.error}`);
+          return reply.code(500).send({
+            error: "Pipeline execution failed",
             trace_id: traceId,
-            duration_ms: result.state.total_duration_ms,
-            cache_hits: result.state.cache_hits,
-            steps_completed: Object.keys(result.state.steps).length,
-          },
-        });
-      } else {
-        app.log.error(`[${traceId}] Pipeline failed: ${result.error}`);
+            message: result.error,
+            state: result.state,
+          });
+        }
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        app.log.error(
+          `[${traceId}] Pipeline failed after ${duration}ms: ${error instanceof Error ? error.message : String(error)}`,
+        );
+
         return reply.code(500).send({
-          error: "Pipeline execution failed",
+          error: "Internal server error",
           trace_id: traceId,
-          message: result.error,
-          state: result.state,
+          message: error instanceof Error ? error.message : "Unknown error",
         });
       }
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      app.log.error(
-        `[${traceId}] Pipeline failed after ${duration}ms: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      return reply.code(500).send({
-        error: "Internal server error",
-        trace_id: traceId,
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-    }
-  });
+    },
+  );
 
   // Pipeline status endpoint
   app.get("/api/v2/dossier/status/:pipeline_id", async (req, reply) => {

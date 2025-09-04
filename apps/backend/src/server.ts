@@ -4,11 +4,11 @@ import rateLimit from "@fastify/rate-limit";
 import { ventureRoutes } from "./routes/venture.js";
 import "dotenv/config";
 
-const app = Fastify({ 
+const app = Fastify({
   logger: true,
   requestTimeout: 300000, // 5 minutes for long-running operations
   keepAliveTimeout: 65000, // Slightly higher than default
-  connectionTimeout: 10000
+  connectionTimeout: 10000,
 });
 
 await app.register(cors, {
