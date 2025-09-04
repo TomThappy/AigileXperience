@@ -92,14 +92,14 @@ export interface PipelineStep {
   inputs: string[];
   outputs: string[];
   prompt_file?: string;
-  model_preference?: "gpt-4o" | "claude-3.5-sonnet";
+  model_preference?: "gpt-4o" | "gpt-4" | "claude-3.5-sonnet" | "claude-3-5-sonnet-20241022";
 }
 
 export interface PipelineState {
   steps: Record<
     string,
     {
-      status: "pending" | "running" | "completed" | "failed";
+      status: "pending" | "running" | "completed" | "failed" | "skipped";
       started_at?: string;
       completed_at?: string;
       duration_ms?: number;

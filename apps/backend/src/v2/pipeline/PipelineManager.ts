@@ -190,48 +190,86 @@ export class PipelineManager {
       skipCache?: boolean;
       parallelLimit?: number;
       timeoutMs?: number;
+      pipelineId?: string;
+      resumeFromCheckpoint?: boolean;
     } = {},
   ): Promise<{
     success: boolean;
     data?: DossierData;
     error?: string;
     state: PipelineState;
+    checkpoints_available?: boolean;
+    resume_possible?: boolean;
   }> {
     const {
       skipCache = false,
-      parallelLimit = 3,
+      parallelLimit = 2, // Reduced to 2 per specification for better stability
       timeoutMs = 300000,
+      pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      resumeFromCheckpoint = false,
     } = options;
     const startTime = Date.now();
 
     console.log("🚀 Starting pipeline execution for:", input.project_title);
+    console.log("🆔 Pipeline ID:", pipelineId);
+    
+    // Check for resume capability
+    let resumeState = null;
+    if (resumeFromCheckpoint) {
+      resumeState = await this.cache.loadCheckpoint(pipelineId);
+      if (resumeState) {
+        console.log("▶️  Resuming from checkpoint:", resumeState.step_id);
+      } else {
+        console.log("⚠️  No checkpoint found, starting from beginning");
+      }
+    }
 
     // Analyze what needs to be rebuilt using incremental builder
     const lastBuildState = await this.incrementalBuilder.loadBuildState();
     let rebuildPlan: RebuildPlan;
-    
+
     if (skipCache) {
       rebuildPlan = {
-        steps_to_rebuild: ["input", "evidence", "brief", "problem", "solution", "team", "market", "business_model", "competition", "status_quo", "gtm", "financial_plan", "validate", "investor_score", "assemble"],
+        steps_to_rebuild: [
+          "input",
+          "evidence",
+          "brief",
+          "problem",
+          "solution",
+          "team",
+          "market",
+          "business_model",
+          "competition",
+          "status_quo",
+          "gtm",
+          "financial_plan",
+          "validate",
+          "investor_score",
+          "assemble",
+        ],
         steps_to_skip: [],
         reason: "skipCache=true - forcing full rebuild",
-        estimated_duration_ms: 180000
+        estimated_duration_ms: 180000,
       };
     } else {
       // Create minimal pitch/sources objects for analysis
       const currentPitch = { pitch_text: input.elevator_pitch };
       const currentSources = {}; // Will be populated after evidence step
-      
+
       rebuildPlan = await this.incrementalBuilder.analyzeBuildNeeds(
         currentPitch,
         currentSources,
-        lastBuildState
+        lastBuildState || undefined,
       );
     }
-    
+
     console.log(`📋 Rebuild plan: ${rebuildPlan.reason}`);
-    console.log(`⚡ Steps to rebuild: ${rebuildPlan.steps_to_rebuild.length}/${rebuildPlan.steps_to_rebuild.length + rebuildPlan.steps_to_skip.length}`);
-    console.log(`⏱️  Estimated duration: ${Math.round(rebuildPlan.estimated_duration_ms / 1000)}s`);
+    console.log(
+      `⚡ Steps to rebuild: ${rebuildPlan.steps_to_rebuild.length}/${rebuildPlan.steps_to_rebuild.length + rebuildPlan.steps_to_skip.length}`,
+    );
+    console.log(
+      `⏱️  Estimated duration: ${Math.round(rebuildPlan.estimated_duration_ms / 1000)}s`,
+    );
 
     const steps = this.getPipelineDefinition();
     const state: PipelineState = {
@@ -256,10 +294,31 @@ export class PipelineManager {
     };
 
     try {
-      // Execute steps in dependency order with limited parallelism
-      const completed = new Set<string>();
+      // Restore state from checkpoint if resuming
+      let completed = new Set<string>();
+      if (resumeState) {
+        // Restore completed steps
+        for (const [stepId, stepState] of Object.entries(resumeState.pipeline_state.steps)) {
+          const typedStepState = stepState as { status: string; [key: string]: any };
+          if (typedStepState.status === 'completed' || typedStepState.status === 'skipped') {
+            completed.add(stepId);
+            state.steps[stepId] = typedStepState as any;
+          }
+        }
+        // Restore artifacts
+        state.artifacts = { ...state.artifacts, ...resumeState.pipeline_state.artifacts };
+        state.cache_hits = resumeState.pipeline_state.cache_hits || 0;
+        console.log(`🔄 Restored ${completed.size} completed steps from checkpoint`);
+      }
 
-      while (completed.size < steps.length) {
+      // Execute steps in dependency order with limited parallelism
+      const timeoutController = new AbortController();
+      const globalTimeout = setTimeout(() => {
+        timeoutController.abort();
+      }, timeoutMs);
+
+      try {
+        while (completed.size < steps.length) {
         const readySteps = steps.filter(
           (step) =>
             !completed.has(step.id) &&
@@ -267,7 +326,7 @@ export class PipelineManager {
             step.dependencies.every((dep) => completed.has(dep)) &&
             rebuildPlan.steps_to_rebuild.includes(step.id), // Only process steps that need rebuilding
         );
-        
+
         // Mark skipped steps as completed immediately
         for (const step of steps) {
           if (
@@ -278,8 +337,8 @@ export class PipelineManager {
             state.steps[step.id].status = "skipped";
             state.steps[step.id].duration_ms = 0;
             state.cache_hits++;
-            
-            // Load cached result for skipped steps  
+
+            // Load cached result for skipped steps
             // TODO: Implement proper cache loading for skipped steps
             for (const outputKey of step.outputs) {
               if (outputKey.includes(".")) {
@@ -292,7 +351,7 @@ export class PipelineManager {
                 state.artifacts[outputKey] = {}; // Placeholder
               }
             }
-            
+
             completed.add(step.id);
             console.log(`⏭️  Skipped ${step.name} (cached)`);
           }
@@ -308,8 +367,22 @@ export class PipelineManager {
         // Execute up to parallelLimit steps concurrently
         const batch = readySteps.slice(0, parallelLimit);
         const promises = batch.map(async (step) => {
+          if (timeoutController.signal.aborted) {
+            throw new Error('Pipeline aborted due to timeout');
+          }
+
           state.steps[step.id].status = "running";
           state.steps[step.id].started_at = new Date().toISOString();
+
+          // Save checkpoint before starting critical steps
+          if (['evidence', 'brief', 'market', 'business_model', 'investor_score'].includes(step.id)) {
+            await this.cache.saveCheckpoint(pipelineId, {
+              step_id: step.id,
+              pipeline_state: { ...state },
+              timestamp: new Date().toISOString(),
+              input_hash: this.cache.generatePitchHash(input)
+            });
+          }
 
           // Prepare inputs for this step
           const stepInputs: Record<string, any> = {};
@@ -364,11 +437,24 @@ export class PipelineManager {
         const completedBatch = await Promise.all(promises);
         completedBatch.forEach((stepId) => completed.add(stepId));
 
-        // Check timeout
-        if (Date.now() - startTime > timeoutMs) {
+        // Periodic checkpoint save every 2 completed steps
+        if (completed.size % 2 === 0) {
+          await this.cache.saveCheckpoint(pipelineId, {
+            step_id: 'batch_checkpoint',
+            pipeline_state: { ...state },
+            timestamp: new Date().toISOString(),
+            input_hash: this.cache.generatePitchHash(input)
+          });
+        }
+
+        // Check timeout via controller
+        if (timeoutController.signal.aborted) {
           throw new Error(`Pipeline timeout after ${timeoutMs}ms`);
         }
       }
+    } finally {
+      clearTimeout(globalTimeout);
+    }
 
       state.total_duration_ms = Date.now() - startTime;
 
@@ -384,33 +470,103 @@ export class PipelineManager {
         await writeJsonFile(path.join(this.outputDir, filename), dossier);
       }
 
+      // Clean up checkpoints after successful completion
+      await this.cache.deleteCheckpoint(pipelineId);
+
       return {
         success: true,
         data: dossier,
         state,
+        checkpoints_available: false,
+        resume_possible: false,
       };
     } catch (error) {
       state.total_duration_ms = Date.now() - startTime;
 
       console.error("❌ Pipeline failed:", error);
 
+      // Save error checkpoint for potential resume
+      await this.cache.saveCheckpoint(pipelineId, {
+        step_id: 'error_state',
+        pipeline_state: { ...state },
+        timestamp: new Date().toISOString(),
+        input_hash: this.cache.generatePitchHash(input),
+        error: error instanceof Error ? error.message : String(error)
+      });
+
+      const checkpointExists = await this.cache.loadCheckpoint(pipelineId);
+
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
         state,
+        checkpoints_available: !!checkpointExists,
+        resume_possible: !!checkpointExists,
       };
     }
   }
 
   async getState(pipelineId: string): Promise<PipelineState | null> {
-    // In a real implementation, you'd persist and retrieve state
-    return null;
+    const checkpoint = await this.cache.loadCheckpoint(pipelineId);
+    return checkpoint?.pipeline_state || null;
   }
 
   async resume(
     pipelineId: string,
-  ): Promise<{ success: boolean; data?: DossierData; error?: string }> {
-    // TODO: Implement resume functionality
-    throw new Error("Resume not yet implemented");
+    input?: PitchInput,
+  ): Promise<{ success: boolean; data?: DossierData; error?: string; state?: PipelineState }> {
+    console.log(`🔄 Attempting to resume pipeline: ${pipelineId}`);
+    
+    const checkpoint = await this.cache.loadCheckpoint(pipelineId);
+    if (!checkpoint) {
+      return {
+        success: false,
+        error: `No checkpoint found for pipeline: ${pipelineId}`,
+      };
+    }
+
+    // If no input provided, try to reconstruct from checkpoint
+    if (!input) {
+      const artifacts = checkpoint.pipeline_state.artifacts;
+      if (!artifacts.project_title || !artifacts.elevator_pitch) {
+        return {
+          success: false,
+          error: "Cannot resume: original input data not available in checkpoint",
+        };
+      }
+
+      input = {
+        project_title: artifacts.project_title,
+        elevator_pitch: artifacts.elevator_pitch,
+        language: artifacts.language || "de",
+        target: artifacts.target || "Pre-Seed/Seed VCs",
+        geo: artifacts.geo || "EU/DACH",
+      };
+    }
+
+    console.log(`⏮️  Resuming from step: ${checkpoint.step_id}`);
+    console.log(`📅 Checkpoint created: ${checkpoint.timestamp}`);
+
+    // Resume execution with existing checkpoint
+    return await this.executePipeline(input, {
+      pipelineId,
+      resumeFromCheckpoint: true,
+    });
+  }
+
+  async listCheckpoints(): Promise<string[]> {
+    // This would need implementation in CacheManager
+    // For now, return empty array
+    return [];
+  }
+
+  async deleteCheckpoint(pipelineId: string): Promise<boolean> {
+    try {
+      await this.cache.deleteCheckpoint(pipelineId);
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete checkpoint ${pipelineId}:`, error);
+      return false;
+    }
   }
 }

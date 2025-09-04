@@ -131,11 +131,8 @@ export class StepProcessor {
       // Use advanced Evidence Harvester with topic parallelization and retry
       const region = inputs.geo || "EU/DE";
       console.log(`🔬 Using advanced Evidence Harvester for region: ${region}`);
-      
-      return await this.evidenceHarvester.harvestEvidence(
-        inputs.pitch,
-        region
-      );
+
+      return await this.evidenceHarvester.harvestEvidence(inputs.pitch, region);
     }
 
     if (inputs.brief) {
@@ -234,18 +231,23 @@ export class StepProcessor {
   }
 
   private validateNumbers(inputs: Record<string, any>): any {
-    console.log(`🔍 Running comprehensive number validation with advanced validator`);
-    
+    console.log(
+      `🔍 Running comprehensive number validation with advanced validator`,
+    );
+
     const sections = inputs.sections || {};
     const validationResult = this.numberValidator.validateSections(sections);
-    
+
     // Apply high-confidence auto-fixes
     let fixedSections = sections;
     if (validationResult.fixes.length > 0) {
       console.log(`🔧 Applying ${validationResult.fixes.length} auto-fixes`);
-      fixedSections = this.numberValidator.applyAutoFixes(sections, validationResult.fixes);
+      fixedSections = this.numberValidator.applyAutoFixes(
+        sections,
+        validationResult.fixes,
+      );
     }
-    
+
     return {
       validation_passed: validationResult.validation_passed,
       issues: validationResult.issues,
@@ -255,9 +257,9 @@ export class StepProcessor {
       fixed_sections: fixedSections,
       // Legacy format for compatibility
       suggestions: validationResult.issues
-        .filter(i => i.suggestion)
-        .map(i => i.suggestion)
-        .filter(Boolean)
+        .filter((i) => i.suggestion)
+        .map((i) => i.suggestion)
+        .filter(Boolean),
     };
   }
 

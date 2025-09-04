@@ -31,7 +31,6 @@ export interface ValidationResult {
 }
 
 export class NumberValidator {
-  
   validateSections(sections: Record<string, any>): ValidationResult {
     const issues: ValidationIssue[] = [];
     const fixes: ValidationFix[] = [];
@@ -42,57 +41,81 @@ export class NumberValidator {
       this.validateBusinessModel(sections.business_model.data, issues, fixes);
     }
 
-    // 2. Market Size Consistency 
+    // 2. Market Size Consistency
     if (sections.market?.data) {
       this.validateMarketSizing(sections.market.data, issues, fixes);
     }
 
     // 3. GTM Budget vs Revenue Consistency
     if (sections.gtm?.data && sections.business_model?.data) {
-      this.validateGTMConsistency(sections.gtm.data, sections.business_model.data, issues, fixes);
+      this.validateGTMConsistency(
+        sections.gtm.data,
+        sections.business_model.data,
+        issues,
+        fixes,
+      );
     }
 
     // 4. Financial Plan Consistency
     if (sections.financial_plan?.data && sections.business_model?.data) {
-      this.validateFinancialConsistency(sections.financial_plan.data, sections.business_model.data, issues, fixes);
+      this.validateFinancialConsistency(
+        sections.financial_plan.data,
+        sections.business_model.data,
+        issues,
+        fixes,
+      );
     }
 
     // 5. Cross-Section Plausibility
     this.validateCrossSectionPlausibility(sections, issues, warnings);
 
     const summary = {
-      critical_count: issues.filter(i => i.severity === "critical").length,
-      warning_count: issues.filter(i => i.severity === "warning").length,
-      info_count: issues.filter(i => i.severity === "info").length,
-      auto_fixable: fixes.filter(f => f.confidence === "high").length
+      critical_count: issues.filter((i) => i.severity === "critical").length,
+      warning_count: issues.filter((i) => i.severity === "warning").length,
+      info_count: issues.filter((i) => i.severity === "info").length,
+      auto_fixable: fixes.filter((f) => f.confidence === "high").length,
     };
 
     return {
-      validation_passed: summary.critical_count === 0 && summary.warning_count === 0,
+      validation_passed:
+        summary.critical_count === 0 && summary.warning_count === 0,
       issues,
       fixes,
       warnings,
-      summary
+      summary,
     };
   }
 
-  private validateBusinessModel(bizData: any, issues: ValidationIssue[], fixes: ValidationFix[]): void {
-    const { arpu, gross_margin, churn_monthly, CAC, CLV, payback_months, contribution_per_month } = bizData;
+  private validateBusinessModel(
+    bizData: any,
+    issues: ValidationIssue[],
+    fixes: ValidationFix[],
+  ): void {
+    const {
+      arpu,
+      gross_margin,
+      churn_monthly,
+      CAC,
+      CLV,
+      payback_months,
+      contribution_per_month,
+    } = bizData;
 
     // CLV Formula: ARPU × Gross Margin × (1/churn_monthly)
     if (arpu && gross_margin && churn_monthly) {
       const expectedCLV = arpu * gross_margin * (1 / churn_monthly);
-      
-      if (CLV && Math.abs(CLV - expectedCLV) > expectedCLV * 0.05) { // 5% tolerance
+
+      if (CLV && Math.abs(CLV - expectedCLV) > expectedCLV * 0.05) {
+        // 5% tolerance
         issues.push({
           severity: "critical",
-          section: "business_model", 
+          section: "business_model",
           field: "CLV",
           issue: "CLV calculation doesn't match formula",
           expected: Math.round(expectedCLV * 100) / 100,
           actual: CLV,
           formula: "CLV = ARPU × Gross Margin × (1/churn_monthly)",
-          suggestion: `Recalculate CLV using the standard formula`
+          suggestion: `Recalculate CLV using the standard formula`,
         });
 
         fixes.push({
@@ -100,7 +123,7 @@ export class NumberValidator {
           current_value: CLV,
           new_value: Math.round(expectedCLV * 100) / 100,
           reason: "Auto-fix CLV calculation using correct formula",
-          confidence: "high"
+          confidence: "high",
         });
       }
     }
@@ -108,16 +131,20 @@ export class NumberValidator {
     // Contribution per Month: ARPU × Gross Margin
     if (arpu && gross_margin) {
       const expectedContribution = arpu * gross_margin;
-      
-      if (contribution_per_month && Math.abs(contribution_per_month - expectedContribution) > expectedContribution * 0.05) {
+
+      if (
+        contribution_per_month &&
+        Math.abs(contribution_per_month - expectedContribution) >
+          expectedContribution * 0.05
+      ) {
         issues.push({
           severity: "warning",
           section: "business_model",
-          field: "contribution_per_month", 
+          field: "contribution_per_month",
           issue: "Contribution per month inconsistent with ARPU × Gross Margin",
           expected: Math.round(expectedContribution * 100) / 100,
           actual: contribution_per_month,
-          formula: "Contribution = ARPU × Gross Margin"
+          formula: "Contribution = ARPU × Gross Margin",
         });
 
         fixes.push({
@@ -125,7 +152,7 @@ export class NumberValidator {
           current_value: contribution_per_month,
           new_value: Math.round(expectedContribution * 100) / 100,
           reason: "Correct contribution calculation",
-          confidence: "high"
+          confidence: "high",
         });
       }
     }
@@ -133,16 +160,20 @@ export class NumberValidator {
     // Payback Period: CAC / Contribution per Month
     if (CAC && contribution_per_month) {
       const expectedPayback = CAC / contribution_per_month;
-      
-      if (payback_months && Math.abs(payback_months - expectedPayback) > Math.max(expectedPayback * 0.1, 1)) {
+
+      if (
+        payback_months &&
+        Math.abs(payback_months - expectedPayback) >
+          Math.max(expectedPayback * 0.1, 1)
+      ) {
         issues.push({
           severity: "warning",
           section: "business_model",
           field: "payback_months",
-          issue: "Payback period doesn't match CAC/Contribution calculation", 
+          issue: "Payback period doesn't match CAC/Contribution calculation",
           expected: Math.round(expectedPayback * 10) / 10,
           actual: payback_months,
-          formula: "Payback = CAC / Contribution per Month"
+          formula: "Payback = CAC / Contribution per Month",
         });
 
         fixes.push({
@@ -150,7 +181,7 @@ export class NumberValidator {
           current_value: payback_months,
           new_value: Math.round(expectedPayback * 10) / 10,
           reason: "Correct payback period calculation",
-          confidence: "high"
+          confidence: "high",
         });
       }
     }
@@ -161,22 +192,23 @@ export class NumberValidator {
         severity: "warning",
         section: "business_model",
         field: "payback_months",
-        issue: "Payback period > 24 months may be too long for Pre-Seed/Seed stage",
+        issue:
+          "Payback period > 24 months may be too long for Pre-Seed/Seed stage",
         expected: "< 18 months",
         actual: payback_months,
-        suggestion: "Consider optimizing CAC or improving unit economics"
+        suggestion: "Consider optimizing CAC or improving unit economics",
       });
     }
 
-    if (CLV && CAC && (CLV / CAC) < 3) {
+    if (CLV && CAC && CLV / CAC < 3) {
       issues.push({
         severity: "critical",
-        section: "business_model", 
+        section: "business_model",
         field: "CLV_CAC_ratio",
         issue: "CLV:CAC ratio below 3:1 threshold",
         expected: "> 3.0",
         actual: Math.round((CLV / CAC) * 10) / 10,
-        suggestion: "Improve unit economics - increase CLV or reduce CAC"
+        suggestion: "Improve unit economics - increase CLV or reduce CAC",
       });
     }
 
@@ -187,18 +219,22 @@ export class NumberValidator {
         field: "gross_margin",
         issue: "Gross margin below 60% - may indicate scaling challenges",
         expected: "> 0.6",
-        actual: gross_margin
+        actual: gross_margin,
       });
     }
   }
 
-  private validateMarketSizing(marketData: any, issues: ValidationIssue[], fixes: ValidationFix[]): void {
+  private validateMarketSizing(
+    marketData: any,
+    issues: ValidationIssue[],
+    fixes: ValidationFix[],
+  ): void {
     const { tam_eur, sam_eur, som_eur } = marketData;
-    
+
     // TAM > SAM > SOM logic check
     if (tam_eur && sam_eur && som_eur) {
       const tamValue = Array.isArray(tam_eur) ? tam_eur[0] : tam_eur;
-      const samValue = Array.isArray(sam_eur) ? sam_eur[0] : sam_eur; 
+      const samValue = Array.isArray(sam_eur) ? sam_eur[0] : sam_eur;
       const somValue = Array.isArray(som_eur) ? som_eur[0] : som_eur;
 
       if (samValue > tamValue) {
@@ -208,18 +244,18 @@ export class NumberValidator {
           field: "sam_eur",
           issue: "SAM cannot be larger than TAM",
           expected: `< ${tamValue}`,
-          actual: samValue
+          actual: samValue,
         });
       }
 
       if (somValue > samValue) {
         issues.push({
-          severity: "critical", 
+          severity: "critical",
           section: "market",
           field: "som_eur",
           issue: "SOM cannot be larger than SAM",
           expected: `< ${samValue}`,
-          actual: somValue
+          actual: somValue,
         });
       }
 
@@ -227,17 +263,22 @@ export class NumberValidator {
       if (somValue > samValue * 0.1) {
         issues.push({
           severity: "warning",
-          section: "market", 
+          section: "market",
           field: "som_eur",
           issue: "SOM > 10% of SAM may be overly optimistic for early stage",
           expected: `< ${Math.round(samValue * 0.1)}`,
-          actual: somValue
+          actual: somValue,
         });
       }
     }
   }
 
-  private validateGTMConsistency(gtmData: any, bizData: any, issues: ValidationIssue[], fixes: ValidationFix[]): void {
+  private validateGTMConsistency(
+    gtmData: any,
+    bizData: any,
+    issues: ValidationIssue[],
+    fixes: ValidationFix[],
+  ): void {
     const { channels, kpis } = gtmData;
     const { arpu } = bizData;
 
@@ -257,39 +298,47 @@ export class NumberValidator {
           issues.push({
             severity: "warning",
             section: "gtm",
-            field: "subscribers_target", 
-            issue: "Subscriber target may be unrealistic given GTM budget and CAC",
+            field: "subscribers_target",
+            issue:
+              "Subscriber target may be unrealistic given GTM budget and CAC",
             expected: `~${Math.round(estimatedNewCustomers)}`,
             actual: kpis.Subscribers,
-            suggestion: "Increase GTM budget or optimize CAC to reach target"
+            suggestion: "Increase GTM budget or optimize CAC to reach target",
           });
         }
       }
     }
   }
 
-  private validateFinancialConsistency(financialData: any, bizData: any, issues: ValidationIssue[], fixes: ValidationFix[]): void {
+  private validateFinancialConsistency(
+    financialData: any,
+    bizData: any,
+    issues: ValidationIssue[],
+    fixes: ValidationFix[],
+  ): void {
     const { forecast, break_even_month } = financialData;
     const { arpu, gross_margin } = bizData;
 
     if (forecast && break_even_month) {
       // Find break-even point in forecast
       let foundBreakEven = false;
-      
+
       for (const [period, data] of Object.entries(forecast)) {
         const periodData = data as any;
         if (periodData.ebitda && periodData.ebitda >= 0) {
           foundBreakEven = true;
-          
+
           // Check if this matches stated break-even month
-          if (!period.includes(break_even_month.substring(0, 7))) { // Check year-month
+          if (!period.includes(break_even_month.substring(0, 7))) {
+            // Check year-month
             issues.push({
               severity: "warning",
               section: "financial_plan",
               field: "break_even_month",
-              issue: "Break-even month doesn't match EBITDA positive point in forecast",
+              issue:
+                "Break-even month doesn't match EBITDA positive point in forecast",
               expected: `Around ${period}`,
-              actual: break_even_month
+              actual: break_even_month,
             });
           }
           break;
@@ -299,81 +348,110 @@ export class NumberValidator {
       if (!foundBreakEven) {
         issues.push({
           severity: "info",
-          section: "financial_plan", 
+          section: "financial_plan",
           field: "break_even_month",
           issue: "No positive EBITDA found in forecast period",
           expected: "Positive EBITDA within forecast",
-          actual: "Always negative"
+          actual: "Always negative",
         });
       }
     }
   }
 
-  private validateCrossSectionPlausibility(sections: Record<string, any>, issues: ValidationIssue[], warnings: string[]): void {
+  private validateCrossSectionPlausibility(
+    sections: Record<string, any>,
+    issues: ValidationIssue[],
+    warnings: string[],
+  ): void {
     // Team size vs revenue plausibility
-    if (sections.team?.data?.org_chart && sections.financial_plan?.data?.forecast) {
+    if (
+      sections.team?.data?.org_chart &&
+      sections.financial_plan?.data?.forecast
+    ) {
       const teamSize = sections.team.data.org_chart.length;
-      const forecastEntries = Object.entries(sections.financial_plan.data.forecast);
-      
+      const forecastEntries = Object.entries(
+        sections.financial_plan.data.forecast,
+      );
+
       if (forecastEntries.length > 0) {
         const lastYear = forecastEntries[forecastEntries.length - 1][1] as any;
         const finalRevenue = lastYear.revenue;
-        
+
         if (finalRevenue && teamSize > 0) {
           const revenuePerEmployee = finalRevenue / teamSize;
-          
-          if (revenuePerEmployee < 100000) { // Less than 100k per employee
-            warnings.push(`Revenue per employee (${Math.round(revenuePerEmployee)}€) seems low - consider team efficiency`);
+
+          if (revenuePerEmployee < 100000) {
+            // Less than 100k per employee
+            warnings.push(
+              `Revenue per employee (${Math.round(revenuePerEmployee)}€) seems low - consider team efficiency`,
+            );
           } else if (revenuePerEmployee > 500000) {
-            warnings.push(`Revenue per employee (${Math.round(revenuePerEmployee)}€) seems very high - validate assumptions`);
+            warnings.push(
+              `Revenue per employee (${Math.round(revenuePerEmployee)}€) seems very high - validate assumptions`,
+            );
           }
         }
       }
     }
 
     // Market share realism check
-    if (sections.market?.data?.som_eur && sections.financial_plan?.data?.forecast) {
-      const som = Array.isArray(sections.market.data.som_eur) ? sections.market.data.som_eur[0] : sections.market.data.som_eur;
-      const forecastEntries = Object.entries(sections.financial_plan.data.forecast);
-      
+    if (
+      sections.market?.data?.som_eur &&
+      sections.financial_plan?.data?.forecast
+    ) {
+      const som = Array.isArray(sections.market.data.som_eur)
+        ? sections.market.data.som_eur[0]
+        : sections.market.data.som_eur;
+      const forecastEntries = Object.entries(
+        sections.financial_plan.data.forecast,
+      );
+
       if (forecastEntries.length > 0 && som > 0) {
         const finalYear = forecastEntries[forecastEntries.length - 1][1] as any;
         const finalRevenue = finalYear.revenue;
-        
-        if (finalRevenue > som * 0.5) { // More than 50% of SOM
+
+        if (finalRevenue > som * 0.5) {
+          // More than 50% of SOM
           issues.push({
             severity: "warning",
             section: "financial_plan",
             field: "revenue_projection",
-            issue: "Revenue projection exceeds 50% of SOM - may be overly optimistic",
+            issue:
+              "Revenue projection exceeds 50% of SOM - may be overly optimistic",
             expected: `< ${Math.round(som * 0.5)}`,
-            actual: finalRevenue
+            actual: finalRevenue,
           });
         }
       }
     }
   }
 
-  applyAutoFixes(sections: Record<string, any>, fixes: ValidationFix[]): Record<string, any> {
+  applyAutoFixes(
+    sections: Record<string, any>,
+    fixes: ValidationFix[],
+  ): Record<string, any> {
     const fixedSections = JSON.parse(JSON.stringify(sections)); // Deep clone
-    
+
     for (const fix of fixes) {
       if (fix.confidence === "high") {
         // Parse path like "sections.business_model.data.CLV"
-        const pathParts = fix.path.split('.');
+        const pathParts = fix.path.split(".");
         let current = fixedSections;
-        
-        for (let i = 1; i < pathParts.length - 1; i++) { // Skip first 'sections'
+
+        for (let i = 1; i < pathParts.length - 1; i++) {
+          // Skip first 'sections'
           current = current[pathParts[i]];
         }
-        
+
         const finalKey = pathParts[pathParts.length - 1];
         current[finalKey] = fix.new_value;
-        
-        console.log(`🔧 Auto-fixed ${fix.path}: ${fix.current_value} → ${fix.new_value}`);
+
+        console.log(
+          `🔧 Auto-fixed ${fix.path}: ${fix.current_value} → ${fix.new_value}`,
+        );
       }
     }
-    
+
     return fixedSections;
   }
 }
