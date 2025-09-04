@@ -204,7 +204,7 @@ export class PipelineManager {
     const {
       skipCache = false,
       parallelLimit = 2, // Reduced to 2 per specification for better stability
-      timeoutMs = 300000,
+      timeoutMs = 120000,
       pipelineId = `pipeline_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       resumeFromCheckpoint = false,
     } = options;

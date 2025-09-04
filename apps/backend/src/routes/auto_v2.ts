@@ -7,7 +7,11 @@ export default async function autoV2(app: FastifyInstance) {
   const pipelineManager = new PipelineManager();
 
   // Main pipeline execution endpoint
-  app.post("/api/v2/dossier/generate", async (req, reply) => {
+  app.post("/api/v2/dossier/generate", {
+    config: {
+      timeout: 300000 // 5 minutes for this specific route
+    }
+  }, async (req, reply) => {
     const startTime = Date.now();
     const traceId = crypto.randomUUID().substring(0, 8);
 
@@ -39,7 +43,8 @@ export default async function autoV2(app: FastifyInstance) {
       const options = {
         skipCache: body.skip_cache === true,
         parallelLimit: body.parallel_limit || 2,
-        timeoutMs: body.timeout_ms || 180000, // 3 minutes default
+        timeoutMs: body.timeout_ms || 120000, // 2 minutes default for better UX
+        pipelineId: body.pipeline_id, // Allow external pipeline ID for resume
       };
 
       const result = await pipelineManager.executePipeline(input, options);
