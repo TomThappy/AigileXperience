@@ -10,9 +10,10 @@ export class StepProcessor {
   private cache: CacheManager;
   private promptsDir: string;
 
-  constructor(cache: CacheManager, promptsDir = "apps/backend/src/v2/prompts") {
+  constructor(cache: CacheManager, promptsDir?: string) {
     this.cache = cache;
-    this.promptsDir = promptsDir;
+    // Use absolute path resolution for better compatibility
+    this.promptsDir = promptsDir || path.resolve(process.cwd(), "apps/backend/src/v2/prompts");
   }
 
   async executeStep(
@@ -93,12 +94,15 @@ export class StepProcessor {
     }
 
     const promptPath = path.join(this.promptsDir, step.prompt_file);
+    console.log(`🔍 Looking for prompt file: ${promptPath}`);
     let promptTemplate: string;
 
     try {
       promptTemplate = await fs.readFile(promptPath, "utf-8");
+      console.log(`✅ Prompt file loaded: ${step.prompt_file} (${promptTemplate.length} chars)`);
     } catch (error) {
-      throw new Error(`Failed to read prompt file: ${promptPath}`);
+      console.error(`❌ Failed to read prompt file: ${promptPath}`, error);
+      throw new Error(`Failed to read prompt file: ${promptPath} - ${error}`);
     }
 
     // Replace placeholders in prompt
@@ -123,9 +127,22 @@ export class StepProcessor {
     const model = step.model_preference || "gpt-4o";
     const response = await chatComplete(prompt, { model, temperature: 0.1 });
 
-    // Parse JSON response
+    // Parse JSON response - clean markdown code blocks first
     try {
-      return JSON.parse(response.trim());
+      let cleanResponse = response.trim();
+      
+      // Remove markdown code blocks if present
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, '');
+      }
+      if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, '');
+      }
+      if (cleanResponse.endsWith('```')) {
+        cleanResponse = cleanResponse.replace(/\s*```$/, '');
+      }
+      
+      return JSON.parse(cleanResponse.trim());
     } catch (parseError) {
       console.error(
         "Failed to parse LLM response as JSON:",
