@@ -36,7 +36,7 @@ export class PipelineManager {
         inputs: ["pitch"],
         outputs: ["sources"],
         prompt_file: "10_evidence_harvester.md",
-        model_preference: "gpt-4o", // GPT-4o for research & curation
+        model_preference: "gpt-4", // GPT-4.1 for research & curation per specification
       },
       {
         id: "brief",
@@ -81,7 +81,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.market"],
         prompt_file: "33_market.md",
-        model_preference: "gpt-4o", // GPT-4o for numbers/methodology
+        model_preference: "gpt-4", // GPT-4.1 for numbers/methodology per specification
       },
       {
         id: "business_model",
@@ -90,7 +90,7 @@ export class PipelineManager {
         inputs: ["brief", "sources", "sections.market"],
         outputs: ["sections.business_model"],
         prompt_file: "34_business_model.md",
-        model_preference: "gpt-4o", // GPT-4o for financial modeling
+        model_preference: "gpt-4", // GPT-4.1 for financial modeling per specification
       },
       {
         id: "competition",
@@ -107,26 +107,36 @@ export class PipelineManager {
         dependencies: ["brief", "evidence"],
         inputs: ["brief", "sources"],
         outputs: ["sections.status_quo"],
-        prompt_file: "36_status_quo.md",
+        prompt_file: "37_status_quo.md",
         model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "gtm",
         name: "Go-to-Market Section",
         dependencies: ["brief", "evidence", "market", "business_model"],
-        inputs: ["brief", "sources", "sections.market", "sections.business_model"],
+        inputs: [
+          "brief",
+          "sources",
+          "sections.market",
+          "sections.business_model",
+        ],
         outputs: ["sections.gtm"],
-        prompt_file: "37_gtm.md",
-        model_preference: "gpt-4o", // GPT-4o for strategy/numbers
+        prompt_file: "36_go-to-market.md",
+        model_preference: "gpt-4", // GPT-4.1 for strategy/numbers per specification
       },
       {
         id: "financial_plan",
         name: "Financial Plan Section",
         dependencies: ["business_model", "market"],
-        inputs: ["brief", "sources", "sections.market", "sections.business_model"],
+        inputs: [
+          "brief",
+          "sources",
+          "sections.market",
+          "sections.business_model",
+        ],
         outputs: ["sections.financial_plan"],
         prompt_file: "38_financial_plan.md",
-        model_preference: "gpt-4o", // GPT-4o for financial modeling
+        model_preference: "gpt-4", // GPT-4.1 for financial modeling per specification
       },
       {
         id: "validate",
@@ -138,11 +148,21 @@ export class PipelineManager {
       {
         id: "investor_score",
         name: "Investor Scoring",
-        dependencies: ["problem", "solution", "team", "market", "business_model", "competition", "status_quo", "gtm", "financial_plan"],
+        dependencies: [
+          "problem",
+          "solution",
+          "team",
+          "market",
+          "business_model",
+          "competition",
+          "status_quo",
+          "gtm",
+          "financial_plan",
+        ],
         inputs: ["sections", "brief"],
         outputs: ["investor_score"],
         prompt_file: "90_investor_scoring.md",
-        model_preference: "gpt-4o", // GPT-4o for rubric evaluation
+        model_preference: "gpt-4", // GPT-4.1 for rubric evaluation per specification
       },
       {
         id: "assemble",
