@@ -143,12 +143,15 @@ export default async function autoV2(app: FastifyInstance) {
   // Convenience alias for the main pipeline endpoint (matches v1 naming)
   app.post("/api/v2/auto", async (req, reply) => {
     // Forward to the main dossier/generate endpoint
-    return app.inject({
-      method: 'POST',
-      url: '/api/v2/dossier/generate',
-      payload: req.body,
-      headers: req.headers
+    const injectedResponse = await app.inject({
+      method: "POST",
+      url: "/api/v2/dossier/generate",
+      payload: req.body as Record<string, any>,
+      headers: req.headers as Record<string, string>,
     });
+    
+    reply.code(injectedResponse.statusCode).type(injectedResponse.headers['content-type'] || 'application/json');
+    return injectedResponse.payload;
   });
 
   // Health check endpoint for V2
