@@ -6,7 +6,7 @@ export default async function autoV1(app: FastifyInstance) {
   app.post("/api/auto/run", async (req, reply) => {
     const startTime = Date.now();
     const traceId = crypto.randomUUID().substring(0, 8);
-    const TIMEOUT_MS = 25000; // 25 seconds to stay under Render's 30s limit
+    const TIMEOUT_MS = 28000; // 28 seconds to stay under Render's 30s limit
 
     app.log.info(`[${traceId}] AUTO/RUN Request received`);
 

@@ -51,7 +51,7 @@ export async function runLeitfadenV1(input: In) {
     "\n\nSCHEMA (JSON only):\n" +
     `{"meta":{},"sections":{},"assumption_policy":"conservative_eu_2025"}`;
   const p1Out = await chatComplete(p1, {
-    model: process.env.MODEL_ANALYZE || "gpt-4o-mini",
+    model: "gpt-4o", // Use fast model to avoid timeout
     temperature: 0,
   });
   const p1Json = JSON.parse(strip(p1Out));
@@ -64,7 +64,7 @@ export async function runLeitfadenV1(input: In) {
     "\n\nP1_JSON:\n" +
     JSON.stringify(p1Json, null, 2);
   const p2Out = await chatComplete(p2, {
-    model: process.env.MODEL_ANALYZE || "gpt-4o-mini",
+    model: "gpt-4o", // Use fast model to avoid timeout
     temperature: 0,
   });
   const p2Json = JSON.parse(strip(p2Out));
@@ -77,7 +77,7 @@ export async function runLeitfadenV1(input: In) {
     "\n\nINPUT:\n" +
     JSON.stringify(p2Json, null, 2);
   const p3Out = await chatComplete(p3, {
-    model: process.env.MODEL_REFINE || "gpt-4o-mini",
+    model: "gpt-4o", // Use fast model to avoid timeout
     temperature: 0.5,
   });
   const finalPre = JSON.parse(strip(p3Out));

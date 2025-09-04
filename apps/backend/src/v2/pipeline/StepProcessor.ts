@@ -13,7 +13,8 @@ export class StepProcessor {
   constructor(cache: CacheManager, promptsDir?: string) {
     this.cache = cache;
     // Use absolute path resolution for better compatibility
-    this.promptsDir = promptsDir || path.resolve(process.cwd(), "apps/backend/src/v2/prompts");
+    this.promptsDir =
+      promptsDir || path.resolve(process.cwd(), "apps/backend/src/v2/prompts");
   }
 
   async executeStep(
@@ -99,7 +100,9 @@ export class StepProcessor {
 
     try {
       promptTemplate = await fs.readFile(promptPath, "utf-8");
-      console.log(`✅ Prompt file loaded: ${step.prompt_file} (${promptTemplate.length} chars)`);
+      console.log(
+        `✅ Prompt file loaded: ${step.prompt_file} (${promptTemplate.length} chars)`,
+      );
     } catch (error) {
       console.error(`❌ Failed to read prompt file: ${promptPath}`, error);
       throw new Error(`Failed to read prompt file: ${promptPath} - ${error}`);
@@ -130,18 +133,18 @@ export class StepProcessor {
     // Parse JSON response - clean markdown code blocks first
     try {
       let cleanResponse = response.trim();
-      
+
       // Remove markdown code blocks if present
-      if (cleanResponse.startsWith('```json')) {
-        cleanResponse = cleanResponse.replace(/^```json\s*/, '');
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, "");
       }
-      if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/^```\s*/, '');
+      if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, "");
       }
-      if (cleanResponse.endsWith('```')) {
-        cleanResponse = cleanResponse.replace(/\s*```$/, '');
+      if (cleanResponse.endsWith("```")) {
+        cleanResponse = cleanResponse.replace(/\s*```$/, "");
       }
-      
+
       return JSON.parse(cleanResponse.trim());
     } catch (parseError) {
       console.error(
