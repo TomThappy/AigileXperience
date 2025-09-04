@@ -5,16 +5,22 @@ import type { StepResult, PipelineStep } from "../types.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { EvidenceHarvester } from "./EvidenceHarvester.js";
+import { NumberValidator } from "./NumberValidator.js";
 
 export class StepProcessor {
   private cache: CacheManager;
   private promptsDir: string;
+  private evidenceHarvester: EvidenceHarvester;
+  private numberValidator: NumberValidator;
 
   constructor(cache: CacheManager, promptsDir?: string) {
     this.cache = cache;
     // Use absolute path resolution for better compatibility
     this.promptsDir =
       promptsDir || path.resolve(process.cwd(), "apps/backend/src/v2/prompts");
+    this.evidenceHarvester = new EvidenceHarvester();
+    this.numberValidator = new NumberValidator();
   }
 
   async executeStep(
@@ -120,15 +126,18 @@ export class StepProcessor {
       prompt = prompt.replace(new RegExp(placeholder, "g"), replacementValue);
     }
 
-    // Add context data and special processing per step
+    // Special processing per step
     if (step.id === "evidence") {
-      // Evidence Harvester: Add standard topics from specification
-      const standardTopics = ["TAM", "ARPU", "CAC", "Churn", "Competitors", "Digital mediation efficacy", "Data privacy/regulatory"];
+      // Use advanced Evidence Harvester with topic parallelization and retry
       const region = inputs.geo || "EU/DE";
-      prompt = prompt.replace("<<TOPICS>>", JSON.stringify(standardTopics));
-      prompt = prompt.replace("<<REGION>>", region);
+      console.log(`🔬 Using advanced Evidence Harvester for region: ${region}`);
+      
+      return await this.evidenceHarvester.harvestEvidence(
+        inputs.pitch,
+        region
+      );
     }
-    
+
     if (inputs.brief) {
       prompt += `\\n\\n## BRIEF DATA\\n${JSON.stringify(inputs.brief, null, 2)}`;
     }
@@ -225,38 +234,40 @@ export class StepProcessor {
   }
 
   private validateNumbers(inputs: Record<string, any>): any {
-    // Simple validation - in production this would be more comprehensive
+    console.log(`🔍 Running comprehensive number validation with advanced validator`);
+    
     const sections = inputs.sections || {};
-    const issues: string[] = [];
-
-    // Check business model consistency
-    const bizModel = sections.business_model;
-    if (bizModel?.data) {
-      const { arpu, gross_margin, churn_monthly, CAC, CLV, payback_months } =
-        bizModel.data;
-
-      if (arpu && gross_margin && churn_monthly) {
-        const expectedCLV = arpu * gross_margin * (1 / churn_monthly);
-        if (CLV && Math.abs(CLV - expectedCLV) > expectedCLV * 0.1) {
-          issues.push(
-            `CLV inconsistency: expected ~${expectedCLV.toFixed(2)}, got ${CLV}`,
-          );
-        }
-      }
+    const validationResult = this.numberValidator.validateSections(sections);
+    
+    // Apply high-confidence auto-fixes
+    let fixedSections = sections;
+    if (validationResult.fixes.length > 0) {
+      console.log(`🔧 Applying ${validationResult.fixes.length} auto-fixes`);
+      fixedSections = this.numberValidator.applyAutoFixes(sections, validationResult.fixes);
     }
-
+    
     return {
-      validation_passed: issues.length === 0,
-      issues,
-      suggestions:
-        issues.length > 0 ? ["Review unit economics calculations"] : [],
+      validation_passed: validationResult.validation_passed,
+      issues: validationResult.issues,
+      fixes: validationResult.fixes,
+      warnings: validationResult.warnings,
+      summary: validationResult.summary,
+      fixed_sections: fixedSections,
+      // Legacy format for compatibility
+      suggestions: validationResult.issues
+        .filter(i => i.suggestion)
+        .map(i => i.suggestion)
+        .filter(Boolean)
     };
   }
 
-  private async persistStepResult(step: PipelineStep, result: any): Promise<void> {
+  private async persistStepResult(
+    step: PipelineStep,
+    result: any,
+  ): Promise<void> {
     try {
       let filePath: string;
-      
+
       // File persistence as per specification
       switch (step.id) {
         case "input":
@@ -265,7 +276,10 @@ export class StepProcessor {
           break;
         case "evidence":
           // Step 1: Save to examples/output/sources.json
-          filePath = path.resolve(process.cwd(), "examples/output/sources.json");
+          filePath = path.resolve(
+            process.cwd(),
+            "examples/output/sources.json",
+          );
           break;
         case "brief":
           // Step 2: Save to examples/output/brief.json
@@ -283,30 +297,45 @@ export class StepProcessor {
           // Step 3: Save each section separately
           const sectionMap: Record<string, string> = {
             problem: "30_problem",
-            solution: "31_solution", 
+            solution: "31_solution",
             team: "32_team",
             market: "33_market",
             business_model: "34_business_model",
             competition: "35_competition",
             status_quo: "37_status_quo",
-            gtm: "36_go_to_market", 
-            financial_plan: "38_financial_plan"
+            gtm: "36_go_to_market",
+            financial_plan: "38_financial_plan",
           };
-          filePath = path.resolve(process.cwd(), `examples/output/${sectionMap[step.id]}.json`);
+          filePath = path.resolve(
+            process.cwd(),
+            `examples/output/${sectionMap[step.id]}.json`,
+          );
           break;
         case "validate":
           // Step 4: Save to examples/output/validated/
-          await fs.mkdir(path.resolve(process.cwd(), "examples/output/validated"), { recursive: true });
-          filePath = path.resolve(process.cwd(), "examples/output/validated/validation.json");
+          await fs.mkdir(
+            path.resolve(process.cwd(), "examples/output/validated"),
+            { recursive: true },
+          );
+          filePath = path.resolve(
+            process.cwd(),
+            "examples/output/validated/validation.json",
+          );
           break;
         case "investor_score":
           // Step 5: Save to examples/output/investor_score.json
-          filePath = path.resolve(process.cwd(), "examples/output/investor_score.json");
+          filePath = path.resolve(
+            process.cwd(),
+            "examples/output/investor_score.json",
+          );
           break;
         case "assemble":
           // Step 6: Save with timestamp as per specification
           const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-          filePath = path.resolve(process.cwd(), `examples/output/dossier_${timestamp}.json`);
+          filePath = path.resolve(
+            process.cwd(),
+            `examples/output/dossier_${timestamp}.json`,
+          );
           break;
         default:
           return; // Skip persistence for unknown steps
@@ -314,10 +343,10 @@ export class StepProcessor {
 
       // Ensure directory exists
       await fs.mkdir(path.dirname(filePath), { recursive: true });
-      
+
       // Write JSON file
       await writeJsonFile(filePath, result);
-      
+
       console.log(`💾 Persisted ${step.id} result to: ${filePath}`);
     } catch (error) {
       console.warn(`⚠️  Failed to persist ${step.id} result:`, error);

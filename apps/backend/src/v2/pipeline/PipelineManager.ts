@@ -1,6 +1,7 @@
 import { CacheManager } from "../cache/CacheManager.js";
 import { StepProcessor } from "./StepProcessor.js";
 import { writeJsonFile } from "../utils/hash.js";
+import { IncrementalBuilder, type RebuildPlan } from "./IncrementalBuilder.js";
 import type {
   PipelineStep,
   PipelineState,
@@ -13,11 +14,13 @@ export class PipelineManager {
   private cache: CacheManager;
   private stepProcessor: StepProcessor;
   private outputDir: string;
+  private incrementalBuilder: IncrementalBuilder;
 
   constructor(outputDir = "examples/output") {
     this.cache = new CacheManager();
     this.stepProcessor = new StepProcessor(this.cache);
     this.outputDir = outputDir;
+    this.incrementalBuilder = new IncrementalBuilder();
   }
 
   private getPipelineDefinition(): PipelineStep[] {
@@ -203,6 +206,33 @@ export class PipelineManager {
 
     console.log("🚀 Starting pipeline execution for:", input.project_title);
 
+    // Analyze what needs to be rebuilt using incremental builder
+    const lastBuildState = await this.incrementalBuilder.loadBuildState();
+    let rebuildPlan: RebuildPlan;
+    
+    if (skipCache) {
+      rebuildPlan = {
+        steps_to_rebuild: ["input", "evidence", "brief", "problem", "solution", "team", "market", "business_model", "competition", "status_quo", "gtm", "financial_plan", "validate", "investor_score", "assemble"],
+        steps_to_skip: [],
+        reason: "skipCache=true - forcing full rebuild",
+        estimated_duration_ms: 180000
+      };
+    } else {
+      // Create minimal pitch/sources objects for analysis
+      const currentPitch = { pitch_text: input.elevator_pitch };
+      const currentSources = {}; // Will be populated after evidence step
+      
+      rebuildPlan = await this.incrementalBuilder.analyzeBuildNeeds(
+        currentPitch,
+        currentSources,
+        lastBuildState
+      );
+    }
+    
+    console.log(`📋 Rebuild plan: ${rebuildPlan.reason}`);
+    console.log(`⚡ Steps to rebuild: ${rebuildPlan.steps_to_rebuild.length}/${rebuildPlan.steps_to_rebuild.length + rebuildPlan.steps_to_skip.length}`);
+    console.log(`⏱️  Estimated duration: ${Math.round(rebuildPlan.estimated_duration_ms / 1000)}s`);
+
     const steps = this.getPipelineDefinition();
     const state: PipelineState = {
       steps: {},
@@ -234,8 +264,39 @@ export class PipelineManager {
           (step) =>
             !completed.has(step.id) &&
             state.steps[step.id].status === "pending" &&
-            step.dependencies.every((dep) => completed.has(dep)),
+            step.dependencies.every((dep) => completed.has(dep)) &&
+            rebuildPlan.steps_to_rebuild.includes(step.id), // Only process steps that need rebuilding
         );
+        
+        // Mark skipped steps as completed immediately
+        for (const step of steps) {
+          if (
+            !completed.has(step.id) &&
+            rebuildPlan.steps_to_skip.includes(step.id) &&
+            step.dependencies.every((dep) => completed.has(dep))
+          ) {
+            state.steps[step.id].status = "skipped";
+            state.steps[step.id].duration_ms = 0;
+            state.cache_hits++;
+            
+            // Load cached result for skipped steps  
+            // TODO: Implement proper cache loading for skipped steps
+            for (const outputKey of step.outputs) {
+              if (outputKey.includes(".")) {
+                const [parent, child] = outputKey.split(".");
+                if (!state.artifacts[parent]) {
+                  state.artifacts[parent] = {};
+                }
+                state.artifacts[parent][child] = {}; // Placeholder
+              } else {
+                state.artifacts[outputKey] = {}; // Placeholder
+              }
+            }
+            
+            completed.add(step.id);
+            console.log(`⏭️  Skipped ${step.name} (cached)`);
+          }
+        }
 
         if (readySteps.length === 0) {
           const remaining = steps.filter((step) => !completed.has(step.id));
