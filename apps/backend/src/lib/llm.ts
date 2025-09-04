@@ -17,7 +17,7 @@ export async function chatComplete(
   prompt: string,
   opts: ChatOptions = {},
 ): Promise<string> {
-  const model = opts.model || process.env.MODEL_NAME || "gpt-4o-mini";
+  const model = opts.model || process.env.MODEL_NAME || "gpt-4o";
   const temp = opts.temperature ?? 0.2;
   const provider = pickProvider(model);
 
@@ -48,7 +48,10 @@ export async function chatComplete(
       messages: [{ role: "user", content: prompt }],
     };
     // Only add temperature if model supports it (exclude o1-*, o3-*, gpt-4o-mini)
-    const supportsTemp = !model.startsWith("o1-") && !model.startsWith("o3-") && model !== "gpt-4o-mini";
+    const supportsTemp =
+      !model.startsWith("o1-") &&
+      !model.startsWith("o3-") &&
+      model !== "gpt-4o-mini";
     if (supportsTemp && temp !== undefined) {
       chatParams.temperature = temp;
     }

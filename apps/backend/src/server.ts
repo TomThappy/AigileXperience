@@ -28,7 +28,7 @@ app.get("/health", async (req, reply) => {
       status: "ok",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
-      version: "2025-09-04-o3-mini-temperature-fix",
+      version: "2025-09-04-gpt-4o-default",
       env: {
         node: process.version,
         platform: process.platform,
