@@ -36,7 +36,7 @@ export class PipelineManager {
         inputs: ["pitch"],
         outputs: ["sources"],
         prompt_file: "10_evidence_harvester.md",
-        model_preference: "gpt-4o",
+        model_preference: "gpt-4o", // GPT-4o for research & curation
       },
       {
         id: "brief",
@@ -45,7 +45,7 @@ export class PipelineManager {
         inputs: ["pitch", "sources"],
         outputs: ["brief"],
         prompt_file: "20_extract_brief.md",
-        model_preference: "gpt-4o",
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for structure/narrative
       },
       {
         id: "problem",
@@ -54,7 +54,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.problem"],
         prompt_file: "30_problem.md",
-        model_preference: "gpt-4o",
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "solution",
@@ -63,7 +63,16 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.solution"],
         prompt_file: "31_solution.md",
-        model_preference: "gpt-4o",
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
+      },
+      {
+        id: "team",
+        name: "Team Section",
+        dependencies: ["brief", "evidence"],
+        inputs: ["brief", "sources"],
+        outputs: ["sections.team"],
+        prompt_file: "32_team.md",
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
       },
       {
         id: "market",
@@ -72,7 +81,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.market"],
         prompt_file: "33_market.md",
-        model_preference: "gpt-4o",
+        model_preference: "gpt-4o", // GPT-4o for numbers/methodology
       },
       {
         id: "business_model",
@@ -81,7 +90,43 @@ export class PipelineManager {
         inputs: ["brief", "sources", "sections.market"],
         outputs: ["sections.business_model"],
         prompt_file: "34_business_model.md",
-        model_preference: "gpt-4o",
+        model_preference: "gpt-4o", // GPT-4o for financial modeling
+      },
+      {
+        id: "competition",
+        name: "Competition Section",
+        dependencies: ["brief", "evidence", "market"],
+        inputs: ["brief", "sources", "sections.market"],
+        outputs: ["sections.competition"],
+        prompt_file: "35_competition.md",
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
+      },
+      {
+        id: "status_quo",
+        name: "Status Quo Section",
+        dependencies: ["brief", "evidence"],
+        inputs: ["brief", "sources"],
+        outputs: ["sections.status_quo"],
+        prompt_file: "36_status_quo.md",
+        model_preference: "claude-3-5-sonnet-20241022", // Claude for textual content
+      },
+      {
+        id: "gtm",
+        name: "Go-to-Market Section",
+        dependencies: ["brief", "evidence", "market", "business_model"],
+        inputs: ["brief", "sources", "sections.market", "sections.business_model"],
+        outputs: ["sections.gtm"],
+        prompt_file: "37_gtm.md",
+        model_preference: "gpt-4o", // GPT-4o for strategy/numbers
+      },
+      {
+        id: "financial_plan",
+        name: "Financial Plan Section",
+        dependencies: ["business_model", "market"],
+        inputs: ["brief", "sources", "sections.market", "sections.business_model"],
+        outputs: ["sections.financial_plan"],
+        prompt_file: "38_financial_plan.md",
+        model_preference: "gpt-4o", // GPT-4o for financial modeling
       },
       {
         id: "validate",
@@ -93,11 +138,11 @@ export class PipelineManager {
       {
         id: "investor_score",
         name: "Investor Scoring",
-        dependencies: ["problem", "solution", "market", "business_model"],
+        dependencies: ["problem", "solution", "team", "market", "business_model", "competition", "status_quo", "gtm", "financial_plan"],
         inputs: ["sections", "brief"],
         outputs: ["investor_score"],
         prompt_file: "90_investor_scoring.md",
-        model_preference: "gpt-4o",
+        model_preference: "gpt-4o", // GPT-4o for rubric evaluation
       },
       {
         id: "assemble",
