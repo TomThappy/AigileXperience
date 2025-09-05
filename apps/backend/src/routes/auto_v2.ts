@@ -161,7 +161,9 @@ export default async function autoV2(app: FastifyInstance) {
       const startTime = Date.now();
       const traceId = crypto.randomUUID().substring(0, 8);
 
-      app.log.info(`[${traceId}] V2/AUTO Request received (alias for dossier/generate)`);
+      app.log.info(
+        `[${traceId}] V2/AUTO Request received (alias for dossier/generate)`,
+      );
 
       try {
         const body = req.body as any;
