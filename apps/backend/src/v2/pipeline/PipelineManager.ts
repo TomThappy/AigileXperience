@@ -125,7 +125,7 @@ export class PipelineManager {
         ],
         outputs: ["sections.gtm"],
         prompt_file: "36_go-to-market.md",
-        model_preference: "gpt-4", // GPT-4.1 for strategy/numbers per specification
+        model_preference: "gpt-4o-mini", // Temporary: Use gpt-4o-mini to avoid TPM rate limits
       },
       {
         id: "financial_plan",
