@@ -109,8 +109,8 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
             
             // Alle Sections als done markieren
             const doneState = Object.fromEntries(
-              SECTIONS.map((s) => [s.key, finalData.sections[s.key] ? "done" : "pending"])
-            );
+              SECTIONS.map((s) => [s.key, finalData.sections[s.key] ? "done" : "pending"] as [string, "pending" | "running" | "done" | "error"])
+            ) as Record<string, "pending" | "running" | "done" | "error">;
             setSecState(doneState);
           }
           setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
