@@ -10,7 +10,7 @@
     "dev": "tsx src/server.ts",
     "worker": "tsx src/worker.ts",
     "worker:prod": "node dist/worker.js",
-    "prebuild": "cd ../../packages/common && npm install && npm run build",
+    "prebuild": "env RENDER=true sh -c 'cd ../../packages/common && npm ci --include=dev && npm run build'",
     "build": "tsc -p tsconfig.json",
     "type-check": "tsc --noEmit",
     "test": "echo 'Backend tests temporarily disabled for deployment'"
@@ -26,12 +26,12 @@
     "openai": "^4.57.0",
     "@anthropic-ai/sdk": "^0.24.0",
     "ioredis": "^5.4.1",
-    "@aigilexperience/common": "*"
+    "@aigilexperience/common": "*",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.4"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
     "tsx": "^4.17.0",
-    "typescript": "^5.5.4",
     "vitest": "^2.0.5"
   }
 }
