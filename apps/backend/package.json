@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "type": "module",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "tsx src/server.ts",
     "worker": "tsx src/worker.ts",
@@ -26,6 +29,7 @@
     "@aigilexperience/common": "*"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "tsx": "^4.17.0",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"

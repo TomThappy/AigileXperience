@@ -7,24 +7,27 @@
 #### Häufigste Ursachen:
 
 **Environment Variables fehlen**
+
 ```bash
 ❌ Missing required environment variables: REDIS_URL, OPENAI_API_KEY, ANTHROPIC_API_KEY
 ```
 
 **Lösung:**
+
 - Gehe zu Render Dashboard → dein Worker Service → Settings → Environment
 - Kopiere **alle** Environment Variables vom Backend Service:
   - `REDIS_URL` (wichtig: Internal Redis URL verwenden)
-  - `OPENAI_API_KEY` 
+  - `OPENAI_API_KEY`
   - `ANTHROPIC_API_KEY`
   - `MODEL_ANALYZE`
-  - `MODEL_REFINE` 
+  - `MODEL_REFINE`
   - `USE_ASSUMPTIONS_LLM`
   - `NODE_ENV=production`
 
 #### Build Command Problems
 
 **Falsche Konfiguration:**
+
 ```
 ❌ Build Command: npm install && npm run build
 ❌ Start Command: npm start
@@ -32,6 +35,7 @@
 ```
 
 **Korrekte Konfiguration:**
+
 ```
 ✅ Root Directory: apps/backend
 ✅ Build Command: npm run build
@@ -41,11 +45,13 @@
 #### Redis Connection Issues
 
 **Symptom:** Worker startet, aber kann sich nicht zu Redis verbinden
+
 ```bash
 ❌ Service initialization failed: Redis connection error
 ```
 
 **Lösung:**
+
 1. Überprüfe, dass Redis Service läuft (Render Dashboard → Redis Service → Status)
 2. Verwende **Internal Redis URL**, nicht External URL
 3. Redis URL Format: `redis://red-xxxxx:6379` (ohne Username/Password bei Render Redis)
@@ -53,13 +59,16 @@
 ### 2. Worker startet, aber verarbeitet keine Jobs
 
 #### Redis Queue nicht erreichbar
+
 ```bash
 🔌 Testing Redis connection...
 ❌ Service initialization failed: connect ECONNREFUSED
 ```
 
 **Debug Steps:**
+
 1. Teste Redis URL im Backend Service:
+
    ```bash
    # In Backend Logs schauen nach:
    ✅ Redis connection successful
@@ -71,6 +80,7 @@
    - **Müssen identisch sein!**
 
 #### Missing API Keys
+
 ```bash
 🚀 Pipeline Worker starting...
 ❌ Missing required environment variables: OPENAI_API_KEY
@@ -81,6 +91,7 @@
 ### 3. Worker läuft, aber Jobs schlagen fehl
 
 #### Pipeline Import Errors
+
 ```bash
 ❌ Job 123 failed with error: Cannot find module '../v2/pipeline/PipelineManager.js'
 ```
@@ -88,26 +99,31 @@
 **Ursache:** Build-Probleme oder falsche Root Directory
 
 **Lösung:**
+
 1. Root Directory: `apps/backend` (nicht `/` oder leer)
 2. Build Command: `npm run build` (nicht `npm install && npm run build`)
 3. Check Build Logs auf TypeScript Errors
 
 #### Memory/Timeout Issues
+
 ```bash
 ❌ Job 123 failed with error: Request timeout
 ```
 
 **Render Background Worker Limits:**
+
 - **Memory**: 512MB (Starter) - 4GB (Pro)
 - **CPU**: Shared
 - **Runtime**: Unbegrenzt (kein 30s Limit wie Web Services)
 
 **Upgrade bei Bedarf:**
+
 - Render Dashboard → Worker Service → Settings → Instance Type → Upgrade
 
 ### 4. Environment Variables Debug
 
 #### Worker Startup Validation
+
 Der verbesserte Worker zeigt beim Start alle Environment Variables:
 
 ```bash
@@ -123,12 +139,14 @@ Der verbesserte Worker zeigt beim Start alle Environment Variables:
 ```
 
 #### Wenn Validation fehlschlägt:
+
 ```bash
 ❌ Missing required environment variables: REDIS_URL
 💥 Worker startup failed: Error: Missing required environment variables
 ```
 
 **Sofortiger Fix:**
+
 1. Render Dashboard → Worker Service → Settings → Environment
 2. Add Variable: `REDIS_URL` = `<Internal Redis URL from Redis Service>`
 3. Restart Service
@@ -136,6 +154,7 @@ Der verbesserte Worker zeigt beim Start alle Environment Variables:
 ### 5. Redis Service Setup Issues
 
 #### Redis Service erstellen
+
 ```
 Render Dashboard → New → Redis
 - Name: aigilexperience-redis
@@ -145,25 +164,29 @@ Render Dashboard → New → Redis
 ```
 
 #### Internal vs External URLs
+
 - **Internal URL**: `redis://red-xxxxx:6379` ✅ (für Backend/Worker)
 - **External URL**: `redis://user:pass@xxx.render.com:6380` ❌ (nur für externe Clients)
 
 **In Environment Variables verwenden:**
+
 ```
 REDIS_URL=redis://red-xxxxx:6379
 ```
+
 (die genaue URL findest du im Redis Service → Connect)
 
 ### 6. Monitoring & Debugging
 
 #### Live Worker Logs
+
 ```bash
 # Render Dashboard → Worker Service → Logs
 # Gesunde Worker Logs sollten zeigen:
 
 🚀 Pipeline Worker starting...
 ✅ Environment validation passed
-✅ Redis connection successful  
+✅ Redis connection successful
 🎯 Worker ready, waiting for jobs...
 
 # Bei Job Processing:
@@ -173,6 +196,7 @@ REDIS_URL=redis://red-xxxxx:6379
 ```
 
 #### Testing the Queue
+
 ```bash
 # Backend Logs sollten zeigen:
 ✅ Created job abc123 for project: My Startup
@@ -184,11 +208,13 @@ REDIS_URL=redis://red-xxxxx:6379
 ### 7. Performance Tuning
 
 #### Worker Instance Sizing
+
 - **Starter ($7/month)**: 512MB RAM - gut für 1-2 parallele Jobs
 - **Standard ($25/month)**: 2GB RAM - gut für mehr parallele Jobs
 - **Pro ($85/month)**: 4GB RAM - für hohe Last
 
 #### Redis Sizing
+
 - **Starter ($7/month)**: 25MB - gut für Development/Testing
 - **Standard ($15/month)**: 100MB - gut für Production
 - **Pro ($25/month)**: 500MB - für hohe Job-Volumes
@@ -196,11 +222,13 @@ REDIS_URL=redis://red-xxxxx:6379
 ### 8. Manual Restart Commands
 
 #### Service Restarts
+
 1. **Redis Service**: Render Dashboard → Redis Service → Manual Deploy
-2. **Backend Service**: Render Dashboard → Backend Service → Manual Deploy  
+2. **Backend Service**: Render Dashboard → Backend Service → Manual Deploy
 3. **Worker Service**: Render Dashboard → Worker Service → Manual Deploy
 
 #### Order beim Restart:
+
 1. Redis zuerst
 2. Dann Backend
 3. Dann Worker
@@ -208,6 +236,7 @@ REDIS_URL=redis://red-xxxxx:6379
 ### 9. Local Testing
 
 #### Test Worker lokal
+
 ```bash
 cd apps/backend
 
@@ -228,6 +257,7 @@ npm run worker
 ```
 
 #### Create Test Job
+
 ```bash
 # In another terminal:
 curl -X POST http://localhost:3000/api/jobs \
@@ -260,6 +290,6 @@ Wenn alle Troubleshooting-Schritte fehlschlagen:
 ✅ Worker Service: Alle ENV vars vom Backend kopiert  
 ✅ REDIS_URL in Backend und Worker identisch  
 ✅ Worker Logs zeigen "Worker ready, waiting for jobs..."  
-✅ Test Job erstellt und wird verarbeitet  
+✅ Test Job erstellt und wird verarbeitet
 
 Wenn alle Checkboxen ✅ sind, sollte das System funktionieren!

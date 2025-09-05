@@ -25,33 +25,40 @@ class PipelineWorker {
   }
 
   private validateEnvironment(): void {
-    const required = ['REDIS_URL', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY'];
-    const missing = required.filter(key => !process.env[key]);
-    
+    const required = ["REDIS_URL", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"];
+    const missing = required.filter((key) => !process.env[key]);
+
     if (missing.length > 0) {
-      throw new Error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+      throw new Error(
+        `❌ Missing required environment variables: ${missing.join(", ")}`,
+      );
     }
-    
-    console.log('✅ Environment validation passed');
-    console.log(`📍 Redis URL: ${process.env.REDIS_URL?.replace(/redis:\/\/[^@]*@/, 'redis://***@') || 'Not set'}`);
-    console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Missing'}`);
-    console.log(`🔑 Anthropic API Key: ${process.env.ANTHROPIC_API_KEY ? '✅ Set' : '❌ Missing'}`);
+
+    console.log("✅ Environment validation passed");
+    console.log(
+      `📍 Redis URL: ${process.env.REDIS_URL?.replace(/redis:\/\/[^@]*@/, "redis://***@") || "Not set"}`,
+    );
+    console.log(
+      `🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? "✅ Set" : "❌ Missing"}`,
+    );
+    console.log(
+      `🔑 Anthropic API Key: ${process.env.ANTHROPIC_API_KEY ? "✅ Set" : "❌ Missing"}`,
+    );
   }
 
   private async initializeServices(): Promise<void> {
     try {
-      console.log('🔧 Initializing services...');
-      
+      console.log("🔧 Initializing services...");
+
       this.jobQueue = getJobQueue();
       this.enhancedWorker = getEnhancedWorker();
-      
+
       // Test Redis connection
-      console.log('🔌 Testing Redis connection...');
+      console.log("🔌 Testing Redis connection...");
       await this.jobQueue.getQueueStats();
-      console.log('✅ Redis connection successful');
-      
+      console.log("✅ Redis connection successful");
     } catch (error) {
-      console.error('❌ Service initialization failed:', error);
+      console.error("❌ Service initialization failed:", error);
       throw error;
     }
   }
@@ -94,15 +101,15 @@ class PipelineWorker {
   async start() {
     try {
       console.log("🚀 Pipeline Worker starting...");
-      
+
       // Validate environment
       this.validateEnvironment();
-      
+
       // Initialize services
       await this.initializeServices();
-      
+
       console.log("🎯 Worker ready, waiting for jobs...");
-      
+
       // Clean up old jobs on startup
       await this.jobQueue!.cleanup();
 
@@ -142,9 +149,9 @@ class PipelineWorker {
 
   private async processJob(jobId: string) {
     if (!this.enhancedWorker) {
-      throw new Error('Enhanced worker not initialized');
+      throw new Error("Enhanced worker not initialized");
     }
-    
+
     try {
       // Use enhanced worker for detailed progress tracking
       await this.enhancedWorker.processJobWithDetailedProgress(jobId);
