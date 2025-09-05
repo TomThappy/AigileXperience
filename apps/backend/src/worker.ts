@@ -5,7 +5,7 @@ import { getEnhancedWorker } from "./jobs/PipelineWorker.js";
 import type { JobData, JobArtifact } from "./jobs/JobQueue.js";
 
 class PipelineWorker {
-  private jobQueue: ReturnType<typeof getJobQueue> | null = null;
+  private jobQueue: Awaited<ReturnType<typeof getJobQueue>> | null = null;
   private enhancedWorker: ReturnType<typeof getEnhancedWorker> | null = null;
   private isShuttingDown = false;
   private currentJobId: string | null = null;
@@ -50,7 +50,7 @@ class PipelineWorker {
     try {
       console.log("🔧 Initializing services...");
 
-      this.jobQueue = getJobQueue();
+      this.jobQueue = await getJobQueue(); // Fix: await the async function
       this.enhancedWorker = getEnhancedWorker();
 
       // Test Redis connection
