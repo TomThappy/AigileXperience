@@ -11,15 +11,16 @@ export default async function jobRoutes(app: FastifyInstance) {
       const body = req.body as any;
 
       // Validate required fields
-      if (!body.project_title || !body.elevator_pitch) {
+      const pitch = body.elevator_pitch || body.pitch;
+      if (!body.project_title || !pitch) {
         return reply.code(400).send({
-          error: "Missing required fields: project_title and elevator_pitch",
+          error: "Missing required fields: project_title and pitch (or elevator_pitch)",
         });
       }
 
       const input: PitchInput = {
         project_title: body.project_title,
-        elevator_pitch: body.elevator_pitch,
+        elevator_pitch: pitch,
         language: body.language || "de",
         target: body.target || "Pre-Seed/Seed VCs",
         geo: body.geo || "EU/DACH",
