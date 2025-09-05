@@ -120,3 +120,15 @@ export interface StepResult {
   cache_hit: boolean;
   hash: string;
 }
+
+export interface PipelineResult {
+  success: boolean;
+  data?: DossierData;
+  error?: string;
+  state: PipelineStateComplete;
+}
+
+export interface PipelineStateComplete extends PipelineState {
+  pipeline_id: string;
+  status: 'completed' | 'failed' | 'running' | 'pending';
+}

@@ -1,6 +1,6 @@
-import Redis from 'ioredis';
-import crypto from 'node:crypto';
-import type { PitchInput, PipelineResult } from '../v2/types.js';
+import Redis from "ioredis";
+import crypto from "node:crypto";
+import type { PitchInput, PipelineResult } from "../v2/types.js";
 
 export interface JobData {
   id: string;
@@ -10,7 +10,7 @@ export interface JobData {
     parallelLimit?: number;
     timeoutMs?: number;
   };
-  status: 'queued' | 'running' | 'completed' | 'failed';
+  status: "queued" | "running" | "completed" | "failed";
   progress: {
     step: string;
     percentage: number;
@@ -26,7 +26,7 @@ export interface JobData {
 
 export interface JobArtifact {
   name: string;
-  type: 'evidence' | 'brief' | 'section' | 'score' | 'final';
+  type: "evidence" | "brief" | "section" | "score" | "final";
   data: any;
   hash: string;
   timestamp: number;
@@ -34,25 +34,31 @@ export interface JobArtifact {
 
 export class JobQueue {
   private redis: Redis;
-  private readonly QUEUE_KEY = 'pipeline:jobs:queue';
-  private readonly JOB_PREFIX = 'pipeline:job';
-  private readonly ARTIFACT_PREFIX = 'pipeline:artifact';
-  
+  private readonly QUEUE_KEY = "pipeline:jobs:queue";
+  private readonly JOB_PREFIX = "pipeline:job";
+  private readonly ARTIFACT_PREFIX = "pipeline:artifact";
+
   constructor() {
     // Use Redis URL from environment or default to localhost
-    const redisUrl = process.env.REDIS_URL || process.env.REDISCLOUD_URL || 'redis://localhost:6379';
+    const redisUrl =
+      process.env.REDIS_URL ||
+      process.env.REDISCLOUD_URL ||
+      "redis://localhost:6379";
     this.redis = new Redis(redisUrl, {
-      retryDelayOnFailover: 100,
-      enableReadyCheck: false,
+      connectTimeout: 10000,
       lazyConnect: true,
+      maxRetriesPerRequest: 3,
     });
-    
-    this.redis.on('error', (err) => {
-      console.error('Redis connection error:', err);
+
+    this.redis.on("error", (err) => {
+      console.error("Redis connection error:", err);
     });
   }
 
-  async createJob(input: PitchInput, options: JobData['options'] = {}): Promise<string> {
+  async createJob(
+    input: PitchInput,
+    options: JobData["options"] = {},
+  ): Promise<string> {
     const jobId = crypto.randomUUID();
     const job: JobData = {
       id: jobId,
@@ -63,9 +69,9 @@ export class JobQueue {
         timeoutMs: options.timeoutMs || 300000, // 5 minutes
         ...options,
       },
-      status: 'queued',
+      status: "queued",
       progress: {
-        step: 'queued',
+        step: "queued",
         percentage: 0,
         totalSteps: 7, // Evidence, Brief, 4 Sections, Validation, Score
         currentStep: 0,
@@ -77,7 +83,7 @@ export class JobQueue {
     await this.redis.setex(
       `${this.JOB_PREFIX}:${jobId}`,
       3600, // 1 hour TTL
-      JSON.stringify(job)
+      JSON.stringify(job),
     );
 
     // Add to queue
@@ -93,10 +99,10 @@ export class JobQueue {
   }
 
   async updateJobStatus(
-    jobId: string, 
-    status: JobData['status'], 
-    progress?: Partial<JobData['progress']>,
-    error?: string
+    jobId: string,
+    status: JobData["status"],
+    progress?: Partial<JobData["progress"]>,
+    error?: string,
   ): Promise<void> {
     const job = await this.getJob(jobId);
     if (!job) return;
@@ -108,20 +114,22 @@ export class JobQueue {
     if (error) {
       job.error = error;
     }
-    if (status === 'running' && !job.startedAt) {
+    if (status === "running" && !job.startedAt) {
       job.startedAt = Date.now();
     }
-    if (status === 'completed' || status === 'failed') {
+    if (status === "completed" || status === "failed") {
       job.completedAt = Date.now();
     }
 
     await this.redis.setex(
       `${this.JOB_PREFIX}:${jobId}`,
       3600,
-      JSON.stringify(job)
+      JSON.stringify(job),
     );
 
-    console.log(`🔄 Job ${jobId}: ${status} - ${progress?.step || 'N/A'} (${progress?.percentage || 0}%)`);
+    console.log(
+      `🔄 Job ${jobId}: ${status} - ${progress?.step || "N/A"} (${progress?.percentage || 0}%)`,
+    );
   }
 
   async setJobResult(jobId: string, result: PipelineResult): Promise<void> {
@@ -129,20 +137,23 @@ export class JobQueue {
     if (!job) return;
 
     job.result = result;
-    job.status = 'completed';
+    job.status = "completed";
     job.completedAt = Date.now();
     job.progress.percentage = 100;
 
     await this.redis.setex(
       `${this.JOB_PREFIX}:${jobId}`,
       3600,
-      JSON.stringify(job)
+      JSON.stringify(job),
     );
 
     console.log(`✅ Job ${jobId} completed successfully`);
   }
 
-  async addArtifact(jobId: string, artifact: Omit<JobArtifact, 'timestamp'>): Promise<void> {
+  async addArtifact(
+    jobId: string,
+    artifact: Omit<JobArtifact, "timestamp">,
+  ): Promise<void> {
     const artifactWithTimestamp: JobArtifact = {
       ...artifact,
       timestamp: Date.now(),
@@ -151,7 +162,7 @@ export class JobQueue {
     await this.redis.setex(
       `${this.ARTIFACT_PREFIX}:${jobId}:${artifact.name}`,
       3600,
-      JSON.stringify(artifactWithTimestamp)
+      JSON.stringify(artifactWithTimestamp),
     );
 
     console.log(`📄 Added artifact ${artifact.name} for job ${jobId}`);
@@ -165,7 +176,7 @@ export class JobQueue {
       const artifactData = await this.redis.get(key);
       if (artifactData) {
         const artifact = JSON.parse(artifactData);
-        const name = key.split(':').pop()!;
+        const name = key.split(":").pop()!;
         artifacts[name] = artifact;
       }
     }
@@ -180,16 +191,16 @@ export class JobQueue {
 
   async getQueueStats(): Promise<{ pending: number; processing: number }> {
     const pending = await this.redis.llen(this.QUEUE_KEY);
-    
+
     // Count jobs with 'running' status
     const runningJobs = await this.redis.keys(`${this.JOB_PREFIX}:*`);
     let processing = 0;
-    
+
     for (const key of runningJobs) {
       const jobData = await this.redis.get(key);
       if (jobData) {
         const job = JSON.parse(jobData);
-        if (job.status === 'running') {
+        if (job.status === "running") {
           processing++;
         }
       }
@@ -200,9 +211,9 @@ export class JobQueue {
 
   async cleanup(): Promise<void> {
     // Clean up jobs older than 24 hours
-    const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     const jobKeys = await this.redis.keys(`${this.JOB_PREFIX}:*`);
-    
+
     for (const key of jobKeys) {
       const jobData = await this.redis.get(key);
       if (jobData) {
@@ -210,9 +221,11 @@ export class JobQueue {
         if (job.createdAt < cutoff) {
           const jobId = job.id;
           await this.redis.del(key);
-          
+
           // Clean up artifacts
-          const artifactKeys = await this.redis.keys(`${this.ARTIFACT_PREFIX}:${jobId}:*`);
+          const artifactKeys = await this.redis.keys(
+            `${this.ARTIFACT_PREFIX}:${jobId}:*`,
+          );
           if (artifactKeys.length > 0) {
             await this.redis.del(...artifactKeys);
           }
