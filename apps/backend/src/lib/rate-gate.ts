@@ -149,41 +149,51 @@ export async function executeWithRetries<T>(
   estimatedTokens: number,
   stepId: string,
   jobId?: string,
-  phase?: string
+  phase?: string,
 ): Promise<{ result: T; attempts: number; rateGateWaitMs: number }> {
   const maxRetries = parseInt(process.env.LLM_RETRIES || "3");
   const baseDelayMs = parseInt(process.env.LLM_RETRY_BASE_DELAY || "2000");
-  
+
   let lastError: Error | null = null;
   let totalRateGateWait = 0;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       // Rate gate check and wait
       const limit = getModelLimit(model);
-      const { waitedMs } = await rateGate.reserveTokens(model, estimatedTokens, limit);
+      const { waitedMs } = await rateGate.reserveTokens(
+        model,
+        estimatedTokens,
+        limit,
+      );
       totalRateGateWait += waitedMs;
-      
+
       if (waitedMs > 0) {
-        console.log(`⏳ [RATE-GATE] Waited ${waitedMs}ms for ${model} on attempt ${attempt}`);
+        console.log(
+          `⏳ [RATE-GATE] Waited ${waitedMs}ms for ${model} on attempt ${attempt}`,
+        );
       }
-      
+
       // Execute the LLM call
       const result = await llmCall();
-      
-      console.log(`✅ [RATE-GATE] LLM call succeeded on attempt ${attempt} for ${stepId}`);
-      
+
+      console.log(
+        `✅ [RATE-GATE] LLM call succeeded on attempt ${attempt} for ${stepId}`,
+      );
+
       return {
         result,
         attempts: attempt,
-        rateGateWaitMs: totalRateGateWait
+        rateGateWaitMs: totalRateGateWait,
       };
-      
     } catch (error) {
       lastError = error as Error;
-      
-      console.error(`❌ [RATE-GATE] LLM call failed on attempt ${attempt} for ${stepId}:`, (error as Error).message);
-      
+
+      console.error(
+        `❌ [RATE-GATE] LLM call failed on attempt ${attempt} for ${stepId}:`,
+        (error as Error).message,
+      );
+
       // Don't retry on certain errors
       if (isNonRetryableError(error as Error)) {
         console.log(`🚫 [RATE-GATE] Non-retryable error, stopping retries`);
@@ -193,13 +203,18 @@ export async function executeWithRetries<T>(
       // Wait before retry (exponential backoff)
       if (attempt < maxRetries) {
         const delay = baseDelayMs * Math.pow(2, attempt - 1);
-        console.log(`⏱️ [RATE-GATE] Waiting ${delay}ms before retry ${attempt + 1}`);
+        console.log(
+          `⏱️ [RATE-GATE] Waiting ${delay}ms before retry ${attempt + 1}`,
+        );
         await sleep(delay);
       }
     }
   }
 
-  throw lastError || new Error(`All ${maxRetries} retry attempts failed for ${stepId}`);
+  throw (
+    lastError ||
+    new Error(`All ${maxRetries} retry attempts failed for ${stepId}`)
+  );
 }
 
 /**
@@ -208,22 +223,22 @@ export async function executeWithRetries<T>(
 function isNonRetryableError(error: Error): boolean {
   const message = error.message.toLowerCase();
   const nonRetryablePatterns = [
-    'invalid api key',
-    'insufficient quota',
-    'model not found', 
-    'invalid request',
-    'context length exceeded',
-    'content policy violation',
+    "invalid api key",
+    "insufficient quota",
+    "model not found",
+    "invalid request",
+    "context length exceeded",
+    "content policy violation",
   ];
 
-  return nonRetryablePatterns.some(pattern => message.includes(pattern));
+  return nonRetryablePatterns.some((pattern) => message.includes(pattern));
 }
 
 /**
  * Sleep utility
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**

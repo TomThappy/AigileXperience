@@ -604,38 +604,10 @@
             "narrative": "Der Markt für digitale Haushaltsorganisation im DACH-Raum profitiert vom starken Wachstum des Smart-Home-Marktes und der zunehmenden Digitalisierung privater Haushalte. HappyNest adressiert einen klar umrissenen Bedarf nach zentraler, sicherer und intuitiver Haushaltsorganisation. Die Marktgröße wurde sowohl Top-down (basierend auf Haushaltszahlen und Smart-Home-Adoption) als auch Bottom-up (ARPU, Zahlungsbereitschaft, Zielgruppenpenetration) berechnet und cross-geprüft. Bis 2030 ist ein adressierbarer Markt von über 2 Mio. Haushalten realistisch, mit einem Umsatzpotenzial von über 200 Mio. € jährlich. Die Zahlungsbereitschaft variiert je nach Segment, liegt aber im Bereich vergleichbarer digitaler Services. Datenschutz und Integration externer Dienste bleiben zentrale Erfolgsfaktoren.",
             "data": {
               "definition": "Digitale Plattformen zur zentralen Organisation, Kommunikation und Automatisierung privater Haushalte, inkl. Smart-Home-Integration, im DACH-Raum.",
-              "years": [
-                "2025",
-                "2026",
-                "2027",
-                "2028",
-                "2029",
-                "2030"
-              ],
-              "tam_eur": [
-                "1.05B",
-                "1.22B",
-                "1.43B",
-                "1.68B",
-                "1.98B",
-                "2.34B"
-              ],
-              "sam_eur": [
-                "210M",
-                "244M",
-                "286M",
-                "337M",
-                "397M",
-                "468M"
-              ],
-              "som_eur": [
-                "10M",
-                "24M",
-                "48M",
-                "84M",
-                "134M",
-                "201M"
-              ],
+              "years": ["2025", "2026", "2027", "2028", "2029", "2030"],
+              "tam_eur": ["1.05B", "1.22B", "1.43B", "1.68B", "1.98B", "2.34B"],
+              "sam_eur": ["210M", "244M", "286M", "337M", "397M", "468M"],
+              "som_eur": ["10M", "24M", "48M", "84M", "134M", "201M"],
               "segments": [
                 {
                   "name": "Familien",
@@ -828,11 +800,7 @@
               },
               {
                 "category": "Smart-Home-Plattformen",
-                "examples": [
-                  "Apple HomeKit",
-                  "Google Home",
-                  "Amazon Alexa"
-                ],
+                "examples": ["Apple HomeKit", "Google Home", "Amazon Alexa"],
                 "threat_level": "high",
                 "description": "Technologiegiganten bieten zentrale Steuerung und Integration von Smart-Home-Geräten, jedoch ohne spezifische Haushaltsorganisationsfunktionen."
               },
@@ -848,10 +816,7 @@
               },
               {
                 "category": "Facility Management Software",
-                "examples": [
-                  "Casavi",
-                  "iHaus"
-                ],
+                "examples": ["Casavi", "iHaus"],
                 "threat_level": "medium",
                 "description": "B2B-Lösungen für Immobilien- und Facility-Management, die teilweise in den Consumer-Bereich vordringen."
               }
@@ -1008,10 +973,7 @@
                 "role": "Serviceanbieter, Integrationspartner",
                 "influence_level": "low",
                 "resistance_level": "low",
-                "key_concerns": [
-                  "Schnittstellenzugang",
-                  "Kundenzugang"
-                ]
+                "key_concerns": ["Schnittstellenzugang", "Kundenzugang"]
               }
             ],
             "change_readiness": {
@@ -2034,14 +1996,7 @@
               "narrative": "Der Markt für digitale Haushaltsorganisation im DACH-Raum profitiert vom starken Wachstum des Smart-Home-Marktes und der zunehmenden Digitalisierung privater Haushalte. HappyNest adressiert einen klar umrissenen Bedarf nach zentraler, sicherer und intuitiver Haushaltsorganisation. Die Marktgröße wurde sowohl Top-down (basierend auf Haushaltszahlen und Smart-Home-Adoption) als auch Bottom-up (ARPU, Zahlungsbereitschaft, Zielgruppenpenetration) berechnet und cross-geprüft. Bis 2030 ist ein adressierbarer Markt von über 2 Mio. Haushalten realistisch, mit einem Umsatzpotenzial von über 200 Mio. € jährlich. Die Zahlungsbereitschaft variiert je nach Segment, liegt aber im Bereich vergleichbarer digitaler Services. Datenschutz und Integration externer Dienste bleiben zentrale Erfolgsfaktoren.",
               "data": {
                 "definition": "Digitale Plattformen zur zentralen Organisation, Kommunikation und Automatisierung privater Haushalte, inkl. Smart-Home-Integration, im DACH-Raum.",
-                "years": [
-                  "2025",
-                  "2026",
-                  "2027",
-                  "2028",
-                  "2029",
-                  "2030"
-                ],
+                "years": ["2025", "2026", "2027", "2028", "2029", "2030"],
                 "tam_eur": [
                   "1.05B",
                   "1.22B",
@@ -2050,22 +2005,8 @@
                   "1.98B",
                   "2.34B"
                 ],
-                "sam_eur": [
-                  "210M",
-                  "244M",
-                  "286M",
-                  "337M",
-                  "397M",
-                  "468M"
-                ],
-                "som_eur": [
-                  "10M",
-                  "24M",
-                  "48M",
-                  "84M",
-                  "134M",
-                  "201M"
-                ],
+                "sam_eur": ["210M", "244M", "286M", "337M", "397M", "468M"],
+                "som_eur": ["10M", "24M", "48M", "84M", "134M", "201M"],
                 "segments": [
                   {
                     "name": "Familien",
@@ -2258,11 +2199,7 @@
                 },
                 {
                   "category": "Smart-Home-Plattformen",
-                  "examples": [
-                    "Apple HomeKit",
-                    "Google Home",
-                    "Amazon Alexa"
-                  ],
+                  "examples": ["Apple HomeKit", "Google Home", "Amazon Alexa"],
                   "threat_level": "high",
                   "description": "Technologiegiganten bieten zentrale Steuerung und Integration von Smart-Home-Geräten, jedoch ohne spezifische Haushaltsorganisationsfunktionen."
                 },
@@ -2278,10 +2215,7 @@
                 },
                 {
                   "category": "Facility Management Software",
-                  "examples": [
-                    "Casavi",
-                    "iHaus"
-                  ],
+                  "examples": ["Casavi", "iHaus"],
                   "threat_level": "medium",
                   "description": "B2B-Lösungen für Immobilien- und Facility-Management, die teilweise in den Consumer-Bereich vordringen."
                 }
@@ -2438,10 +2372,7 @@
                   "role": "Serviceanbieter, Integrationspartner",
                   "influence_level": "low",
                   "resistance_level": "low",
-                  "key_concerns": [
-                    "Schnittstellenzugang",
-                    "Kundenzugang"
-                  ]
+                  "key_concerns": ["Schnittstellenzugang", "Kundenzugang"]
                 }
               ],
               "change_readiness": {

@@ -45,13 +45,13 @@ export class ArtifactManager {
    * Generate artifact file path based on step and phase
    */
   private getArtifactPath(
-    jobId: string, 
-    step: string, 
-    phase?: string, 
-    extension: string = "json"
+    jobId: string,
+    step: string,
+    phase?: string,
+    extension: string = "json",
   ): string {
     const stepDir = this.getStepDir(jobId, step);
-    
+
     if (phase) {
       return path.join(stepDir, `phase${phase}.${extension}`);
     } else {
@@ -64,7 +64,7 @@ export class ArtifactManager {
    */
   async initializeJobArtifacts(jobId: string): Promise<void> {
     const jobDir = this.getJobDir(jobId);
-    
+
     // Create base job directory
     await fs.mkdir(jobDir, { recursive: true });
 
@@ -93,10 +93,10 @@ export class ArtifactManager {
       phase?: string;
       type?: "json" | "text" | "prompt";
       metadata?: Record<string, any>;
-    } = {}
+    } = {},
   ): Promise<ArtifactEntry> {
     const { phase, type = "json", metadata = {} } = options;
-    
+
     // Ensure step directory exists
     const stepDir = this.getStepDir(jobId, step);
     await fs.mkdir(stepDir, { recursive: true });
@@ -104,7 +104,7 @@ export class ArtifactManager {
     // Determine file path and extension
     const extension = type === "json" ? "json" : "txt";
     const filePath = this.getArtifactPath(jobId, step, phase, extension);
-    
+
     // Write the artifact
     if (type === "json") {
       await writeJsonFile(filePath, data);
@@ -114,7 +114,7 @@ export class ArtifactManager {
 
     // Get file stats
     const stats = await fs.stat(filePath);
-    
+
     // Create artifact entry
     const artifactEntry: ArtifactEntry = {
       name: phase ? `${step}_phase${phase}` : step,
@@ -131,7 +131,7 @@ export class ArtifactManager {
     await this.updateIndex(jobId, artifactEntry);
 
     console.log(`💾 Stored artifact: ${artifactEntry.name} → ${filePath}`);
-    
+
     return artifactEntry;
   }
 
@@ -142,18 +142,18 @@ export class ArtifactManager {
     jobId: string,
     step: string,
     promptContent: string,
-    phase?: string
+    phase?: string,
   ): Promise<ArtifactEntry> {
     const stepDir = this.getStepDir(jobId, step);
     await fs.mkdir(stepDir, { recursive: true });
 
     const filename = phase ? `prompt_phase${phase}.txt` : "prompt.txt";
     const filePath = path.join(stepDir, filename);
-    
+
     await fs.writeFile(filePath, promptContent, "utf-8");
-    
+
     const stats = await fs.stat(filePath);
-    
+
     const artifactEntry: ArtifactEntry = {
       name: phase ? `${step}_prompt_phase${phase}` : `${step}_prompt`,
       type: "prompt",
@@ -166,9 +166,9 @@ export class ArtifactManager {
     };
 
     await this.updateIndex(jobId, artifactEntry);
-    
+
     console.log(`📝 Stored prompt: ${artifactEntry.name} → ${filePath}`);
-    
+
     return artifactEntry;
   }
 
@@ -178,7 +178,7 @@ export class ArtifactManager {
   async getArtifact(jobId: string, artifactName: string): Promise<any | null> {
     const index = await this.loadIndex(jobId);
     const artifact = index?.artifacts[artifactName];
-    
+
     if (!artifact) {
       return null;
     }
@@ -199,7 +199,9 @@ export class ArtifactManager {
   /**
    * List all artifacts for a job
    */
-  async listArtifacts(jobId: string): Promise<Record<string, ArtifactEntry> | null> {
+  async listArtifacts(
+    jobId: string,
+  ): Promise<Record<string, ArtifactEntry> | null> {
     const index = await this.loadIndex(jobId);
     return index?.artifacts || null;
   }
@@ -207,10 +209,14 @@ export class ArtifactManager {
   /**
    * Check if artifact exists and is written
    */
-  async hasArtifact(jobId: string, step: string, phase?: string): Promise<boolean> {
+  async hasArtifact(
+    jobId: string,
+    step: string,
+    phase?: string,
+  ): Promise<boolean> {
     const artifactName = phase ? `${step}_phase${phase}` : step;
     const index = await this.loadIndex(jobId);
-    
+
     if (!index?.artifacts[artifactName]) {
       return false;
     }
@@ -230,7 +236,7 @@ export class ArtifactManager {
   async getArtifactLinks(jobId: string): Promise<Record<string, string>> {
     const links: Record<string, string> = {};
     const artifacts = await this.listArtifacts(jobId);
-    
+
     if (!artifacts) {
       return links;
     }
@@ -254,11 +260,11 @@ export class ArtifactManager {
 
     try {
       const jobDirs = await fs.readdir(this.baseDir);
-      
+
       for (const jobDir of jobDirs) {
         const jobPath = path.join(this.baseDir, jobDir);
         const stats = await fs.stat(jobPath);
-        
+
         if (stats.isDirectory() && stats.mtime < cutoffDate) {
           console.log(`🧹 Cleaning up old artifacts: ${jobDir}`);
           await fs.rm(jobPath, { recursive: true, force: true });
@@ -272,9 +278,12 @@ export class ArtifactManager {
   /**
    * Update the artifact index
    */
-  private async updateIndex(jobId: string, artifactEntry: ArtifactEntry): Promise<void> {
+  private async updateIndex(
+    jobId: string,
+    artifactEntry: ArtifactEntry,
+  ): Promise<void> {
     const indexPath = path.join(this.getJobDir(jobId), "index.json");
-    
+
     let index: ArtifactIndex;
     try {
       const content = await fs.readFile(indexPath, "utf-8");
@@ -300,7 +309,7 @@ export class ArtifactManager {
    */
   private async loadIndex(jobId: string): Promise<ArtifactIndex | null> {
     const indexPath = path.join(this.getJobDir(jobId), "index.json");
-    
+
     try {
       const content = await fs.readFile(indexPath, "utf-8");
       return JSON.parse(content);
@@ -314,7 +323,11 @@ export class ArtifactManager {
    */
   private generateHash(content: string): string {
     const crypto = require("crypto");
-    return crypto.createHash("sha256").update(content).digest("hex").substring(0, 16);
+    return crypto
+      .createHash("sha256")
+      .update(content)
+      .digest("hex")
+      .substring(0, 16);
   }
 }
 

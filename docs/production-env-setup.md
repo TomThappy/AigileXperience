@@ -5,6 +5,7 @@
 Diese Environment Variables sollten in der Render Console für den Backend Service gesetzt werden:
 
 ### Global Model Configuration
+
 ```bash
 MODEL_ANALYZE=gpt-4-turbo
 MODEL_REFINE=gpt-4-turbo
@@ -13,6 +14,7 @@ LLM_DEFAULT_MODEL=gpt-4-turbo
 ```
 
 ### Step-specific Model Configuration
+
 ```bash
 # Critical steps requiring high-quality models
 LLM_MODEL_EVIDENCE=gpt-4-turbo
@@ -32,12 +34,13 @@ LLM_MODEL_GTM=gpt-4o-mini
 ```
 
 ### Phase-specific Model Configuration (für Phase-Splitting)
+
 ```bash
 # Market phases
 LLM_MODEL_MARKET_PHASE1=gpt-4o-mini
 LLM_MODEL_MARKET_PHASE2=gpt-4-turbo
 
-# GTM phases  
+# GTM phases
 LLM_MODEL_GTM_PHASE1=gpt-4o-mini
 LLM_MODEL_GTM_PHASE2=gpt-4-turbo
 
@@ -47,6 +50,7 @@ LLM_MODEL_FINANCIAL_PLAN_PHASE2=gpt-4-turbo
 ```
 
 ### RateGate Configuration
+
 ```bash
 RATEGATE_TOKENS_PER_MINUTE=30000
 RATEGATE_TOKENS_PER_HOUR=180000
@@ -57,6 +61,7 @@ RATEGATE_STATS_INTERVAL_MS=30000
 ```
 
 ### Retry Configuration
+
 ```bash
 LLM_RETRIES=3
 LLM_RETRY_BASE_DELAY=2000
@@ -65,6 +70,7 @@ RATE_WINDOW_MS=60000
 ```
 
 ### Model-specific Rate Limits (TPM = Tokens Per Minute)
+
 ```bash
 OPENAI_TPM_GPT4=30000
 OPENAI_TPM_GPT4O=50000
@@ -82,6 +88,7 @@ Der Worker Service sollte die gleichen Environment Variables haben wie der Backe
 ## Expected Results nach dem Setup
 
 ### 1. `/api/config` sollte zeigen:
+
 ```json
 {
   "effective_routing": {
@@ -96,14 +103,16 @@ Der Worker Service sollte die gleichen Environment Variables haben wie der Backe
 ```
 
 ### 2. Context Guards sollten verhindern:
+
 - Keine 8192-Token-Modelle für market/gtm/financial_plan
 - Alle ctx_max Werte ≥ 100k für kritische Steps
 
 ### 3. Trace Events sollten zeigen:
+
 ```json
 {
   "step": "market",
-  "phase": "phase1", 
+  "phase": "phase1",
   "model": "gpt-4o-mini",
   "ctx_max": 128000,
   "est_tokens": 15000,
@@ -134,19 +143,25 @@ curl -sS https://aigilexperience-backend.onrender.com/api/jobs/$JOB_ID/trace | j
 ## Troubleshooting
 
 ### Issue: Environment variables not visible in /api/config
-**Solution:** 
+
+**Solution:**
+
 - Verify variables are set in both Backend AND Worker services in Render
 - Restart both services after setting variables
 - Check variable names for typos
 
 ### Issue: Still getting 8192 token limit errors
+
 **Solution:**
+
 - Check that gpt-4 is NOT being used (use gpt-4-turbo instead)
 - Verify context guards are active
 - Check trace events for actual models being used
 
 ### Issue: S1 badge still shows ~1s completion
+
 **Solution:**
+
 - Verify LLM_MODEL_EVIDENCE is set to gpt-4-turbo
 - Check that evidence step is actually calling LLM (not cached)
 - Monitor trace events for evidence step
@@ -154,6 +169,7 @@ curl -sS https://aigilexperience-backend.onrender.com/api/jobs/$JOB_ID/trace | j
 ## Context Guard Validation
 
 The system should prevent these scenarios:
+
 - ❌ `gpt-4` (8192 ctx) on market/gtm/financial_plan steps
 - ❌ `gpt-3.5-turbo` (4096 ctx) on any large step
 - ✅ All models should have ctx_max ≥ 100k for critical steps
@@ -161,8 +177,9 @@ The system should prevent these scenarios:
 ## Phase Splitting Validation
 
 Expected behavior:
+
 - market, gtm, financial_plan always split into 2 phases
-- Phase 1 = data generation (gpt-4o-mini)  
+- Phase 1 = data generation (gpt-4o-mini)
 - Phase 2 = narrative generation (gpt-4-turbo)
 - Trace shows phase=1 before phase=2
 - Phase 2 gets data_from_phase1: true
@@ -170,6 +187,7 @@ Expected behavior:
 ## Artifact System Validation
 
 Expected behavior:
+
 - artifact_written events only after successful file writes
 - Frontend renders links only after receiving artifact_written
 - No 404s on artifact links

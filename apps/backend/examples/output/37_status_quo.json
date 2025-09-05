@@ -104,10 +104,7 @@
       "role": "Serviceanbieter, Integrationspartner",
       "influence_level": "low",
       "resistance_level": "low",
-      "key_concerns": [
-        "Schnittstellenzugang",
-        "Kundenzugang"
-      ]
+      "key_concerns": ["Schnittstellenzugang", "Kundenzugang"]
     }
   ],
   "change_readiness": {

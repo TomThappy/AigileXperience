@@ -5,7 +5,9 @@ This directory contains debugging tools to help identify and resolve issues with
 ## Scripts Overview
 
 ### 1. `test-config.sh` - Configuration Debug Endpoint
+
 Tests the `/api/config` endpoint which shows the effective runtime configuration including:
+
 - All environment variables for model routing
 - Effective model resolution for each step
 - RateGate configuration
@@ -13,29 +15,36 @@ Tests the `/api/config` endpoint which shows the effective runtime configuration
 - Current environment status
 
 **Usage:**
+
 ```bash
 ./test-config.sh
 ```
 
 ### 2. `test-job-with-trace.sh` - Job Creation and Trace Test
+
 Creates a test job and checks for trace data. This helps verify:
+
 - Job creation is working
 - Trace system is recording data
 - Basic job status endpoints
 
 **Usage:**
+
 ```bash
 ./test-job-with-trace.sh
 ```
 
 ### 3. `test-sse-stream.sh` - Server-Sent Events Stream Monitor
+
 Monitors a job's real-time execution via SSE with enhanced trace events. Shows:
+
 - Job status updates
 - Live trace events with model info
 - Final trace summary
 - Error events
 
 **Usage:**
+
 ```bash
 ./test-sse-stream.sh <JOB_ID>
 ```
@@ -43,33 +52,39 @@ Monitors a job's real-time execution via SSE with enhanced trace events. Shows:
 ## Troubleshooting Workflow
 
 ### Step 1: Check Configuration
+
 ```bash
 ./test-config.sh
 ```
 
 Look for these key indicators:
+
 - **effective_routing** section shows which models are actually being used
 - **step_models** shows if your `LLM_MODEL_*` env vars are set
 - **api_config** confirms API keys are loaded (shows first 10 chars)
 - **rate_gate** shows token limits and settings
 
 ### Step 2: Create Test Job and Monitor
+
 ```bash
 ./test-job-with-trace.sh
 ```
 
 This will:
+
 1. Create a test job with `skip_cache: true` for fresh execution
 2. Show the job ID for monitoring
 3. Attempt to fetch initial trace data
 4. Provide commands for real-time monitoring
 
 ### Step 3: Monitor Job Execution in Real-Time
+
 ```bash
 ./test-sse-stream.sh job_<ID>
 ```
 
 Watch for these patterns:
+
 - **Fast execution (~1s)** on steps like "evidence" suggests wrong model (gpt-4o-mini instead of gpt-4)
 - **Token limit errors (8192)** indicate gpt-4o-mini is being used instead of gpt-4
 - **Trace events** showing `model: "gpt-4"` confirm correct model usage
@@ -79,60 +94,72 @@ Watch for these patterns:
 
 Based on current configuration priorities:
 
-| Step | Expected Model | Phase 1 | Phase 2 |
-|------|----------------|---------|---------|
-| evidence | gpt-4 | - | - |
-| brief | gpt-4 | - | - |
-| problem | gpt-4o-mini | - | - |
-| solution | gpt-4o-mini | - | - |
-| team | gpt-4o-mini | - | - |
-| market | gpt-4 | gpt-4o-mini | gpt-4 |
-| business_model | gpt-4 | - | - |
-| competition | gpt-4o-mini | - | - |
-| status_quo | gpt-4o-mini | - | - |
-| gtm | gpt-4o-mini | gpt-4o-mini | gpt-4 |
-| financial_plan | gpt-4 | gpt-4o-mini | gpt-4 |
-| investor_score | gpt-4 | - | - |
+| Step           | Expected Model | Phase 1     | Phase 2 |
+| -------------- | -------------- | ----------- | ------- |
+| evidence       | gpt-4          | -           | -       |
+| brief          | gpt-4          | -           | -       |
+| problem        | gpt-4o-mini    | -           | -       |
+| solution       | gpt-4o-mini    | -           | -       |
+| team           | gpt-4o-mini    | -           | -       |
+| market         | gpt-4          | gpt-4o-mini | gpt-4   |
+| business_model | gpt-4          | -           | -       |
+| competition    | gpt-4o-mini    | -           | -       |
+| status_quo     | gpt-4o-mini    | -           | -       |
+| gtm            | gpt-4o-mini    | gpt-4o-mini | gpt-4   |
+| financial_plan | gpt-4          | gpt-4o-mini | gpt-4   |
+| investor_score | gpt-4          | -           | -       |
 
 ## Common Issues and Solutions
 
 ### Issue: All steps using gpt-4o-mini despite env vars
+
 **Symptoms:**
+
 - Config shows `LLM_MODEL_*` vars as null
 - Fast execution times on evidence step
 - Token limit errors on market/gtm/financial_plan
 
 **Solutions:**
+
 1. Verify env vars are set in Render dashboard for both Backend and Worker services
 2. Restart both services after setting env vars
 3. Check for typos in env var names (should be `LLM_MODEL_EVIDENCE`, not `LLM_MODEL_EXECUTIVE`)
 
 ### Issue: Environment variables not loading
+
 **Symptoms:**
+
 - Config endpoint shows all env vars as null
 - Effective routing shows default/fallback models
 
 **Solutions:**
+
 1. Check if services are reading from correct environment
 2. Verify Render environment variable propagation
 3. Test locally with `.env` file to confirm code works
 
 ### Issue: Trace data not appearing
+
 **Symptoms:**
+
 - Trace endpoint returns 404
 - SSE stream shows no trace events
 
 **Solutions:**
+
 1. Ensure trace system is properly integrated in job processor
 2. Check that job IDs match between creation and trace requests
 3. Verify trace system singleton is working correctly
 
 ### Issue: Context window/token limit errors
+
 **Symptoms:**
+
 - Errors mentioning 8192 token limit
 - "Maximum context length exceeded" errors
 
 **Solutions:**
+
 1. Confirm gpt-4 models are being used for large steps
 2. Check effective model routing in config
 3. Verify phase-specific model overrides are working
@@ -140,6 +167,7 @@ Based on current configuration priorities:
 ## Example Output
 
 ### Successful Config Check
+
 ```json
 {
   "effective_routing": {
@@ -158,6 +186,7 @@ Based on current configuration priorities:
 ```
 
 ### Successful Trace Event
+
 ```json
 {
   "step": "evidence",

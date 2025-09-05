@@ -25,12 +25,16 @@ if (!process.env.ANTHROPIC_API_KEY) {
 
 // DEV Bypass detection
 if (process.env.DEV_BYPASS_QUEUE === "true") {
-  console.log("🔧 [DEV] DEV_BYPASS_QUEUE enabled - Jobs will run synchronously without Redis");
+  console.log(
+    "🔧 [DEV] DEV_BYPASS_QUEUE enabled - Jobs will run synchronously without Redis",
+  );
 }
 
 // LLM DRY_RUN detection
 if (process.env.LLM_DRY_RUN === "true") {
-  console.log("🏃 [DEV] LLM_DRY_RUN enabled - No actual API calls, synthetic responses only");
+  console.log(
+    "🏃 [DEV] LLM_DRY_RUN enabled - No actual API calls, synthetic responses only",
+  );
   console.log("   This saves costs during development and testing.");
 } else {
   console.log("💰 [PROD] LLM_DRY_RUN disabled - Real API calls will be made");

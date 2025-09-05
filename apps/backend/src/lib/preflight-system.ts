@@ -25,18 +25,18 @@ export interface PreflightResult {
   truncate_applied: boolean;
   sources_before: number;
   sources_after: number;
-  
+
   // Truncation details
   sources_kept: PreflightSource[];
   sources_dropped: PreflightSource[];
   brief_truncated?: boolean;
   brief_length_before?: number;
   brief_length_after?: number;
-  
+
   // Error info
   error?: string;
   error_code?: string;
-  
+
   // Hashes for reproducibility
   sources_hash: string;
   brief_hash?: string;
@@ -53,16 +53,16 @@ export interface PreflightContext {
 class PreflightSystem {
   private readonly MAX_BRIEF_LENGTH = 8000; // Characters
   private readonly TOKEN_MULTIPLIER = 0.25; // Approximation: 4 chars = 1 token
-  
+
   /**
    * Perform preflight check and truncation
    */
   async check(
     config: PreflightConfig,
-    context: PreflightContext
+    context: PreflightContext,
   ): Promise<PreflightResult> {
     const startTime = Date.now();
-    
+
     // Validate model capabilities
     const modelCaps = MODEL_CAPABILITIES[config.model];
     if (!modelCaps) {
@@ -81,15 +81,15 @@ class PreflightSystem {
         error_code: "UNKNOWN_MODEL",
       };
     }
-    
+
     const ctx_max = modelCaps.maxTokens;
     const reserveTokens = config.reserveTokens || 1500;
     const availableTokens = ctx_max - reserveTokens;
-    
+
     // Calculate base prompt tokens
     const basePrompt = context.systemPrompt + context.userPrompt;
     const baseTokens = this.estimateTokens(basePrompt);
-    
+
     if (baseTokens > availableTokens) {
       return {
         ok: false,
@@ -106,30 +106,32 @@ class PreflightSystem {
         error_code: "PROMPT_TOO_LARGE",
       };
     }
-    
+
     let availableForContent = availableTokens - baseTokens;
     let brief = context.brief || "";
     let briefTruncated = false;
     let briefLengthBefore = brief.length;
     let briefLengthAfter = briefLengthBefore;
-    
+
     // Truncate brief if necessary
     if (brief.length > this.MAX_BRIEF_LENGTH) {
       brief = this.truncateBrief(brief, this.MAX_BRIEF_LENGTH);
       briefTruncated = true;
       briefLengthAfter = brief.length;
     }
-    
+
     const briefTokens = this.estimateTokens(brief);
     availableForContent -= briefTokens;
-    
+
     // Sort sources by priority (descending) and filter/truncate
-    const sortedSources = [...context.sources].sort((a, b) => b.priority - a.priority);
+    const sortedSources = [...context.sources].sort(
+      (a, b) => b.priority - a.priority,
+    );
     const sourcesKept: PreflightSource[] = [];
     const sourcesDropped: PreflightSource[] = [];
-    
+
     let usedTokens = 0;
-    
+
     for (const source of sortedSources) {
       if (usedTokens + source.tokens <= availableForContent) {
         sourcesKept.push(source);
@@ -137,10 +139,11 @@ class PreflightSystem {
       } else {
         // Check if we can fit a truncated version
         const remainingTokens = availableForContent - usedTokens;
-        if (remainingTokens >= 100) { // Minimum useful content
+        if (remainingTokens >= 100) {
+          // Minimum useful content
           const truncatedContent = this.truncateByTokens(
-            source.content, 
-            remainingTokens
+            source.content,
+            remainingTokens,
           );
           const truncatedSource: PreflightSource = {
             ...source,
@@ -154,16 +157,20 @@ class PreflightSystem {
         }
       }
     }
-    
+
     // Calculate final estimates
     const totalTokens = baseTokens + briefTokens + usedTokens;
-    const truncateApplied = briefTruncated || sourcesDropped.length > 0 || 
+    const truncateApplied =
+      briefTruncated ||
+      sourcesDropped.length > 0 ||
       sourcesKept.some((s, i) => s.content !== sortedSources[i]?.content);
-    
+
     // Create hashes for reproducibility
-    const sourcesHash = createHash(sourcesKept.map(s => s.id + s.content).join(''));
+    const sourcesHash = createHash(
+      sourcesKept.map((s) => s.id + s.content).join(""),
+    );
     const briefHash = context.brief ? createHash(brief) : undefined;
-    
+
     const result: PreflightResult = {
       ok: true,
       model: config.model,
@@ -180,7 +187,7 @@ class PreflightSystem {
       sources_hash: sourcesHash,
       brief_hash: briefHash,
     };
-    
+
     // Record to trace
     traceSystem.addEntry(context.jobId, {
       step: config.step,
@@ -199,14 +206,16 @@ class PreflightSystem {
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startTime,
     });
-    
-    console.log(`🚀 [PREFLIGHT] ${config.step}${config.phase ? `(${config.phase})` : ""}: ` +
-      `${totalTokens}/${ctx_max} tokens, ${sourcesKept.length}/${context.sources.length} sources` +
-      `${truncateApplied ? " (TRUNCATED)" : ""}`);
-    
+
+    console.log(
+      `🚀 [PREFLIGHT] ${config.step}${config.phase ? `(${config.phase})` : ""}: ` +
+        `${totalTokens}/${ctx_max} tokens, ${sourcesKept.length}/${context.sources.length} sources` +
+        `${truncateApplied ? " (TRUNCATED)" : ""}`,
+    );
+
     return result;
   }
-  
+
   /**
    * Estimate tokens from text (rough approximation)
    */
@@ -215,36 +224,36 @@ class PreflightSystem {
     // Add some padding for special tokens and formatting
     return Math.ceil(text.length * this.TOKEN_MULTIPLIER * 1.2);
   }
-  
+
   /**
    * Truncate text to fit within token limit
    */
   private truncateByTokens(text: string, maxTokens: number): string {
     const maxChars = Math.floor(maxTokens / this.TOKEN_MULTIPLIER);
     if (text.length <= maxChars) return text;
-    
+
     // Try to truncate at word boundaries
     const truncated = text.substring(0, maxChars);
-    const lastSpaceIndex = truncated.lastIndexOf(' ');
-    
+    const lastSpaceIndex = truncated.lastIndexOf(" ");
+
     if (lastSpaceIndex > maxChars * 0.8) {
       return truncated.substring(0, lastSpaceIndex) + "...";
     }
-    
+
     return truncated + "...";
   }
-  
+
   /**
    * Intelligently truncate brief content
    */
   private truncateBrief(brief: string, maxLength: number): string {
     if (brief.length <= maxLength) return brief;
-    
+
     // Try to keep the most important parts
-    const sections = brief.split('\n\n');
+    const sections = brief.split("\n\n");
     let result = "";
     let remainingLength = maxLength - 20; // Reserve space for truncation marker
-    
+
     for (const section of sections) {
       if (result.length + section.length + 2 <= remainingLength) {
         result += (result ? "\n\n" : "") + section;
@@ -253,7 +262,7 @@ class PreflightSystem {
         const spaceLeft = remainingLength - result.length;
         if (spaceLeft > 100) {
           const partialSection = section.substring(0, spaceLeft - 10);
-          const lastSentence = partialSection.lastIndexOf('.');
+          const lastSentence = partialSection.lastIndexOf(".");
           if (lastSentence > spaceLeft * 0.7) {
             result += "\n\n" + partialSection.substring(0, lastSentence + 1);
           }
@@ -261,21 +270,21 @@ class PreflightSystem {
         break;
       }
     }
-    
+
     return result + "\n\n[BRIEF TRUNCATED]";
   }
-  
+
   /**
    * Create sources from various input types with automatic prioritization
    */
   createSources(
-    urls: string[] = [], 
-    documents: Array<{content: string, type?: string}> = [],
-    additionalText: string[] = []
+    urls: string[] = [],
+    documents: Array<{ content: string; type?: string }> = [],
+    additionalText: string[] = [],
   ): PreflightSource[] {
     const sources: PreflightSource[] = [];
     let id = 1;
-    
+
     // URLs get medium priority
     for (const url of urls) {
       sources.push({
@@ -286,7 +295,7 @@ class PreflightSystem {
         type: "url",
       });
     }
-    
+
     // Documents get high priority
     for (const doc of documents) {
       sources.push({
@@ -297,7 +306,7 @@ class PreflightSystem {
         type: "document",
       });
     }
-    
+
     // Additional text gets lower priority
     for (const text of additionalText) {
       sources.push({
@@ -308,7 +317,7 @@ class PreflightSystem {
         type: "text",
       });
     }
-    
+
     return sources;
   }
 }
@@ -327,10 +336,15 @@ export async function performPreflight(
   systemPrompt: string,
   userPrompt: string,
   sources: PreflightSource[],
-  brief?: string
+  brief?: string,
 ): Promise<PreflightResult> {
   return preflightSystem.check(
-    { step, phase, model, maxTokens: MODEL_CAPABILITIES[model]?.maxTokens || 128000 },
-    { jobId, sources, brief, systemPrompt, userPrompt }
+    {
+      step,
+      phase,
+      model,
+      maxTokens: MODEL_CAPABILITIES[model]?.maxTokens || 128000,
+    },
+    { jobId, sources, brief, systemPrompt, userPrompt },
   );
 }

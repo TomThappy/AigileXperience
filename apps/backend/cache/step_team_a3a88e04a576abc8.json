@@ -30,17 +30,11 @@
       "hiring_plan_quarters": [
         {
           "quarter": "Q4-2025",
-          "roles": [
-            "Data Privacy Engineer",
-            "Smart-Home Integration Engineer"
-          ]
+          "roles": ["Data Privacy Engineer", "Smart-Home Integration Engineer"]
         },
         {
           "quarter": "Q1-2026",
-          "roles": [
-            "Customer Success Manager",
-            "Growth Marketing Manager"
-          ]
+          "roles": ["Customer Success Manager", "Growth Marketing Manager"]
         }
       ]
     },

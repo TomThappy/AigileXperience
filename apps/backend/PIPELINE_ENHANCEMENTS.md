@@ -4,17 +4,19 @@ Diese Dokumentation beschreibt die neuen robusten Pipeline-Features, die für vo
 
 ## 🚀 Neue Features Übersicht
 
-### 1. **Erweiterte Trace-System** 
+### 1. **Erweiterte Trace-System**
+
 - **Datei:** `src/lib/trace-system.ts`
 - **API:** `/api/jobs/:id/trace`
 - **Features:**
   - Vollständige Nachverfolgung aller LLM-Calls
   - Token-Effizienz-Messung
-  - Fehler-Kategorisierung  
+  - Fehler-Kategorisierung
   - Modell-Performance-Metriken
   - Hash-basierte Reproduzierbarkeit
 
 ### 2. **Preflight-System**
+
 - **Datei:** `src/lib/preflight-system.ts`
 - **Features:**
   - Token-basierte Prüfungen vor LLM-Calls
@@ -23,6 +25,7 @@ Diese Dokumentation beschreibt die neuen robusten Pipeline-Features, die für vo
   - Trace-Integration für Transparenz
 
 ### 3. **Robustes JSON-Handling**
+
 - **Datei:** `src/lib/llm-json.ts`
 - **Features:**
   - Automatische JSON-Reparatur mit `jsonrepair`
@@ -31,6 +34,7 @@ Diese Dokumentation beschreibt die neuen robusten Pipeline-Features, die für vo
   - Strukturierte Error-Responses
 
 ### 4. **Context Guards & Hard Limits**
+
 - **Datei:** `src/lib/context-guards.ts`
 - **Features:**
   - Harte Guards gegen kleine Context-Windows
@@ -39,6 +43,7 @@ Diese Dokumentation beschreibt die neuen robusten Pipeline-Features, die für vo
   - Environment-Variable-basierte Konfiguration
 
 ### 5. **Erweiterte SSE-Events**
+
 - **Datei:** `src/routes/jobs.ts` (Zeile 194-218)
 - **Features:**
   - Real-time Trace-Event-Streaming
@@ -47,6 +52,7 @@ Diese Dokumentation beschreibt die neuen robusten Pipeline-Features, die für vo
   - Error-Events mit detaillierten Codes
 
 ### 6. **Enhanced Configuration API**
+
 - **Endpoint:** `/api/config`
 - **Features:**
   - Vollständige Modell-Routing-Übersicht
@@ -57,18 +63,21 @@ Diese Dokumentation beschreibt die neuen robusten Pipeline-Features, die für vo
 ## 📊 API Endpoints
 
 ### Trace System
+
 ```bash
 GET /api/jobs/:id/trace              # Vollständige Trace
-GET /api/jobs/:id/trace/summary      # Nur Summary-Daten  
+GET /api/jobs/:id/trace/summary      # Nur Summary-Daten
 GET /api/jobs/:id/trace/entries/:step # Step-spezifische Entries
 ```
 
 ### Configuration
+
 ```bash
 GET /api/config                      # Vollständige Konfiguration
 ```
 
 ### Job Management (erweitert)
+
 ```bash
 GET /api/jobs/:id/stream            # SSE mit erweiterten Events
 GET /api/jobs/:id                   # Status mit Trace-Info
@@ -77,6 +86,7 @@ GET /api/jobs/:id                   # Status mit Trace-Info
 ## 🔧 Environment Variables
 
 ### Modell-Routing
+
 ```bash
 # Globale Modelle
 MODEL_NAME=gpt-4o
@@ -98,6 +108,7 @@ LLM_MODEL_GTM_PHASE2=gpt-4o
 ```
 
 ### Rate Gate & Retries
+
 ```bash
 # Rate Limiting
 RATEGATE_TOKENS_PER_MINUTE=40000
@@ -117,15 +128,17 @@ ANTHROPIC_TPM_SONNET=80000
 ## 📋 Testing & Debugging
 
 ### Automatisierte Tests
+
 ```bash
 # Vollständiger Pipeline-Test
 ./test-pipeline.sh http://localhost:3001
 
-# Test mit Production URL  
+# Test mit Production URL
 ./test-pipeline.sh https://your-api.vercel.app
 ```
 
 ### Manual Debugging
+
 ```bash
 # Health Check
 curl http://localhost:3001/health
@@ -146,13 +159,14 @@ curl -N http://localhost:3001/api/jobs/$JOB_ID/stream
 ## 🛠 Implementation Examples
 
 ### 1. Preflight Check vor LLM Call
+
 ```javascript
-import { performPreflight } from '../lib/preflight-system.js';
+import { performPreflight } from "../lib/preflight-system.js";
 
 const sources = preflightSystem.createSources(
   urls,
   [{ content: briefContent }],
-  additionalContext
+  additionalContext,
 );
 
 const preflightResult = await performPreflight(
@@ -163,7 +177,7 @@ const preflightResult = await performPreflight(
   systemPrompt,
   userPrompt,
   sources,
-  brief
+  brief,
 );
 
 if (!preflightResult.ok) {
@@ -172,27 +186,29 @@ if (!preflightResult.ok) {
 ```
 
 ### 2. Robuster JSON LLM Call
+
 ```javascript
-import { llmJson } from '../lib/llm-json.js';
-import { GTMSchema } from '../schemas/gtm.js';
+import { llmJson } from "../lib/llm-json.js";
+import { GTMSchema } from "../schemas/gtm.js";
 
 const result = await llmJson(prompt, GTMSchema, {
-  model: 'gpt-4o',
+  model: "gpt-4o",
   temperature: 0.1,
   maxRetries: 3,
   jobId,
-  step: 'gtm',
-  phase: 'phase2'
+  step: "gtm",
+  phase: "phase2",
 });
 ```
 
 ### 3. Trace Entry hinzufügen
+
 ```javascript
-import { traceSystem } from '../lib/trace-system.js';
+import { traceSystem } from "../lib/trace-system.js";
 
 traceSystem.addEntry(jobId, {
   step: "gtm",
-  phase: "phase2", 
+  phase: "phase2",
   model: "gpt-4o",
   ctx_max: 128000,
   prompt_tokens_est: 15000,
@@ -203,13 +219,17 @@ traceSystem.addEntry(jobId, {
   status: "ok",
   raw_text_path: `/tmp/gtm_${Date.now()}.txt`,
   duration_ms: 12500,
-  actual_tokens: 14200
+  actual_tokens: 14200,
 });
 ```
 
 ### 4. Context Guards verwenden
+
 ```javascript
-import { enforceContextRequirements, MODEL_CAPABILITIES } from '../lib/context-guards.js';
+import {
+  enforceContextRequirements,
+  MODEL_CAPABILITIES,
+} from "../lib/context-guards.js";
 
 const config = enforceContextRequirements("market", "gpt-4o-mini", 50000);
 // Returns: { model: "gpt-4o", forcedUpgrade: true, reason: "context_too_small" }
@@ -218,6 +238,7 @@ const config = enforceContextRequirements("market", "gpt-4o-mini", 50000);
 ## 📊 Monitoring & Metriken
 
 ### Key Metrics verfügbar
+
 - **Token-Effizienz:** Actual vs. Estimated Tokens pro Call
 - **Model-Performance:** Durchschnittliche Response-Zeit pro Model
 - **Error-Rates:** Fehlerquote pro Step/Phase/Model
@@ -226,17 +247,18 @@ const config = enforceContextRequirements("market", "gpt-4o-mini", 50000);
 - **Truncation-Rate:** Wie oft Sources/Brief gekürzt werden
 
 ### Dashboard Queries
+
 ```bash
 # Token-Effizienz pro Modell
 curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '
-  [.entries[] | select(.token_efficiency) | {model, efficiency: .token_efficiency}] 
-  | group_by(.model) 
+  [.entries[] | select(.token_efficiency) | {model, efficiency: .token_efficiency}]
+  | group_by(.model)
   | map({model: .[0].model, avg_efficiency: (map(.efficiency | rtrimstr("%") | tonumber) | add / length)})'
 
-# Error-Rate pro Step  
+# Error-Rate pro Step
 curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '
-  [.entries[] | {step, status}] 
-  | group_by(.step) 
+  [.entries[] | {step, status}]
+  | group_by(.step)
   | map({step: .[0].step, error_rate: (map(select(.status=="error")) | length) / length * 100})'
 
 # Rate-Gate Impact
@@ -248,6 +270,7 @@ curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '
 ## 🚨 Error Handling
 
 ### Error-Kategorien in Traces
+
 - `UNKNOWN_MODEL`: Model nicht in Capabilities definiert
 - `CONTEXT_TOO_SMALL`: Context Window zu klein für Step
 - `PROMPT_TOO_LARGE`: Base Prompt überschreitet verfügbaren Context
@@ -256,6 +279,7 @@ curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '
 - `VALIDATION_ERROR`: Zod Schema Validation fehlgeschlagen
 
 ### Automatic Recovery
+
 - **JSON Parse Errors:** Automatische Reparatur mit `jsonrepair`
 - **Context Issues:** Hard Guards upgraden Modell automatisch
 - **Rate Limits:** Exponential Backoff mit konfigurierbaren Retries
@@ -264,8 +288,9 @@ curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '
 ## 🔄 Deployment & CI/CD
 
 ### Health Checks für Deployment
+
 ```bash
-# Basic Health  
+# Basic Health
 curl -f https://api.example.com/health
 
 # Functional Health
@@ -277,6 +302,7 @@ curl -f "https://api.example.com/api/jobs/$JOB_ID/trace"
 ```
 
 ### Vercel Deployment mit Rules
+
 ```bash
 # Mit GitHub Actions CI/CD und auto-deployment
 vercel --prod
@@ -287,19 +313,21 @@ vercel --prod
 ## 📈 Performance Tuning
 
 ### Optimale Konfiguration
+
 ```bash
 # Für hohen Durchsatz
 RATEGATE_TOKENS_PER_MINUTE=100000
 QUEUE_CONCURRENCY=3
 LLM_RETRIES=2
 
-# Für hohe Genauigkeit  
+# Für hohe Genauigkeit
 LLM_MODEL_MARKET=gpt-4o
 LLM_MODEL_GTM=gpt-4o
 LLM_MODEL_FINANCIAL_PLAN=gpt-4o
 ```
 
 ### Load Testing
+
 ```bash
 # Multiple Jobs parallel erstellen
 for i in {1..5}; do
@@ -315,6 +343,7 @@ curl http://localhost:3001/api/jobs/stats | jq .
 ## 📝 Troubleshooting
 
 Siehe `TROUBLESHOOTING.md` für:
+
 - Häufige Probleme & Lösungen
 - Debug-Commands
 - Performance-Monitoring
@@ -325,7 +354,7 @@ Siehe `TROUBLESHOOTING.md` für:
 Pipeline gilt als **robust und production-ready** wenn:
 
 1. ✅ **Trace-System:** Alle LLM-Calls werden getrackt mit vollständigen Metriken
-2. ✅ **Error-Handling:** < 2% unhandled errors, alle Errors kategorisiert  
+2. ✅ **Error-Handling:** < 2% unhandled errors, alle Errors kategorisiert
 3. ✅ **Performance:** < 30s average response time, > 95% success rate
 4. ✅ **Monitoring:** Real-time SSE Events, comprehensive /config endpoint
 5. ✅ **Testing:** Automated test suite passes, manual smoke tests OK

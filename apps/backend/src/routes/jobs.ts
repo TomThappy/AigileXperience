@@ -33,8 +33,10 @@ export default async function jobRoutes(app: FastifyInstance) {
 
       const options = {
         skipCache: body.skip_cache === true,
-        parallelLimit: typeof body.parallel_limit === "number" ? body.parallel_limit : 2,
-        timeoutMs: typeof body.timeout_ms === "number" ? body.timeout_ms : 300000, // 5m
+        parallelLimit:
+          typeof body.parallel_limit === "number" ? body.parallel_limit : 2,
+        timeoutMs:
+          typeof body.timeout_ms === "number" ? body.timeout_ms : 300000, // 5m
       };
 
       const jobId = await jobQueue.createJob(input, options);
@@ -404,7 +406,10 @@ export default async function jobRoutes(app: FastifyInstance) {
   app.get("/api/config", async (_req, reply) => {
     const { MODEL_CAPABILITIES } = await import("../lib/context-guards.js");
 
-    const getEffectiveModel = (stepName: string, defaultValue: string): string => {
+    const getEffectiveModel = (
+      stepName: string,
+      defaultValue: string,
+    ): string => {
       const envVar = `LLM_MODEL_${stepName}`;
       return (
         process.env[envVar] ||
@@ -423,7 +428,9 @@ export default async function jobRoutes(app: FastifyInstance) {
 
       if (phaseName) {
         const phaseEnvVar = `LLM_MODEL_${stepName}_${phaseName.toUpperCase()}`;
-        model = (process.env as any)[phaseEnvVar] || getEffectiveModel(stepName, defaultValue);
+        model =
+          (process.env as any)[phaseEnvVar] ||
+          getEffectiveModel(stepName, defaultValue);
       } else {
         model = getEffectiveModel(stepName, defaultValue);
       }
@@ -435,10 +442,7 @@ export default async function jobRoutes(app: FastifyInstance) {
 
       // Versuche mehrere mögliche Properties, dann sicherer Fallback
       const ctx =
-        caps?.maxTokens ??
-        caps?.contextWindow ??
-        caps?.ctx_max ??
-        128000;
+        caps?.maxTokens ?? caps?.contextWindow ?? caps?.ctx_max ?? 128000;
 
       return { model, ctx_max: Number(ctx) || 128000 };
     };

@@ -470,11 +470,7 @@
           "timing": "Year 0-1",
           "amount": 3000000,
           "purpose": "MVP, initial team, go-to-market",
-          "milestones": [
-            "MVP Launch",
-            "First 10k users",
-            "GDPR compliance"
-          ]
+          "milestones": ["MVP Launch", "First 10k users", "GDPR compliance"]
         },
         {
           "round": "Series A",

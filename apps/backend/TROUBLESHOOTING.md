@@ -39,24 +39,27 @@ chmod +x test-pipeline.sh
 ### Problem 1: "Trace not found" (404 Error)
 
 **Symptome:**
+
 - `/api/jobs/:id/trace` gibt 404 zurück
 - Frontend zeigt "Trace nicht verfügbar"
 
 **Ursachen & Lösungen:**
 
 1. **Job-ID existiert nicht:**
+
    ```bash
    # Prüfe ob Job existiert
    curl http://localhost:3001/api/jobs/YOUR_JOB_ID
-   
+
    # Wenn 404: Job wurde nie erstellt oder ist abgelaufen
    ```
 
 2. **Trace-System nicht initialisiert:**
+
    ```bash
    # Prüfe Server-Logs für:
    # "🔍 [TRACE] Started tracing for job: ..."
-   
+
    # Wenn fehlt: traceSystem.startTrace() wird nicht aufgerufen
    ```
 
@@ -67,9 +70,10 @@ chmod +x test-pipeline.sh
    ```
 
 **Debugging:**
+
 ```javascript
 // Im Backend Code prüfen:
-import { traceSystem } from './lib/trace-system.js';
+import { traceSystem } from "./lib/trace-system.js";
 
 // In Job-Creation:
 traceSystem.startTrace(jobId);
@@ -86,10 +90,12 @@ traceSystem.addEntry(jobId, {
 ### Problem 2: JSON Parse Errors in GTM Step
 
 **Symptome:**
+
 - GTM Step schlägt fehl mit "Invalid JSON"
 - Frontend zeigt Parse-Fehler
 
 **Debugging:**
+
 ```bash
 # 1. Trace prüfen für GTM Step
 curl http://localhost:3001/api/jobs/JOB_ID/trace/entries/gtm | jq .
@@ -104,36 +110,40 @@ curl http://localhost:3001/api/config | jq .effective_routing.gtm
 **Lösungen:**
 
 1. **Robuster JSON Wrapper verwenden:**
+
    ```javascript
-   import { llmJson } from '../lib/llm-json.js';
-   import { GTMSchema } from '../schemas/gtm.js';
-   
+   import { llmJson } from "../lib/llm-json.js";
+   import { GTMSchema } from "../schemas/gtm.js";
+
    const result = await llmJson(prompt, GTMSchema, {
-     model: 'gpt-4o',
+     model: "gpt-4o",
      temperature: 0.1,
-     maxRetries: 3
+     maxRetries: 3,
    });
    ```
 
 2. **Raw Output speichern für Debugging:**
+
    ```javascript
    // In LLM Call:
    const rawResponse = await llmCall();
-   
+
    // Raw speichern für Debugging
    traceSystem.addEntry(jobId, {
-     raw_text_path: `/tmp/gtm_raw_${Date.now()}.txt`
+     raw_text_path: `/tmp/gtm_raw_${Date.now()}.txt`,
    });
    ```
 
 ### Problem 3: Rate Limit Errors
 
 **Symptome:**
-- "429 Too Many Requests" 
+
+- "429 Too Many Requests"
 - Sehr langsame API Antworten
 - Jobs hängen in "running"
 
 **Debugging:**
+
 ```bash
 # 1. Rate Gate Status prüfen
 curl http://localhost:3001/api/config | jq .rate_gate
@@ -145,6 +155,7 @@ curl http://localhost:3001/api/config | jq .rate_gate
 **Lösungen:**
 
 1. **Environment Variables anpassen:**
+
    ```bash
    # .env
    RATEGATE_TOKENS_PER_MINUTE=60000
@@ -163,10 +174,12 @@ curl http://localhost:3001/api/config | jq .rate_gate
 ### Problem 4: Context Length Exceeded
 
 **Symptome:**
+
 - "Context length exceeded" Fehler
 - Large Steps (market, gtm, financial_plan) schlagen fehl
 
 **Debugging:**
+
 ```bash
 # 1. Preflight-System Logs prüfen
 # Server-Logs für: "🚀 [PREFLIGHT]"
@@ -178,28 +191,32 @@ curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '.entries[] | select(.step
 **Lösungen:**
 
 1. **Hard Guards aktivieren:**
+
    ```bash
    # .env - Erzwinge große Modelle für große Steps
    LLM_MODEL_MARKET=gpt-4o
-   LLM_MODEL_GTM=gpt-4o  
+   LLM_MODEL_GTM=gpt-4o
    LLM_MODEL_FINANCIAL_PLAN=gpt-4o
    ```
 
 2. **Phase-Splitting erzwingen:**
+
    ```javascript
    // Context Guards prüfen
-   import { enforceContextRequirements } from './lib/context-guards.js';
-   
+   import { enforceContextRequirements } from "./lib/context-guards.js";
+
    const config = enforceContextRequirements(step, model, estimatedTokens);
    ```
 
 ### Problem 5: SSE Stream Issues
 
 **Symptome:**
+
 - Frontend bekommt keine Live-Updates
 - Stream verbindet nicht oder bricht ab
 
 **Debugging:**
+
 ```bash
 # 1. Manual SSE Test
 curl -N http://localhost:3001/api/jobs/JOB_ID/stream
@@ -212,6 +229,7 @@ curl -N http://localhost:3001/api/jobs/JOB_ID/stream
 **Lösungen:**
 
 1. **CORS Headers prüfen:**
+
    ```javascript
    // In SSE Response:
    "Access-Control-Allow-Origin": "*",
@@ -220,7 +238,7 @@ curl -N http://localhost:3001/api/jobs/JOB_ID/stream
 
 2. **Client Disconnect Handling:**
    ```javascript
-   req.raw.on('close', () => {
+   req.raw.on("close", () => {
      clearInterval(pollInterval);
    });
    ```
@@ -255,7 +273,7 @@ curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '{
 # Token-Effizienz prüfen
 curl http://localhost:3001/api/jobs/JOB_ID/trace | jq '.entries[] | {
   step,
-  phase, 
+  phase,
   estimated: .prompt_tokens_est,
   actual: .actual_tokens,
   efficiency: .token_efficiency,
@@ -345,9 +363,10 @@ fi
 ## 🔧 Common Fixes
 
 ### Fix 1: Trace System Reset
+
 ```javascript
 // Im Server Code:
-import { traceSystem } from './lib/trace-system.js';
+import { traceSystem } from "./lib/trace-system.js";
 
 // Cleanup alte Traces
 traceSystem.cleanup();
@@ -357,14 +376,16 @@ traceSystem.startTrace(jobId);
 ```
 
 ### Fix 2: Rate Gate Reset
+
 ```javascript
-import { rateGate } from './lib/rate-gate.js';
+import { rateGate } from "./lib/rate-gate.js";
 
 // Alle Budgets zurücksetzen
 rateGate.reset();
 ```
 
 ### Fix 3: Context Guards Bypass (Notfall)
+
 ```bash
 # Temporär größere Modelle erzwingen
 export LLM_DEFAULT_MODEL=claude-3-5-sonnet
@@ -375,6 +396,7 @@ export LLM_MODEL_GTM=claude-3-5-sonnet
 ## 📞 Support & Escalation
 
 ### Log Files zu prüfen
+
 - Server Console Output
 - SSE Connection Logs
 - Rate Gate Warnings
@@ -382,24 +404,26 @@ export LLM_MODEL_GTM=claude-3-5-sonnet
 - LLM API Errors
 
 ### Eskalations-Kriterien
+
 - Success Rate < 80%
 - Average Response Time > 30s
 - Multiple Context Length Errors
 - Rate Limit Errors trotz korrekter Config
 
 ### Debug Information sammeln
+
 ```bash
 # Kompletten Debug-Report generieren
 {
   echo "=== System Health ==="
   curl -s http://localhost:3001/health | jq .
-  
+
   echo "=== Configuration ==="
   curl -s http://localhost:3001/api/config | jq .effective_routing
-  
+
   echo "=== Queue Stats ==="
   curl -s http://localhost:3001/api/jobs/stats | jq .
-  
+
   echo "=== Recent Job Trace ==="
   curl -s http://localhost:3001/api/jobs/YOUR_LATEST_JOB_ID/trace | jq .summary
 } > debug_report_$(date +%Y%m%d_%H%M%S).json
