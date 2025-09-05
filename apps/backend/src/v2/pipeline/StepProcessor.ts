@@ -430,10 +430,22 @@ export class StepProcessor {
     defaultModel?: string,
     phaseName?: string,
   ): string {
+    console.log(
+      `🔍 [DEBUG] Model selection for ${stepId}${phaseName ? ` (${phaseName})` : ""}:`,
+    );
+    console.log(`🔍 - defaultModel: ${defaultModel || "none"}`);
+    console.log(
+      `🔍 - process.env.LLM_DEFAULT_MODEL: ${process.env.LLM_DEFAULT_MODEL || "NOT SET"}`,
+    );
+
     // For phase-split steps, check phase-specific models first
     if (phaseName) {
       const phaseEnvVar = `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()}`;
       const phaseSpecificModel = process.env[phaseEnvVar];
+
+      console.log(
+        `🔍 - Checking phase env var ${phaseEnvVar}: ${phaseSpecificModel || "NOT SET"}`,
+      );
 
       if (phaseSpecificModel) {
         console.log(
@@ -447,6 +459,10 @@ export class StepProcessor {
     const envVarName = `LLM_MODEL_${stepId.toUpperCase()}`;
     const stepSpecificModel = process.env[envVarName];
 
+    console.log(
+      `🔍 - Checking step env var ${envVarName}: ${stepSpecificModel || "NOT SET"}`,
+    );
+
     if (stepSpecificModel) {
       console.log(
         `🎯 Found step-specific model for ${stepId}: ${stepSpecificModel}`,
@@ -455,7 +471,12 @@ export class StepProcessor {
     }
 
     // Fallback to step preference, then global default
-    return defaultModel || process.env.LLM_DEFAULT_MODEL || "gpt-4o";
+    const finalModel =
+      defaultModel || process.env.LLM_DEFAULT_MODEL || "gpt-4o";
+    console.log(
+      `🔍 - Final model selection: ${finalModel} (${!defaultModel && !process.env.LLM_DEFAULT_MODEL ? "hardcoded fallback" : "from env/default"})`,
+    );
+    return finalModel;
   }
 
   private getModelSource(

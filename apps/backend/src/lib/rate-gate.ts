@@ -144,22 +144,49 @@ export function getModelLimit(model: string): number {
  * Initialisiert das RateGate System mit Environment Variables
  */
 export function initializeRateGate(): void {
-  const tokensPerMinute = parseInt(process.env.RATEGATE_TOKENS_PER_MINUTE || '40000');
-  const tokensPerHour = parseInt(process.env.RATEGATE_TOKENS_PER_HOUR || '240000');
-  const tokensPerDay = parseInt(process.env.RATEGATE_TOKENS_PER_DAY || '1000000');
-  const reservePercentage = parseFloat(process.env.RATEGATE_RESERVE_PERCENTAGE || '0.20');
-  const minTokensForRequest = parseInt(process.env.RATEGATE_MIN_TOKENS_FOR_REQUEST || '1000');
-  
-  console.log('🛡️ RateGate Configuration:', {
+  const tokensPerMinute = parseInt(
+    process.env.RATEGATE_TOKENS_PER_MINUTE || "40000",
+  );
+  const tokensPerHour = parseInt(
+    process.env.RATEGATE_TOKENS_PER_HOUR || "240000",
+  );
+  const tokensPerDay = parseInt(
+    process.env.RATEGATE_TOKENS_PER_DAY || "1000000",
+  );
+  const reservePercentage = parseFloat(
+    process.env.RATEGATE_RESERVE_PERCENTAGE || "0.20",
+  );
+  const minTokensForRequest = parseInt(
+    process.env.RATEGATE_MIN_TOKENS_FOR_REQUEST || "1000",
+  );
+
+  console.log("🛡️ RateGate Configuration:", {
     tokensPerMinute,
     tokensPerHour,
     tokensPerDay,
     reservePercentage: `${(reservePercentage * 100).toFixed(0)}%`,
     minTokensForRequest,
   });
-  
+
+  // DEBUG: Check all LLM model environment variables
+  console.log("🔍 [DEBUG] Environment Variables Check:");
+  console.log("🔍 Global Models:", {
+    MODEL_NAME: process.env.MODEL_NAME || "NOT SET",
+    MODEL_ANALYZE: process.env.MODEL_ANALYZE || "NOT SET",
+    MODEL_REFINE: process.env.MODEL_REFINE || "NOT SET",
+    LLM_DEFAULT_MODEL: process.env.LLM_DEFAULT_MODEL || "NOT SET",
+  });
+
+  console.log("🔍 Step-specific Models:", {
+    LLM_MODEL_EVIDENCE: process.env.LLM_MODEL_EVIDENCE || "NOT SET",
+    LLM_MODEL_BRIEF: process.env.LLM_MODEL_BRIEF || "NOT SET",
+    LLM_MODEL_PROBLEM: process.env.LLM_MODEL_PROBLEM || "NOT SET",
+    LLM_MODEL_GTM: process.env.LLM_MODEL_GTM || "NOT SET",
+    LLM_MODEL_FINANCIAL_PLAN: process.env.LLM_MODEL_FINANCIAL_PLAN || "NOT SET",
+  });
+
   // Reset any existing budgets
   rateGate.reset();
-  
-  console.log('✅ RateGate system initialized successfully');
+
+  console.log("✅ RateGate system initialized successfully");
 }
