@@ -1,0 +1,61 @@
+# .coderabbit.yaml
+version: 1
+
+# Monorepo Project Hints
+project:
+  name: AigileXperience
+  layout:
+    apps:
+      backend:
+        path: apps/backend
+        language: typescript
+      frontend:
+        path: apps/frontend
+        language: nextjs
+    packages:
+      shared:
+        path: packages/shared
+        language: typescript
+
+review:
+  mode: diff         # fokussiere auf Änderungen
+  max_context_lines: 1200
+  priority:
+    - security
+    - correctness
+    - performance
+    - reliability
+    - maintainability
+  request:
+    docs: inline     # kurze, konkrete Hinweise
+    code: suggestions
+    tests: required  # fordert Tests ein, wenn riskant
+  severity_threshold: medium
+
+rules:
+  - match: "**/*.ts"
+    linters: [eslint]
+    style: standard
+  - match: "apps/backend/**"
+    runtime: node20
+    checks:
+      - "ESM/CommonJS mismatch"
+      - "Uncaught promise / missing await"
+      - "JSON-only output from LLM steps"
+  - match: "apps/frontend/**"
+    checks:
+      - "SSE usage resilient (reconnect, backoff)"
+      - "env NEXT_PUBLIC_* guarded"
+
+ci:
+  re_review_on_push: true
+  block_merge_if:
+    - status != "approved"
+    - has_unresolved_threads == true
+  labels:
+    deep-review: triggers_full_scan
+    skip-review: bypass
+
+messages:
+  pr_summary: true
+  tone: concise

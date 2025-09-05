@@ -44,10 +44,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Render
+      # Deploy Backend
+      - name: Deploy Backend to Render
         uses: johnbeynon/render-deploy-action@v0.0.8
         with:
-          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          service-id: ${{ secrets.RENDER_BACKEND_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+      # Deploy Worker
+      - name: Deploy Worker to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_WORKER_ID }}
           api-key: ${{ secrets.RENDER_API_KEY }}
 
   deploy-frontend:
