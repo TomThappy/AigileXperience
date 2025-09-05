@@ -46,7 +46,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
     try {
       // 1) Job anlegen (asynchron über Render Backend direkt)
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://aigilexperience-backend.onrender.com";
+      const backendUrl = "https://aigilexperience-backend.onrender.com";
       const jobRes = await fetch(`${backendUrl}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
