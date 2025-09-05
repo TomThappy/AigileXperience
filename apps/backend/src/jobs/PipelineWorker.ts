@@ -4,11 +4,18 @@ import type { JobData, JobArtifact } from "./JobQueue.js";
 import type { PipelineResult } from "../v2/types.js";
 
 export class EnhancedPipelineWorker {
-  private jobQueue = getJobQueue();
+  private jobQueue: Awaited<ReturnType<typeof getJobQueue>> | null = null;
   private pipelineManager = new PipelineManager();
 
+  private async initializeQueue() {
+    if (!this.jobQueue) {
+      this.jobQueue = await getJobQueue();
+    }
+  }
+
   async processJobWithDetailedProgress(jobId: string): Promise<void> {
-    const job = await this.jobQueue.getJob(jobId);
+    await this.initializeQueue();
+    const job = await this.jobQueue!.getJob(jobId);
     if (!job) {
       throw new Error(`Job ${jobId} not found`);
     }
@@ -65,13 +72,13 @@ export class EnhancedPipelineWorker {
           },
         };
 
-        await this.jobQueue.setJobResult(jobId, completeResult);
+        await this.jobQueue!.setJobResult(jobId, completeResult);
       } else {
         throw new Error(result.error || "Pipeline execution failed");
       }
     } catch (error) {
       console.error(`❌ Job ${jobId} failed:`, error);
-      await this.jobQueue.updateJobStatus(
+      await this.jobQueue!.updateJobStatus(
         jobId,
         "failed",
         { step: "error", percentage: 100 },
@@ -87,7 +94,7 @@ export class EnhancedPipelineWorker {
     percentage: number,
     currentStep: number,
   ) {
-    await this.jobQueue.updateJobStatus(jobId, "running", {
+    await this.jobQueue!.updateJobStatus(jobId, "running", {
       step,
       percentage: Math.round(percentage),
       currentStep,
@@ -104,7 +111,7 @@ export class EnhancedPipelineWorker {
     data: any,
     hash: string,
   ) {
-    await this.jobQueue.addArtifact(jobId, { name, type, data, hash });
+    await this.jobQueue!.addArtifact(jobId, { name, type, data, hash });
     console.log(`📄 Job ${jobId}: Saved artifact ${name} (${type})`);
   }
 }
