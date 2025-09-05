@@ -43,50 +43,99 @@ export default function AutoPage() {
     setStages({ S1: "running", S2: "idle", S3: "idle", S4: "idle" });
     setSecState(Object.fromEntries(SECTIONS.map((s) => [s.key, "pending"])));
     setData(null);
-    const url = "/api/auto/run";
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ project_title: title, elevator_pitch: pitch }),
-    });
-    if (!res.ok) {
-      setStages((p: any) => ({ ...p, S1: "error" }));
-      setError(`API ${res.status}`);
-      return;
-    }
-    setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
-    const json = await res.json();
-    // Wir simulieren "progressives" Eintreffen, indem wir die Sections seriell setzen:
-    setData({ meta: json.meta, sections: {} });
-    const secOrder = [
-      "executive",
-      "problem",
-      "solution",
-      "market",
-      "gtm",
-      "business",
-      "financials",
-      "competition",
-      "roadmap",
-      "team",
-      "ask",
-    ];
-    for (const k of secOrder) {
-      setSecState((s) => ({ ...s, [k]: "running" }));
-      // kleine Pause für UX (200ms)
-      // @ts-ignore
-      await new Promise((r) => setTimeout(r, 200));
-      const content = json.sections?.[k] || null;
-      setData((prev: any) => {
-        const nxt = { ...prev, sections: { ...prev.sections, [k]: content } };
-        try {
-          localStorage.setItem("last_dossier", JSON.stringify(nxt));
-        } catch {}
-        return nxt;
+
+    try {
+      // 1) Job anlegen (asynchron über Render Backend)
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+      const jobRes = await fetch(`${backendUrl}/api/jobs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_title: title,
+          pitch: pitch,
+          use_assumptions: true
+        }),
       });
-      setSecState((s) => ({ ...s, [k]: content ? "done" : "pending" }));
+
+      if (!jobRes.ok) {
+        setStages((p: any) => ({ ...p, S1: "error" }));
+        setError(`Job creation failed: ${jobRes.status}`);
+        return;
+      }
+
+      const { jobId } = await jobRes.json();
+      setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
+
+      // 2) Progress via Server-Sent Events streamen
+      const eventSource = new EventSource(`${backendUrl}/api/jobs/${jobId}/stream`);
+      setData({ meta: { jobId }, sections: {} });
+
+      eventSource.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'progress') {
+          // Update UI mit Progress
+          const { step, status } = message.payload;
+          if (step) {
+            setSecState((s) => ({ ...s, [step]: status || "running" }));
+          }
+        } else if (message.type === 'artifact') {
+          // Einzelne Section ist fertig
+          const { section, data: sectionData } = message.payload;
+          if (section && sectionData) {
+            setData((prev: any) => {
+              const nxt = { 
+                ...prev, 
+                sections: { ...prev.sections, [section]: sectionData } 
+              };
+              try {
+                localStorage.setItem("last_dossier", JSON.stringify(nxt));
+              } catch {}
+              return nxt;
+            });
+            setSecState((s) => ({ ...s, [section]: "done" }));
+          }
+        } else if (message.type === 'done') {
+          // Job komplett fertig
+          const finalData = message.payload;
+          if (finalData?.sections) {
+            setData((prev: any) => {
+              const nxt = { ...prev, ...finalData };
+              try {
+                localStorage.setItem("last_dossier", JSON.stringify(nxt));
+              } catch {}
+              return nxt;
+            });
+            
+            // Alle Sections als done markieren
+            const doneState = Object.fromEntries(
+              SECTIONS.map((s) => [s.key, finalData.sections[s.key] ? "done" : "pending"])
+            );
+            setSecState(doneState);
+          }
+          setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
+          eventSource.close();
+        } else if (message.type === 'error') {
+          setError(`Pipeline error: ${message.payload?.error || 'Unknown error'}`);
+          setStages((p: any) => ({ ...p, S2: "error" }));
+          eventSource.close();
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error('SSE Error:', err);
+        setError('Connection lost - please refresh');
+        setStages((p: any) => ({ ...p, S2: "error" }));
+        eventSource.close();
+      };
+
+      // Cleanup function speichern für späteren Gebrauch
+      (window as any).currentEventSource = eventSource;
+      
+    } catch (error) {
+      setStages((p: any) => ({ ...p, S1: "error" }));
+      setError(`Error: ${error instanceof Error ? error.message : String(error)}`);
     }
-    setStages({ S1: "done", S2: "done", S3: "done", S4: "idle" });
   }
 
   return (
