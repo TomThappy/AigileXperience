@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import crypto from "node:crypto";
+import crypto from "crypto";
 import type { PitchInput, PipelineResult } from "../v2/types.js";
 
 export interface JobData {

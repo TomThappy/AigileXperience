@@ -1,6 +1,6 @@
-import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import path from "node:path";
+import crypto from "crypto";
+import fs from "fs/promises";
+import path from "path";
 
 export function createHash(data: any): string {
   const normalized = JSON.stringify(data, Object.keys(data).sort());

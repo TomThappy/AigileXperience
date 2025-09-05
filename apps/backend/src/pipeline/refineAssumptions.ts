@@ -1,7 +1,7 @@
 import { Deck, DeckSchema } from "@aigilexperience/common";
 import { chatComplete } from "../lib/llm.js";
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 
 function loadPrompt(relPath: string) {
   const p = path.join(process.cwd(), "apps", "backend", "prompts", relPath);

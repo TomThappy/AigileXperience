@@ -1,7 +1,7 @@
-import path from "node:path";
-import fs from "node:fs/promises";
+import path from "path";
+import fs from "fs/promises";
 import { writeJsonFile, readJsonFile, createHash } from "../utils/hash.js";
-import crypto from "node:crypto";
+import crypto from "crypto";
 
 export class CacheManager {
   private cacheDir: string;

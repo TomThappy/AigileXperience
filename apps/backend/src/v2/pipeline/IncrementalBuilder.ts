@@ -1,6 +1,6 @@
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { writeJsonFile, readJsonFile } from "../utils/hash.js";
-import path from "node:path";
+import path from "path";
 
 export interface BuildState {
   pitch_hash: string;

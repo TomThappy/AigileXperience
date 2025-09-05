@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { PipelineManager } from "../v2/pipeline/PipelineManager.js";
 import type { PitchInput } from "../v2/types.js";
 

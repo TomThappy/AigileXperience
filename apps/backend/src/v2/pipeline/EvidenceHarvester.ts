@@ -1,8 +1,8 @@
 import { chatComplete } from "../../lib/llm.js";
 import { writeJsonFile, readJsonFile } from "../utils/hash.js";
-import fs from "node:fs/promises";
-import path from "node:path";
-import crypto from "node:crypto";
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
 
 export interface SourceData {
   title: string;

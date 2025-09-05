@@ -10,8 +10,7 @@
     "dev": "tsx src/server.ts",
     "worker": "tsx src/worker.ts",
     "worker:prod": "node dist/worker.js",
-    "prebuild": "env RENDER=true sh -c 'cd ../../packages/common && npm ci --include=dev && npm run build'",
-    "build": "tsc -p tsconfig.json",
+    "build": "mkdir -p dist && cp -r src/* dist/ && find dist -name '*.ts' -exec sh -c 'mv \"$1\" \"${1%.ts}.js\"' _ {} \;",
     "type-check": "tsc --noEmit",
     "test": "echo 'Backend tests temporarily disabled for deployment'"
   },

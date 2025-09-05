@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import crypto from "node:crypto";
+import crypto from "crypto";
 import { runLeitfadenV1 } from "../pipeline/leitfaden_v1/run.js";
 
 export default async function autoV1(app: FastifyInstance) {

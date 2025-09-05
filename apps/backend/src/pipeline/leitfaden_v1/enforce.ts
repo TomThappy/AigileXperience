@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 import { chatComplete } from "../../lib/llm.js";
 
 const P = (...x: string[]) => path.join(process.cwd(), "apps", "backend", ...x);

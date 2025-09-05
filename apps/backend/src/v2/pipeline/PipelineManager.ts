@@ -8,7 +8,7 @@ import type {
   PitchInput,
   DossierData,
 } from "../types.js";
-import path from "node:path";
+import path from "path";
 
 export class PipelineManager {
   private cache: CacheManager;

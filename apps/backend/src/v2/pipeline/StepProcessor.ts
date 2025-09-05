@@ -2,9 +2,9 @@ import { chatComplete } from "../../lib/llm.js";
 import { CacheManager } from "../cache/CacheManager.js";
 import { writeJsonFile, readJsonFile } from "../utils/hash.js";
 import type { StepResult, PipelineStep } from "../types.js";
-import fs from "node:fs/promises";
-import path from "node:path";
-import crypto from "node:crypto";
+import fs from "fs/promises";
+import path from "path";
+import crypto from "crypto";
 import { EvidenceHarvester } from "./EvidenceHarvester.js";
 import { NumberValidator } from "./NumberValidator.js";
 
