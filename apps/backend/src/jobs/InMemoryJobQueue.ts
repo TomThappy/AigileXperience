@@ -6,6 +6,8 @@ import type { JobData, JobArtifact } from "./JobQueue.js";
 export class InMemoryJobQueue {
   private store = new Map<string, JobData>();
   private artifacts = new Map<string, Record<string, any>>();
+  private readonly maxStoredJobs = 1000; // Prevent memory bloat
+  private readonly jobRetentionMs = 24 * 60 * 60 * 1000; // 24 hours
 
   async createJob(
     input: PitchInput,
@@ -187,6 +189,69 @@ export class InMemoryJobQueue {
       failed: all.filter((j) => j.status === "failed").length,
       queued: all.filter((j) => j.status === "queued").length,
       running: all.filter((j) => j.status === "running").length,
+      total: all.length,
+      memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     };
+  }
+
+  /**
+   * Clean up old jobs to prevent memory leaks in production
+   */
+  async cleanup(): Promise<{ removed: number }> {
+    const now = Date.now();
+    let removedCount = 0;
+    const jobsToRemove: string[] = [];
+
+    // Find jobs older than retention period
+    for (const [jobId, job] of this.store) {
+      const jobAge = now - job.createdAt;
+      const isCompleted = job.status === "completed" || job.status === "failed";
+      
+      if (isCompleted && jobAge > this.jobRetentionMs) {
+        jobsToRemove.push(jobId);
+      }
+    }
+
+    // If still over limit, remove oldest completed jobs
+    if (this.store.size > this.maxStoredJobs) {
+      const completedJobs = [...this.store.entries()]
+        .filter(([_, job]) => job.status === "completed" || job.status === "failed")
+        .sort(([_, a], [__, b]) => a.createdAt - b.createdAt);
+        
+      const excess = this.store.size - this.maxStoredJobs;
+      for (let i = 0; i < Math.min(excess, completedJobs.length); i++) {
+        const [jobId] = completedJobs[i];
+        if (!jobsToRemove.includes(jobId)) {
+          jobsToRemove.push(jobId);
+        }
+      }
+    }
+
+    // Remove jobs and their artifacts
+    for (const jobId of jobsToRemove) {
+      this.store.delete(jobId);
+      this.artifacts.delete(jobId);
+      removedCount++;
+    }
+
+    if (removedCount > 0) {
+      console.log(`🧹 [CLEANUP] Removed ${removedCount} old jobs from memory`);
+    }
+
+    return { removed: removedCount };
+  }
+
+  /**
+   * Start periodic cleanup (call this once during initialization)
+   */
+  startPeriodicCleanup(): void {
+    // Run cleanup every hour
+    setInterval(() => {
+      this.cleanup().catch(err => {
+        console.error('🚨 [CLEANUP] Error during periodic cleanup:', err);
+      });
+    }, 60 * 60 * 1000);
+
+    console.log('🔧 [INIT] Periodic job cleanup started (every 60 minutes)');
   }
 }

@@ -18,7 +18,7 @@ project:
         language: typescript
 
 review:
-  mode: diff         # fokussiere auf Änderungen
+  mode: diff # fokussiere auf Änderungen
   max_context_lines: 1200
   priority:
     - security
@@ -27,9 +27,9 @@ review:
     - reliability
     - maintainability
   request:
-    docs: inline     # kurze, konkrete Hinweise
+    docs: inline # kurze, konkrete Hinweise
     code: suggestions
-    tests: required  # fordert Tests ein, wenn riskant
+    tests: required # fordert Tests ein, wenn riskant
   severity_threshold: medium
 
 rules:

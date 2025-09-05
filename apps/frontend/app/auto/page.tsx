@@ -46,7 +46,7 @@ export default function AutoPage() {
 
     try {
       // 1) Job anlegen (asynchron über Render Backend direkt)
-      const backendUrl = "https://aigilexperience-backend.onrender.com";
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://aigilexperience-backend.onrender.com";
       const jobRes = await fetch(`${backendUrl}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,81 +66,115 @@ export default function AutoPage() {
       const { jobId } = await jobRes.json();
       setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
 
-      // 2) Progress via Server-Sent Events streamen
-      const eventSource = new EventSource(
-        `${backendUrl}/api/jobs/${jobId}/stream`,
-      );
-      setData({ meta: { jobId }, sections: {} });
+      // 2) Progress via Server-Sent Events streamen mit Reconnection Logic
+      let currentEventSource: EventSource | null = null;
+      let reconnectAttempts = 0;
+      const maxReconnectAttempts = 5;
+      let isJobComplete = false;
+      
+      const connectSSE = (attempt = 0) => {
+        if (isJobComplete) return;
+        
+        const streamUrl = `${backendUrl}/api/jobs/${jobId}/stream`;
+        console.log(`SSE Connection attempt ${attempt + 1}/${maxReconnectAttempts + 1}`);
+        
+        currentEventSource = new EventSource(streamUrl);
+        setData({ meta: { jobId }, sections: {} });
 
-      eventSource.onmessage = (event) => {
-        const message = JSON.parse(event.data);
+        currentEventSource.onopen = () => {
+          console.log('SSE Connection opened successfully');
+          reconnectAttempts = 0; // Reset on successful connection
+          setError(null); // Clear any previous connection errors
+        };
 
-        if (message.type === "progress") {
-          // Update UI mit Progress
-          const { step, status } = message.payload;
-          if (step) {
-            setSecState((s) => ({ ...s, [step]: status || "running" }));
-          }
-        } else if (message.type === "artifact") {
-          // Einzelne Section ist fertig
-          const { section, data: sectionData } = message.payload;
-          if (section && sectionData) {
-            setData((prev: any) => {
-              const nxt = {
-                ...prev,
-                sections: { ...prev.sections, [section]: sectionData },
-              };
-              try {
-                localStorage.setItem("last_dossier", JSON.stringify(nxt));
-              } catch {}
-              return nxt;
-            });
-            setSecState((s) => ({ ...s, [section]: "done" }));
-          }
-        } else if (message.type === "done") {
-          // Job komplett fertig
-          const finalData = message.payload;
-          if (finalData?.sections) {
-            setData((prev: any) => {
-              const nxt = { ...prev, ...finalData };
-              try {
-                localStorage.setItem("last_dossier", JSON.stringify(nxt));
-              } catch {}
-              return nxt;
-            });
+        currentEventSource.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
 
-            // Alle Sections als done markieren
-            const doneState = Object.fromEntries(
-              SECTIONS.map(
-                (s) =>
-                  [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
-                    string,
-                    "pending" | "running" | "done" | "error",
-                  ],
-              ),
-            ) as Record<string, "pending" | "running" | "done" | "error">;
-            setSecState(doneState);
+            if (message.type === "progress") {
+              // Update UI mit Progress
+              const { step, status } = message.payload;
+              if (step) {
+                setSecState((s) => ({ ...s, [step]: status || "running" }));
+              }
+            } else if (message.type === "artifact") {
+              // Einzelne Section ist fertig
+              const { section, data: sectionData } = message.payload;
+              if (section && sectionData) {
+                setData((prev: any) => {
+                  const nxt = {
+                    ...prev,
+                    sections: { ...prev.sections, [section]: sectionData },
+                  };
+                  try {
+                    localStorage.setItem("last_dossier", JSON.stringify(nxt));
+                  } catch {}
+                  return nxt;
+                });
+                setSecState((s) => ({ ...s, [section]: "done" }));
+              }
+            } else if (message.type === "done") {
+              // Job komplett fertig
+              isJobComplete = true;
+              const finalData = message.payload;
+              if (finalData?.sections) {
+                setData((prev: any) => {
+                  const nxt = { ...prev, ...finalData };
+                  try {
+                    localStorage.setItem("last_dossier", JSON.stringify(nxt));
+                  } catch {}
+                  return nxt;
+                });
+
+                // Alle Sections als done markieren
+                const doneState = Object.fromEntries(
+                  SECTIONS.map(
+                    (s) =>
+                      [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
+                        string,
+                        "pending" | "running" | "done" | "error",
+                      ],
+                  ),
+                ) as Record<string, "pending" | "running" | "done" | "error">;
+                setSecState(doneState);
+              }
+              setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
+              currentEventSource?.close();
+            } else if (message.type === "error") {
+              setError(
+                `Pipeline error: ${message.payload?.error || "Unknown error"}`,
+              );
+              setStages((p: any) => ({ ...p, S2: "error" }));
+              currentEventSource?.close();
+            }
+          } catch (parseError) {
+            console.error('Failed to parse SSE message:', parseError, 'Raw data:', event.data);
           }
-          setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
-          eventSource.close();
-        } else if (message.type === "error") {
-          setError(
-            `Pipeline error: ${message.payload?.error || "Unknown error"}`,
-          );
-          setStages((p: any) => ({ ...p, S2: "error" }));
-          eventSource.close();
-        }
+        };
+
+        currentEventSource.onerror = (err) => {
+          console.error('SSE Error:', err);
+          currentEventSource?.close();
+          
+          if (!isJobComplete && reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 10000); // Exponential backoff, max 10s
+            
+            setError(`Connection lost, reconnecting in ${Math.ceil(backoffDelay / 1000)}s... (${reconnectAttempts}/${maxReconnectAttempts})`);
+            
+            setTimeout(() => connectSSE(reconnectAttempts), backoffDelay);
+          } else if (!isJobComplete) {
+            setError('Connection failed after multiple attempts. Please refresh the page.');
+            setStages((p: any) => ({ ...p, S2: "error" }));
+          }
+        };
       };
-
-      eventSource.onerror = (err) => {
-        console.error("SSE Error:", err);
-        setError("Connection lost - please refresh");
-        setStages((p: any) => ({ ...p, S2: "error" }));
-        eventSource.close();
-      };
+      
+      // Initial connection
+      connectSSE();
 
       // Cleanup function speichern für späteren Gebrauch
-      (window as any).currentEventSource = eventSource;
+      (window as any).currentEventSource = currentEventSource;
     } catch (error) {
       setStages((p: any) => ({ ...p, S1: "error" }));
       setError(
