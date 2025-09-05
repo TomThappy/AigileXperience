@@ -1,6 +1,7 @@
 import { chatComplete } from "../../lib/llm.js";
 import { CacheManager } from "../cache/CacheManager.js";
 import { writeJsonFile, readJsonFile } from "../utils/hash.js";
+import { pickSourcesFor, estimateTokenSavings } from "../../lib/source-filter.js";
 import type { StepResult, PipelineStep } from "../types.js";
 import fs from "fs/promises";
 import path from "path";
@@ -103,6 +104,12 @@ export class StepProcessor {
       throw new Error(`No prompt file specified for step: ${step.id}`);
     }
 
+    // Check if this is a large step that needs phase-splitting
+    const largeTLMSteps = ['financial_plan', 'market', 'gtm'];
+    if (largeTLMSteps.includes(step.id)) {
+      return await this.executePhaseSplitStep(step, inputs);
+    }
+
     const promptPath = path.join(this.promptsDir, step.prompt_file);
     console.log(`🔍 Looking for prompt file: ${promptPath}`);
     let promptTemplate: string;
@@ -139,12 +146,228 @@ export class StepProcessor {
       prompt += `\\n\\n## BRIEF DATA\\n${JSON.stringify(inputs.brief, null, 2)}`;
     }
     if (inputs.sources) {
-      prompt += `\\n\\n## SOURCES DATA\\n${JSON.stringify(inputs.sources, null, 2)}`;
+      // Filter sources for this specific step to reduce token load
+      const filteredSources = pickSourcesFor(step.id, inputs.sources, 8);
+      const tokenSavings = estimateTokenSavings(
+        inputs.sources.sources || [],
+        filteredSources.sources || []
+      );
+      
+      console.log(`🎯 Source filtering for ${step.id}:`, {
+        original: inputs.sources.sources?.length || 0,
+        filtered: filteredSources.sources?.length || 0,
+        tokenSavings: tokenSavings.savings,
+        percentage: Math.round((tokenSavings.savings / tokenSavings.originalTokens) * 100)
+      });
+      
+      prompt += `\\n\\n## SOURCES DATA (filtered for ${step.id})\\n${JSON.stringify(filteredSources, null, 2)}`;
     }
 
     prompt += `\\n\\n## IMPORTANT\\nReturn ONLY valid JSON matching the expected output schema. No additional text or explanations.`;
 
-    const model = step.model_preference || "gpt-4o";
+    const model = this.getModelForStep(step.id, step.model_preference);
+    console.log(`🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`);
+    const response = await chatComplete(prompt, { model, temperature: 0.1 });
+
+    // Parse JSON response - clean markdown code blocks first
+    try {
+      let cleanResponse = response.trim();
+
+      // Remove markdown code blocks if present
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, "");
+      }
+      if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, "");
+      }
+      if (cleanResponse.endsWith("```")) {
+        cleanResponse = cleanResponse.replace(/\s*```$/, "");
+      }
+
+    return JSON.parse(cleanResponse.trim());
+    } catch (parseError) {
+      console.error(
+        "Failed to parse LLM response as JSON:",
+        response.substring(0, 500),
+      );
+      throw new Error(`LLM response is not valid JSON: ${parseError}`);
+    }
+  }
+
+  private async executePhaseSplitStep(
+    step: PipelineStep,
+    inputs: Record<string, any>,
+  ): Promise<any> {
+    console.log(`🔀 Executing phase-split step: ${step.name}`);
+
+    // Phase 1: Generate data/structure
+    const phase1Result = await this.executePhase(
+      step,
+      inputs,
+      'data',
+      `${step.prompt_file}_phase1.txt`
+    );
+
+    // Phase 2: Generate narrative/text using phase 1 data
+    const phase2Inputs = {
+      ...inputs,
+      phase1_data: phase1Result,
+    };
+
+    const phase2Result = await this.executePhase(
+      step,
+      phase2Inputs,
+      'narrative',
+      `${step.prompt_file}_phase2.txt`
+    );
+
+    // Merge results - phase 2 should contain narrative text with phase 1 data
+    return {
+      ...phase1Result,
+      ...phase2Result,
+      _meta: {
+        phase_split: true,
+        phase1_tokens: this.estimateTokens(JSON.stringify(phase1Result)),
+        phase2_tokens: this.estimateTokens(JSON.stringify(phase2Result))
+      }
+    };
+  }
+
+  private async executePhase(
+    step: PipelineStep,
+    inputs: Record<string, any>,
+    phaseName: string,
+    promptFileName: string,
+  ): Promise<any> {
+    const promptPath = path.join(this.promptsDir, promptFileName);
+    console.log(`📋 Phase ${phaseName}: Looking for prompt file: ${promptPath}`);
+
+    let promptTemplate: string;
+    try {
+      promptTemplate = await fs.readFile(promptPath, "utf-8");
+      console.log(
+        `✅ Phase ${phaseName} prompt loaded: ${promptFileName} (${promptTemplate.length} chars)`,
+      );
+    } catch (error) {
+      // Fallback to single-phase execution if phase files don't exist
+      console.warn(`⚠️  Phase file not found: ${promptPath}, falling back to single-phase`);
+      return await this.executeSinglePhaseStep(step, inputs);
+    }
+
+    // Replace placeholders in prompt
+    let prompt = promptTemplate;
+    for (const [key, value] of Object.entries(inputs)) {
+      const placeholder = `<<${key.toUpperCase()}>>`;
+      const replacementValue =
+        typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      prompt = prompt.replace(new RegExp(placeholder, "g"), replacementValue);
+    }
+
+    if (inputs.brief) {
+      prompt += `\\n\\n## BRIEF DATA\\n${JSON.stringify(inputs.brief, null, 2)}`;
+    }
+    if (inputs.sources) {
+      // Filter sources for this specific step to reduce token load
+      const filteredSources = pickSourcesFor(step.id, inputs.sources, 8);
+      const tokenSavings = estimateTokenSavings(
+        inputs.sources.sources || [],
+        filteredSources.sources || []
+      );
+      
+      console.log(`🎯 Source filtering for ${step.id} (${phaseName}):`, {
+        original: inputs.sources.sources?.length || 0,
+        filtered: filteredSources.sources?.length || 0,
+        tokenSavings: tokenSavings.savings,
+        percentage: Math.round((tokenSavings.savings / tokenSavings.originalTokens) * 100)
+      });
+      
+      prompt += `\\n\\n## SOURCES DATA (filtered for ${step.id})\\n${JSON.stringify(filteredSources, null, 2)}`;
+    }
+
+    prompt += `\\n\\n## IMPORTANT\\nReturn ONLY valid JSON matching the expected output schema. No additional text or explanations.`;
+
+    const model = this.getModelForStep(step.id, step.model_preference, phaseName);
+    console.log(`🤖 [STEP] ${step.id} (${phaseName}): Using model ${model} (from ${this.getModelSource(step.id, step.model_preference, phaseName)})`);
+    const response = await chatComplete(prompt, { model, temperature: 0.1 });
+
+    // Parse JSON response
+    try {
+      let cleanResponse = response.trim();
+
+      // Remove markdown code blocks if present
+      if (cleanResponse.startsWith("```json")) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, "");
+      }
+      if (cleanResponse.startsWith("```")) {
+        cleanResponse = cleanResponse.replace(/^```\s*/, "");
+      }
+      if (cleanResponse.endsWith("```")) {
+        cleanResponse = cleanResponse.replace(/\s*```$/, "");
+      }
+
+      return JSON.parse(cleanResponse.trim());
+    } catch (parseError) {
+      console.error(
+        `Failed to parse ${phaseName} phase response as JSON:`,
+        response.substring(0, 500),
+      );
+      throw new Error(`Phase ${phaseName} response is not valid JSON: ${parseError}`);
+    }
+  }
+
+  private async executeSinglePhaseStep(
+    step: PipelineStep,
+    inputs: Record<string, any>,
+  ): Promise<any> {
+    // Original single-phase execution logic
+    const promptPath = path.join(this.promptsDir, step.prompt_file!);
+    console.log(`🔍 Single-phase: Looking for prompt file: ${promptPath}`);
+    let promptTemplate: string;
+
+    try {
+      promptTemplate = await fs.readFile(promptPath, "utf-8");
+      console.log(
+        `✅ Single-phase prompt loaded: ${step.prompt_file} (${promptTemplate.length} chars)`,
+      );
+    } catch (error) {
+      console.error(`❌ Failed to read prompt file: ${promptPath}`, error);
+      throw new Error(`Failed to read prompt file: ${promptPath} - ${error}`);
+    }
+
+    // Replace placeholders in prompt
+    let prompt = promptTemplate;
+    for (const [key, value] of Object.entries(inputs)) {
+      const placeholder = `<<${key.toUpperCase()}>>`;
+      const replacementValue =
+        typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      prompt = prompt.replace(new RegExp(placeholder, "g"), replacementValue);
+    }
+
+    if (inputs.brief) {
+      prompt += `\\n\\n## BRIEF DATA\\n${JSON.stringify(inputs.brief, null, 2)}`;
+    }
+    if (inputs.sources) {
+      // Filter sources for this specific step to reduce token load
+      const filteredSources = pickSourcesFor(step.id, inputs.sources, 8);
+      const tokenSavings = estimateTokenSavings(
+        inputs.sources.sources || [],
+        filteredSources.sources || []
+      );
+      
+      console.log(`🎯 Source filtering for ${step.id}:`, {
+        original: inputs.sources.sources?.length || 0,
+        filtered: filteredSources.sources?.length || 0,
+        tokenSavings: tokenSavings.savings,
+        percentage: Math.round((tokenSavings.savings / tokenSavings.originalTokens) * 100)
+      });
+      
+      prompt += `\\n\\n## SOURCES DATA (filtered for ${step.id})\\n${JSON.stringify(filteredSources, null, 2)}`;
+    }
+
+    prompt += `\\n\\n## IMPORTANT\\nReturn ONLY valid JSON matching the expected output schema. No additional text or explanations.`;
+
+    const model = this.getModelForStep(step.id, step.model_preference);
+    console.log(`🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`);
     const response = await chatComplete(prompt, { model, temperature: 0.1 });
 
     // Parse JSON response - clean markdown code blocks first
@@ -170,6 +393,64 @@ export class StepProcessor {
       );
       throw new Error(`LLM response is not valid JSON: ${parseError}`);
     }
+  }
+
+  private estimateTokens(text: string): number {
+    // Rough estimation: ~4 characters per token for English text
+    return Math.ceil(text.length / 4);
+  }
+
+  private getModelForStep(stepId: string, defaultModel?: string, phaseName?: string): string {
+    // For phase-split steps, check phase-specific models first
+    if (phaseName) {
+      const phaseEnvVar = `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()}`;
+      const phaseSpecificModel = process.env[phaseEnvVar];
+      
+      if (phaseSpecificModel) {
+        console.log(`🔀 Found phase-specific model for ${stepId} (${phaseName}): ${phaseSpecificModel}`);
+        return phaseSpecificModel;
+      }
+    }
+    
+    // Check for step-specific environment variable
+    const envVarName = `LLM_MODEL_${stepId.toUpperCase()}`;
+    const stepSpecificModel = process.env[envVarName];
+    
+    if (stepSpecificModel) {
+      console.log(`🎯 Found step-specific model for ${stepId}: ${stepSpecificModel}`);
+      return stepSpecificModel;
+    }
+    
+    // Fallback to step preference, then global default
+    return defaultModel || process.env.LLM_DEFAULT_MODEL || "gpt-4o";
+  }
+
+  private getModelSource(stepId: string, defaultModel?: string, phaseName?: string): string {
+    // Check for phase-specific environment variable first (if applicable)
+    if (phaseName) {
+      const phaseEnvVar = `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()}`;
+      if (process.env[phaseEnvVar]) {
+        return `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()} env var`;
+      }
+    }
+    
+    // Check for step-specific environment variable
+    const envVarName = `LLM_MODEL_${stepId.toUpperCase()}`;
+    if (process.env[envVarName]) {
+      return `LLM_MODEL_${stepId.toUpperCase()} env var`;
+    }
+    
+    // Check step preference
+    if (defaultModel) {
+      return 'step model_preference';
+    }
+    
+    // Check global default
+    if (process.env.LLM_DEFAULT_MODEL) {
+      return 'LLM_DEFAULT_MODEL env var';
+    }
+    
+    return 'hardcoded fallback (gpt-4o)';
   }
 
   private async executeScriptStep(
