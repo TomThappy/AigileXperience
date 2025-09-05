@@ -45,9 +45,8 @@ export default function AutoPage() {
     setData(null);
 
     try {
-      // 1) Job anlegen (asynchron über Render Backend)
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-      const jobRes = await fetch(`${backendUrl}/api/jobs`, {
+      // 1) Job anlegen (asynchron über Render Backend via Vercel Rewrite)
+      const jobRes = await fetch(`/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -67,7 +66,7 @@ export default function AutoPage() {
       setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
 
       // 2) Progress via Server-Sent Events streamen
-      const eventSource = new EventSource(`${backendUrl}/api/jobs/${jobId}/stream`);
+      const eventSource = new EventSource(`/api/jobs/${jobId}/stream`);
       setData({ meta: { jobId }, sections: {} });
 
       eventSource.onmessage = (event) => {
