@@ -15,6 +15,7 @@ Frontend  →  Web Service  →  Redis Queue  →  Background Worker  →  LLM A
 ## API Endpoints
 
 ### Job erstellen
+
 ```bash
 POST /api/jobs
 Content-Type: application/json
@@ -36,6 +37,7 @@ Content-Type: application/json
 ```
 
 ### Job Status abfragen
+
 ```bash
 GET /api/jobs/{jobId}
 
@@ -58,6 +60,7 @@ GET /api/jobs/{jobId}
 ```
 
 ### Real-time Updates (Server-Sent Events)
+
 ```bash
 GET /api/jobs/{jobId}/stream
 
@@ -65,7 +68,7 @@ GET /api/jobs/{jobId}/stream
 event: status
 data: {"jobId":"...","status":"running","progress":{"step":"brief_extraction","percentage":35}}
 
-event: status  
+event: status
 data: {"jobId":"...","status":"running","progress":{"step":"section_problem","percentage":45}}
 
 event: result
@@ -76,13 +79,14 @@ data: {"status":"completed"}
 ```
 
 ### Artifact-Daten abrufen
+
 ```bash
 GET /api/jobs/{jobId}/artifacts/{artifactName}
 
 → Response:
 {
   "name": "brief",
-  "type": "brief", 
+  "type": "brief",
   "data": { ... }, // Vollständige Artifact-Daten
   "hash": "sha256...",
   "timestamp": 1704672000000
@@ -95,32 +99,34 @@ GET /api/jobs/{jobId}/artifacts/{artifactName}
 
 ```typescript
 // Job erstellen
-const response = await fetch('/api/jobs', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/jobs", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    project_title: 'TestApp',
-    elevator_pitch: 'Eine innovative App...'
-  })
+    project_title: "TestApp",
+    elevator_pitch: "Eine innovative App...",
+  }),
 });
 
 const { jobId } = await response.json();
 
 // Option 1: Polling
 const checkProgress = async () => {
-  const status = await fetch(`/api/jobs/${jobId}`).then(r => r.json());
-  
-  if (status.status === 'completed') {
-    console.log('Fertig!', status.result);
+  const status = await fetch(`/api/jobs/${jobId}`).then((r) => r.json());
+
+  if (status.status === "completed") {
+    console.log("Fertig!", status.result);
     return;
   }
-  
-  if (status.status === 'failed') {
-    console.error('Fehler:', status.error);
+
+  if (status.status === "failed") {
+    console.error("Fehler:", status.error);
     return;
   }
-  
-  console.log(`Progress: ${status.progress.percentage}% - ${status.progress.step}`);
+
+  console.log(
+    `Progress: ${status.progress.percentage}% - ${status.progress.step}`,
+  );
   setTimeout(checkProgress, 2000); // Poll alle 2 Sekunden
 };
 
@@ -129,19 +135,19 @@ checkProgress();
 // Option 2: Server-Sent Events
 const eventSource = new EventSource(`/api/jobs/${jobId}/stream`);
 
-eventSource.addEventListener('status', (event) => {
+eventSource.addEventListener("status", (event) => {
   const data = JSON.parse(event.data);
   console.log(`Progress: ${data.progress.percentage}% - ${data.progress.step}`);
 });
 
-eventSource.addEventListener('result', (event) => {
+eventSource.addEventListener("result", (event) => {
   const result = JSON.parse(event.data);
-  console.log('Pipeline completed:', result);
+  console.log("Pipeline completed:", result);
   eventSource.close();
 });
 
-eventSource.addEventListener('error', (event) => {
-  console.error('Error:', event.data);
+eventSource.addEventListener("error", (event) => {
+  console.error("Error:", event.data);
   eventSource.close();
 });
 ```
@@ -153,19 +159,22 @@ eventSource.addEventListener('error', (event) => {
 Du brauchst **2 Services** auf Render:
 
 #### 1. Web Service (Existing)
+
 - **Name**: aigilexperience-backend
-- **Build Command**: `npm run build`  
+- **Build Command**: `npm run build`
 - **Start Command**: `node dist/server.js`
 - **Environment Variables**: Alle existierenden + `REDIS_URL`
 
 #### 2. Background Worker (New)
+
 - **Service Type**: Background Worker
-- **Name**: aigilexperience-worker  
+- **Name**: aigilexperience-worker
 - **Build Command**: `npm run build`
 - **Start Command**: `node dist/worker.js`
 - **Environment Variables**: Alle existierenden + `REDIS_URL`
 
 #### 3. Redis Instance
+
 - **Add-on**: Render Redis oder externes Upstash Redis
 - **Environment Variable**: `REDIS_URL` in beiden Services
 
@@ -184,16 +193,19 @@ REDISCLOUD_URL=redis://...
 ## Monitoring & Debugging
 
 ### Health Checks
+
 ```bash
 # Job System Status
 GET /api/jobs/health
 
-# Queue Statistiken  
+# Queue Statistiken
 GET /api/jobs/stats
 ```
 
 ### Logging
+
 Der Worker loggt detailliert:
+
 ```
 🚀 Pipeline Worker started, waiting for jobs...
 🎯 Processing job abc-123: TestApp
@@ -229,7 +241,7 @@ Der Worker loggt detailliert:
 // Anpassbare Parameter beim Job erstellen:
 {
   "parallel_limit": 2,        // Max gleichzeitige LLM-Calls
-  "timeout_ms": 300000,       // 5 Min Worker-Timeout  
+  "timeout_ms": 300000,       // 5 Min Worker-Timeout
   "skip_cache": false         // Cache bypassen
 }
 ```
@@ -241,11 +253,13 @@ Der Worker loggt detailliert:
 Die alten Endpoints (`/api/v2/auto`, `/api/v2/dossier/generate`) funktionieren weiter, haben aber weiterhin Timeout-Probleme. Für neue Implementierungen nutze das Job Queue System:
 
 **Alt (mit Timeout-Risiko):**
+
 ```bash
 POST /api/v2/auto → 502 Gateway Timeout nach 30s
 ```
 
 **Neu (ohne Timeout):**
+
 ```bash
 POST /api/jobs → 202 Accepted sofort
 GET /api/jobs/{id} → Progress-Updates

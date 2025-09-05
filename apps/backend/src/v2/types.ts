@@ -130,5 +130,5 @@ export interface PipelineResult {
 
 export interface PipelineStateComplete extends PipelineState {
   pipeline_id: string;
-  status: 'completed' | 'failed' | 'running' | 'pending';
+  status: "completed" | "failed" | "running" | "pending";
 }

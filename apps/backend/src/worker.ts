@@ -5,8 +5,8 @@ import { getEnhancedWorker } from "./jobs/PipelineWorker.js";
 import type { JobData, JobArtifact } from "./jobs/JobQueue.js";
 
 class PipelineWorker {
-  private jobQueue = getJobQueue();
-  private enhancedWorker = getEnhancedWorker();
+  private jobQueue: ReturnType<typeof getJobQueue> | null = null;
+  private enhancedWorker: ReturnType<typeof getEnhancedWorker> | null = null;
   private isShuttingDown = false;
   private currentJobId: string | null = null;
 
@@ -15,13 +15,45 @@ class PipelineWorker {
     process.on("SIGTERM", () => this.shutdown("SIGTERM"));
     process.on("SIGINT", () => this.shutdown("SIGINT"));
     process.on("uncaughtException", (error) => {
-      console.error("Uncaught Exception:", error);
+      console.error("❌ Uncaught Exception:", error);
       this.shutdown("uncaughtException");
     });
     process.on("unhandledRejection", (reason, promise) => {
-      console.error("Unhandled Rejection at:", promise, "reason:", reason);
+      console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
       this.shutdown("unhandledRejection");
     });
+  }
+
+  private validateEnvironment(): void {
+    const required = ['REDIS_URL', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY'];
+    const missing = required.filter(key => !process.env[key]);
+    
+    if (missing.length > 0) {
+      throw new Error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+    }
+    
+    console.log('✅ Environment validation passed');
+    console.log(`📍 Redis URL: ${process.env.REDIS_URL?.replace(/redis:\/\/[^@]*@/, 'redis://***@') || 'Not set'}`);
+    console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Missing'}`);
+    console.log(`🔑 Anthropic API Key: ${process.env.ANTHROPIC_API_KEY ? '✅ Set' : '❌ Missing'}`);
+  }
+
+  private async initializeServices(): Promise<void> {
+    try {
+      console.log('🔧 Initializing services...');
+      
+      this.jobQueue = getJobQueue();
+      this.enhancedWorker = getEnhancedWorker();
+      
+      // Test Redis connection
+      console.log('🔌 Testing Redis connection...');
+      await this.jobQueue.getQueueStats();
+      console.log('✅ Redis connection successful');
+      
+    } catch (error) {
+      console.error('❌ Service initialization failed:', error);
+      throw error;
+    }
   }
 
   private async shutdown(signal: string) {
@@ -39,7 +71,7 @@ class PipelineWorker {
         waitTime += 1000;
       }
 
-      if (this.currentJobId) {
+      if (this.currentJobId && this.jobQueue) {
         console.log(
           `⚠️ Force terminating job ${this.currentJobId} due to shutdown timeout`,
         );
@@ -52,48 +84,67 @@ class PipelineWorker {
       }
     }
 
-    await this.jobQueue.disconnect();
+    if (this.jobQueue) {
+      await this.jobQueue.disconnect();
+    }
     console.log("✅ Worker shutdown complete");
     process.exit(0);
   }
 
   async start() {
-    console.log("🚀 Pipeline Worker started, waiting for jobs...");
+    try {
+      console.log("🚀 Pipeline Worker starting...");
+      
+      // Validate environment
+      this.validateEnvironment();
+      
+      // Initialize services
+      await this.initializeServices();
+      
+      console.log("🎯 Worker ready, waiting for jobs...");
+      
+      // Clean up old jobs on startup
+      await this.jobQueue!.cleanup();
 
-    // Clean up old jobs on startup
-    await this.jobQueue.cleanup();
+      while (!this.isShuttingDown) {
+        try {
+          // Get next job from queue (blocking with timeout)
+          const jobId = await this.jobQueue!.getNextJob();
 
-    while (!this.isShuttingDown) {
-      try {
-        // Get next job from queue (blocking with timeout)
-        const jobId = await this.jobQueue.getNextJob();
+          if (!jobId) {
+            // No job available, continue loop
+            continue;
+          }
 
-        if (!jobId) {
-          // No job available, continue loop
-          continue;
-        }
-
-        this.currentJobId = jobId;
-        await this.processJob(jobId);
-        this.currentJobId = null;
-      } catch (error) {
-        console.error("Error in worker main loop:", error);
-        if (this.currentJobId) {
-          await this.jobQueue.updateJobStatus(
-            this.currentJobId,
-            "failed",
-            undefined,
-            error instanceof Error ? error.message : "Unknown error",
-          );
+          this.currentJobId = jobId;
+          await this.processJob(jobId);
           this.currentJobId = null;
+        } catch (error) {
+          console.error("Error in worker main loop:", error);
+          if (this.currentJobId) {
+            await this.jobQueue!.updateJobStatus(
+              this.currentJobId,
+              "failed",
+              undefined,
+              error instanceof Error ? error.message : "Unknown error",
+            );
+            this.currentJobId = null;
+          }
+          // Brief pause before retrying
+          await new Promise((resolve) => setTimeout(resolve, 5000));
         }
-        // Brief pause before retrying
-        await new Promise((resolve) => setTimeout(resolve, 5000));
       }
+    } catch (error) {
+      console.error("💥 Worker startup failed:", error);
+      process.exit(1);
     }
   }
 
   private async processJob(jobId: string) {
+    if (!this.enhancedWorker) {
+      throw new Error('Enhanced worker not initialized');
+    }
+    
     try {
       // Use enhanced worker for detailed progress tracking
       await this.enhancedWorker.processJobWithDetailedProgress(jobId);
@@ -103,7 +154,6 @@ class PipelineWorker {
       // Enhanced worker handles its own error reporting
     }
   }
-
 }
 
 // Start the worker if this file is run directly

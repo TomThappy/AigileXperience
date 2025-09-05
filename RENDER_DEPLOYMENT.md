@@ -33,7 +33,7 @@ Aktualisiere deinen bestehenden Backend Service:
 
 3. Deploy den Service neu (oder warte auf automatisches Deployment)
 
-### 3. Background Worker Service 
+### 3. Background Worker Service
 
 Erstelle einen **neuen** Background Worker Service:
 
@@ -46,6 +46,7 @@ Erstelle einen **neuen** Background Worker Service:
 7. Start Command: `node dist/worker.js`
 
 **Environment Variables** (alle vom Backend Service kopieren):
+
 ```
 REDIS_URL=<Internal Redis URL>
 OPENAI_API_KEY=<dein key>
@@ -62,11 +63,13 @@ NODE_ENV=production
 ## Environment Variables Summary
 
 ### Backend Web Service
+
 - `REDIS_URL` - Redis connection string
 - Alle bestehenden API Keys und Model-Konfigurationen
 
 ### Background Worker
-- `REDIS_URL` - **Gleiche** Redis connection string  
+
+- `REDIS_URL` - **Gleiche** Redis connection string
 - Alle Model-API-Keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)
 - Alle Model-Konfigurationen (MODEL_ANALYZE, MODEL_REFINE, etc.)
 
@@ -75,6 +78,7 @@ NODE_ENV=production
 ### Neue Job-basierte API
 
 **Job erstellen:**
+
 ```bash
 POST /api/jobs
 Content-Type: application/json
@@ -93,6 +97,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -102,11 +107,13 @@ Content-Type: application/json
 ```
 
 **Job Status abfragen:**
+
 ```bash
 GET /api/jobs/123e4567-e89b-12d3-a456-426614174000
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -126,6 +133,7 @@ GET /api/jobs/123e4567-e89b-12d3-a456-426614174000
 ```
 
 **Live Updates (SSE):**
+
 ```bash
 GET /api/jobs/123e4567-e89b-12d3-a456-426614174000/stream
 Accept: text/event-stream
@@ -140,7 +148,7 @@ Accept: text/event-stream
 
 ### Logs
 
-- **Backend Logs**: Render Dashboard → dein Backend Service → Logs  
+- **Backend Logs**: Render Dashboard → dein Backend Service → Logs
 - **Worker Logs**: Render Dashboard → dein Worker Service → Logs
 - **Redis Logs**: Render Dashboard → dein Redis Service → Logs
 
@@ -149,6 +157,7 @@ Accept: text/event-stream
 ```bash
 GET /api/jobs/stats
 ```
+
 ```json
 {
   "success": true,
@@ -162,27 +171,31 @@ GET /api/jobs/stats
 ## Troubleshooting
 
 ### Worker startet nicht
+
 - Überprüfe `REDIS_URL` Environment Variable
 - Schaue in Worker Logs nach Fehlermeldungen
 - Stelle sicher, dass alle API Keys gesetzt sind
 
 ### Jobs werden nicht verarbeitet
+
 - Überprüfe Redis Service Status
 - Schaue in Worker Logs nach Pipeline-Fehlern
 - Prüfe ob REDIS_URL in Backend und Worker identisch ist
 
 ### Timeout Probleme
+
 - Worker hat 30min Timeout (viel länger als Web Service)
 - Pipeline läuft jetzt asynchron, keine 502 Timeouts mehr
 
 ### Redis Memory Issues
+
 - Alte Jobs werden nach 24h automatisch gelöscht
 - Bei Problemen Redis Service neustarten
 
 ## Kosten
 
 - **Redis**: $7/Monat (Starter Plan)
-- **Worker**: $7/Monat (Starter Plan) 
+- **Worker**: $7/Monat (Starter Plan)
 - **Backend**: Bestehende Kosten (unverändert)
 
 **Total zusätzlich**: $14/Monat für Background Processing
@@ -198,8 +211,9 @@ git push origin main
 ```
 
 Render deployed automatisch:
+
 1. Backend Service (Web)
-2. Background Worker Service  
+2. Background Worker Service
 3. Redis läuft kontinuierlich
 
 ## Testing
