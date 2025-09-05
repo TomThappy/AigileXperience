@@ -141,6 +141,92 @@ export function getModelLimit(model: string): number {
 }
 
 /**
+ * Execute LLM call with retries and rate limiting
+ */
+export async function executeWithRetries<T>(
+  llmCall: () => Promise<T>,
+  model: string,
+  estimatedTokens: number,
+  stepId: string,
+  jobId?: string,
+  phase?: string
+): Promise<{ result: T; attempts: number; rateGateWaitMs: number }> {
+  const maxRetries = parseInt(process.env.LLM_RETRIES || "3");
+  const baseDelayMs = parseInt(process.env.LLM_RETRY_BASE_DELAY || "2000");
+  
+  let lastError: Error | null = null;
+  let totalRateGateWait = 0;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Rate gate check and wait
+      const limit = getModelLimit(model);
+      const { waitedMs } = await rateGate.reserveTokens(model, estimatedTokens, limit);
+      totalRateGateWait += waitedMs;
+      
+      if (waitedMs > 0) {
+        console.log(`⏳ [RATE-GATE] Waited ${waitedMs}ms for ${model} on attempt ${attempt}`);
+      }
+      
+      // Execute the LLM call
+      const result = await llmCall();
+      
+      console.log(`✅ [RATE-GATE] LLM call succeeded on attempt ${attempt} for ${stepId}`);
+      
+      return {
+        result,
+        attempts: attempt,
+        rateGateWaitMs: totalRateGateWait
+      };
+      
+    } catch (error) {
+      lastError = error as Error;
+      
+      console.error(`❌ [RATE-GATE] LLM call failed on attempt ${attempt} for ${stepId}:`, (error as Error).message);
+      
+      // Don't retry on certain errors
+      if (isNonRetryableError(error as Error)) {
+        console.log(`🚫 [RATE-GATE] Non-retryable error, stopping retries`);
+        throw error;
+      }
+
+      // Wait before retry (exponential backoff)
+      if (attempt < maxRetries) {
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        console.log(`⏱️ [RATE-GATE] Waiting ${delay}ms before retry ${attempt + 1}`);
+        await sleep(delay);
+      }
+    }
+  }
+
+  throw lastError || new Error(`All ${maxRetries} retry attempts failed for ${stepId}`);
+}
+
+/**
+ * Check if error should not trigger retries
+ */
+function isNonRetryableError(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  const nonRetryablePatterns = [
+    'invalid api key',
+    'insufficient quota',
+    'model not found', 
+    'invalid request',
+    'context length exceeded',
+    'content policy violation',
+  ];
+
+  return nonRetryablePatterns.some(pattern => message.includes(pattern));
+}
+
+/**
+ * Sleep utility
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Initialisiert das RateGate System mit Environment Variables
  */
 export function initializeRateGate(): void {
@@ -159,6 +245,8 @@ export function initializeRateGate(): void {
   const minTokensForRequest = parseInt(
     process.env.RATEGATE_MIN_TOKENS_FOR_REQUEST || "1000",
   );
+  const maxRetries = parseInt(process.env.LLM_RETRIES || "3");
+  const concurrency = parseInt(process.env.QUEUE_CONCURRENCY || "2");
 
   console.log("🛡️ RateGate Configuration:", {
     tokensPerMinute,
@@ -166,6 +254,8 @@ export function initializeRateGate(): void {
     tokensPerDay,
     reservePercentage: `${(reservePercentage * 100).toFixed(0)}%`,
     minTokensForRequest,
+    maxRetries,
+    concurrency,
   });
 
   // DEBUG: Check all LLM model environment variables

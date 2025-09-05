@@ -1,0 +1,45 @@
+{
+  "data": {
+    "topic": "ARPU",
+    "sources": [
+      {
+        "title": "Global Digital Economy - The Rapidly Evolving E-Commerce and M-Commerce Markets",
+        "publisher": "Research and Markets",
+        "year": 2024,
+        "region": "EU/DE",
+        "url": "https://www.researchandmarkets.com/reports/4833385/global-digital-economy-the-rapidly-evolving",
+        "method": "Market research",
+        "key_findings": [
+          "The average revenue per user (ARPU) in the e-commerce market is projected to amount to US$1,020.80 in 2024.",
+          "Germany's ARPU in the e-commerce market is expected to amount to US$1,158.80 in 2024."
+        ],
+        "usage_note": "These findings provide a benchmark for ARPU in the e-commerce market, which could be relevant for the HappyNest business model.",
+        "access": "paid",
+        "reliability_score": 0.8,
+        "last_accessed": "2025-09-05"
+      },
+      {
+        "title": "Digital Market Outlook",
+        "publisher": "Statista",
+        "year": 2024,
+        "region": "EU/DE",
+        "url": "https://www.statista.com/outlook/dmo",
+        "method": "Market research",
+        "key_findings": [
+          "The ARPU in the 'Digital Media' segment is expected to reach US$20.28 in 2024.",
+          "Germany's ARPU in the 'Digital Media' segment is expected to reach US$22.10 in 2024."
+        ],
+        "usage_note": "These findings provide a benchmark for ARPU in the digital media market, which could be relevant if HappyNest includes digital media services.",
+        "access": "paid",
+        "reliability_score": 0.8,
+        "last_accessed": "2025-09-05"
+      }
+    ],
+    "assumptions": [
+      "Assuming that HappyNest operates in the e-commerce or digital media market."
+    ]
+  },
+  "cached_at": "2025-09-05T14:18:47.488Z",
+  "region": "EU/DE",
+  "topic": "ARPU"
+}

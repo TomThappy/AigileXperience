@@ -1,0 +1,580 @@
+{
+  "revenue_projections": {
+    "year_1": {
+      "total_revenue": 10000000,
+      "revenue_streams": [
+        {
+          "stream": "Subscription (Premium/Family)",
+          "amount": 9000000,
+          "percentage": 90
+        },
+        {
+          "stream": "Partner Integrations/Smart-Home APIs",
+          "amount": 700000,
+          "percentage": 7
+        },
+        {
+          "stream": "Add-ons/Marketplace",
+          "amount": 300000,
+          "percentage": 3
+        }
+      ],
+      "customer_metrics": {
+        "customers": 110000,
+        "ARPU": 7.5,
+        "growth_rate": 100
+      }
+    },
+    "year_2": {
+      "total_revenue": 24000000,
+      "revenue_streams": [
+        {
+          "stream": "Subscription (Premium/Family)",
+          "amount": 21600000,
+          "percentage": 90
+        },
+        {
+          "stream": "Partner Integrations/Smart-Home APIs",
+          "amount": 1680000,
+          "percentage": 7
+        },
+        {
+          "stream": "Add-ons/Marketplace",
+          "amount": 560000,
+          "percentage": 3
+        }
+      ],
+      "customer_metrics": {
+        "customers": 265000,
+        "ARPU": 7.5,
+        "growth_rate": 140
+      }
+    },
+    "year_3": {
+      "total_revenue": 48000000,
+      "revenue_streams": [
+        {
+          "stream": "Subscription (Premium/Family)",
+          "amount": 43200000,
+          "percentage": 90
+        },
+        {
+          "stream": "Partner Integrations/Smart-Home APIs",
+          "amount": 3360000,
+          "percentage": 7
+        },
+        {
+          "stream": "Add-ons/Marketplace",
+          "amount": 1120000,
+          "percentage": 3
+        }
+      ],
+      "customer_metrics": {
+        "customers": 530000,
+        "ARPU": 7.5,
+        "growth_rate": 100
+      }
+    },
+    "year_4": {
+      "total_revenue": 84000000,
+      "revenue_streams": [
+        {
+          "stream": "Subscription (Premium/Family)",
+          "amount": 75600000,
+          "percentage": 90
+        },
+        {
+          "stream": "Partner Integrations/Smart-Home APIs",
+          "amount": 5880000,
+          "percentage": 7
+        },
+        {
+          "stream": "Add-ons/Marketplace",
+          "amount": 2520000,
+          "percentage": 3
+        }
+      ],
+      "customer_metrics": {
+        "customers": 930000,
+        "ARPU": 7.5,
+        "growth_rate": 75
+      }
+    },
+    "year_5": {
+      "total_revenue": 134000000,
+      "revenue_streams": [
+        {
+          "stream": "Subscription (Premium/Family)",
+          "amount": 120600000,
+          "percentage": 90
+        },
+        {
+          "stream": "Partner Integrations/Smart-Home APIs",
+          "amount": 9380000,
+          "percentage": 7
+        },
+        {
+          "stream": "Add-ons/Marketplace",
+          "amount": 4020000,
+          "percentage": 3
+        }
+      ],
+      "customer_metrics": {
+        "customers": 1490000,
+        "ARPU": 7.5,
+        "growth_rate": 60
+      }
+    }
+  },
+  "cost_structure": {
+    "year_1": {
+      "total_costs": 14500000,
+      "cost_categories": [
+        {
+          "category": "Sales & Marketing",
+          "amount": 6000000,
+          "percentage": 41.4,
+          "cost_type": "variable"
+        },
+        {
+          "category": "R&D/Product",
+          "amount": 3500000,
+          "percentage": 24.1,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "G&A",
+          "amount": 2000000,
+          "percentage": 13.8,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "Customer Support/Success",
+          "amount": 1000000,
+          "percentage": 6.9,
+          "cost_type": "semi-variable"
+        },
+        {
+          "category": "Cloud/IT/Variable COGS",
+          "amount": 2000000,
+          "percentage": 13.8,
+          "cost_type": "variable"
+        }
+      ],
+      "headcount": 38
+    },
+    "year_2": {
+      "total_costs": 22000000,
+      "cost_categories": [
+        {
+          "category": "Sales & Marketing",
+          "amount": 9000000,
+          "percentage": 40.9,
+          "cost_type": "variable"
+        },
+        {
+          "category": "R&D/Product",
+          "amount": 5000000,
+          "percentage": 22.7,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "G&A",
+          "amount": 3000000,
+          "percentage": 13.6,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "Customer Support/Success",
+          "amount": 2000000,
+          "percentage": 9.1,
+          "cost_type": "semi-variable"
+        },
+        {
+          "category": "Cloud/IT/Variable COGS",
+          "amount": 3000000,
+          "percentage": 13.6,
+          "cost_type": "variable"
+        }
+      ],
+      "headcount": 55
+    },
+    "year_3": {
+      "total_costs": 34000000,
+      "cost_categories": [
+        {
+          "category": "Sales & Marketing",
+          "amount": 14000000,
+          "percentage": 41.2,
+          "cost_type": "variable"
+        },
+        {
+          "category": "R&D/Product",
+          "amount": 7000000,
+          "percentage": 20.6,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "G&A",
+          "amount": 4000000,
+          "percentage": 11.8,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "Customer Support/Success",
+          "amount": 4000000,
+          "percentage": 11.8,
+          "cost_type": "semi-variable"
+        },
+        {
+          "category": "Cloud/IT/Variable COGS",
+          "amount": 5000000,
+          "percentage": 14.7,
+          "cost_type": "variable"
+        }
+      ],
+      "headcount": 75
+    },
+    "year_4": {
+      "total_costs": 50000000,
+      "cost_categories": [
+        {
+          "category": "Sales & Marketing",
+          "amount": 21000000,
+          "percentage": 42,
+          "cost_type": "variable"
+        },
+        {
+          "category": "R&D/Product",
+          "amount": 9000000,
+          "percentage": 18,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "G&A",
+          "amount": 6000000,
+          "percentage": 12,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "Customer Support/Success",
+          "amount": 7000000,
+          "percentage": 14,
+          "cost_type": "semi-variable"
+        },
+        {
+          "category": "Cloud/IT/Variable COGS",
+          "amount": 7000000,
+          "percentage": 14,
+          "cost_type": "variable"
+        }
+      ],
+      "headcount": 110
+    },
+    "year_5": {
+      "total_costs": 75000000,
+      "cost_categories": [
+        {
+          "category": "Sales & Marketing",
+          "amount": 32000000,
+          "percentage": 42.7,
+          "cost_type": "variable"
+        },
+        {
+          "category": "R&D/Product",
+          "amount": 12000000,
+          "percentage": 16,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "G&A",
+          "amount": 9000000,
+          "percentage": 12,
+          "cost_type": "fixed"
+        },
+        {
+          "category": "Customer Support/Success",
+          "amount": 12000000,
+          "percentage": 16,
+          "cost_type": "semi-variable"
+        },
+        {
+          "category": "Cloud/IT/Variable COGS",
+          "amount": 12000000,
+          "percentage": 16,
+          "cost_type": "variable"
+        }
+      ],
+      "headcount": 160
+    }
+  },
+  "financial_statements": {
+    "profit_loss": [
+      {
+        "year": 1,
+        "revenue": 10000000,
+        "gross_profit": 8000000,
+        "operating_expenses": 12500000,
+        "ebitda": -4500000,
+        "net_income": -4700000,
+        "margins": {
+          "gross_margin": 80,
+          "operating_margin": -45,
+          "net_margin": -47
+        }
+      },
+      {
+        "year": 2,
+        "revenue": 24000000,
+        "gross_profit": 19200000,
+        "operating_expenses": 20000000,
+        "ebitda": -800000,
+        "net_income": -1000000,
+        "margins": {
+          "gross_margin": 80,
+          "operating_margin": -3.3,
+          "net_margin": -4.2
+        }
+      },
+      {
+        "year": 3,
+        "revenue": 48000000,
+        "gross_profit": 38400000,
+        "operating_expenses": 30000000,
+        "ebitda": 8400000,
+        "net_income": 7000000,
+        "margins": {
+          "gross_margin": 80,
+          "operating_margin": 17.5,
+          "net_margin": 14.6
+        }
+      },
+      {
+        "year": 4,
+        "revenue": 84000000,
+        "gross_profit": 67200000,
+        "operating_expenses": 42000000,
+        "ebitda": 25200000,
+        "net_income": 21000000,
+        "margins": {
+          "gross_margin": 80,
+          "operating_margin": 30,
+          "net_margin": 25
+        }
+      },
+      {
+        "year": 5,
+        "revenue": 134000000,
+        "gross_profit": 107200000,
+        "operating_expenses": 67000000,
+        "ebitda": 40200000,
+        "net_income": 34000000,
+        "margins": {
+          "gross_margin": 80,
+          "operating_margin": 30,
+          "net_margin": 25.4
+        }
+      }
+    ],
+    "cash_flow": [
+      {
+        "year": 1,
+        "operating_cash_flow": -4000000,
+        "investing_cash_flow": -2000000,
+        "financing_cash_flow": 8000000,
+        "net_cash_flow": 2000000,
+        "cash_balance": 2000000
+      },
+      {
+        "year": 2,
+        "operating_cash_flow": -500000,
+        "investing_cash_flow": -1500000,
+        "financing_cash_flow": 4000000,
+        "net_cash_flow": 2000000,
+        "cash_balance": 4000000
+      },
+      {
+        "year": 3,
+        "operating_cash_flow": 7000000,
+        "investing_cash_flow": -2000000,
+        "financing_cash_flow": 0,
+        "net_cash_flow": 5000000,
+        "cash_balance": 9000000
+      },
+      {
+        "year": 4,
+        "operating_cash_flow": 20000000,
+        "investing_cash_flow": -3000000,
+        "financing_cash_flow": 0,
+        "net_cash_flow": 17000000,
+        "cash_balance": 26000000
+      },
+      {
+        "year": 5,
+        "operating_cash_flow": 32000000,
+        "investing_cash_flow": -4000000,
+        "financing_cash_flow": 0,
+        "net_cash_flow": 28000000,
+        "cash_balance": 54000000
+      }
+    ]
+  },
+  "unit_economics": [
+    {
+      "year": 1,
+      "CAC": 45,
+      "CLV": 200,
+      "CLV_CAC_ratio": 4.4,
+      "payback_period": 7.8,
+      "gross_margin_per_customer": 90
+    },
+    {
+      "year": 2,
+      "CAC": 45,
+      "CLV": 200,
+      "CLV_CAC_ratio": 4.4,
+      "payback_period": 7.8,
+      "gross_margin_per_customer": 90
+    },
+    {
+      "year": 3,
+      "CAC": 45,
+      "CLV": 210,
+      "CLV_CAC_ratio": 4.7,
+      "payback_period": 7.5,
+      "gross_margin_per_customer": 95
+    },
+    {
+      "year": 4,
+      "CAC": 45,
+      "CLV": 220,
+      "CLV_CAC_ratio": 4.9,
+      "payback_period": 7.2,
+      "gross_margin_per_customer": 100
+    },
+    {
+      "year": 5,
+      "CAC": 45,
+      "CLV": 230,
+      "CLV_CAC_ratio": 5.1,
+      "payback_period": 7,
+      "gross_margin_per_customer": 105
+    }
+  ],
+  "funding_plan": {
+    "total_funding_needed": 12000000,
+    "funding_rounds": [
+      {
+        "round": "Pre-Seed/Seed",
+        "timing": "Year 0-1",
+        "amount": 3000000,
+        "purpose": "MVP, initial team, go-to-market",
+        "milestones": [
+          "MVP Launch",
+          "First 10k users",
+          "GDPR compliance"
+        ]
+      },
+      {
+        "round": "Series A",
+        "timing": "Year 1-2",
+        "amount": 5000000,
+        "purpose": "Growth, product scaling, marketing",
+        "milestones": [
+          "100k paying users",
+          "API/Smart-Home integrations",
+          "Churn <4%"
+        ]
+      },
+      {
+        "round": "Series B",
+        "timing": "Year 2-3",
+        "amount": 4000000,
+        "purpose": "Market expansion, team scaling, partnerships",
+        "milestones": [
+          "500k users",
+          "Positive EBITDA",
+          "DACH market leadership"
+        ]
+      }
+    ],
+    "use_of_funds": [
+      {
+        "category": "Product & R&D",
+        "percentage": 30,
+        "rationale": "Platform development, integrations, security"
+      },
+      {
+        "category": "Sales & Marketing",
+        "percentage": 45,
+        "rationale": "Customer acquisition, brand building"
+      },
+      {
+        "category": "G&A",
+        "percentage": 10,
+        "rationale": "Admin, legal, finance"
+      },
+      {
+        "category": "Customer Support/Success",
+        "percentage": 10,
+        "rationale": "Onboarding, retention"
+      },
+      {
+        "category": "CapEx/IT Infrastructure",
+        "percentage": 5,
+        "rationale": "Cloud, servers, security"
+      }
+    ]
+  },
+  "break_even_analysis": {
+    "break_even_month": 28,
+    "break_even_customers": 400000,
+    "break_even_revenue": 36000000,
+    "sensitivity": {
+      "optimistic": "Break-even in month 22 with 20% higher ARPU and 20% lower CAC.",
+      "pessimistic": "Break-even in month 36 if churn rises to 5% and CAC increases by 20%."
+    }
+  },
+  "key_assumptions": [
+    {
+      "assumption": "ARPU remains at 7.5 €/month across segments.",
+      "rationale": "Benchmarks from digital media and smart home SaaS; validated by market studies.",
+      "risk_level": "medium"
+    },
+    {
+      "assumption": "Churn stabilizes at 3%/month after year 1.",
+      "rationale": "Target value for sticky SaaS platforms; supported by telecom/digital benchmarks.",
+      "risk_level": "medium"
+    },
+    {
+      "assumption": "CAC remains at 45 € despite scaling.",
+      "rationale": "Based on digital platform benchmarks; assumes efficient marketing.",
+      "risk_level": "medium"
+    },
+    {
+      "assumption": "Gross margin at 80% due to SaaS model.",
+      "rationale": "Cloud/SaaS cost structure; variable costs per user low.",
+      "risk_level": "low"
+    },
+    {
+      "assumption": "Market growth and digital adoption continue at projected CAGR (12-20%).",
+      "rationale": "Smart home and digitalization trends in DACH region.",
+      "risk_level": "medium"
+    },
+    {
+      "assumption": "No major regulatory or data privacy roadblocks.",
+      "rationale": "GDPR compliance from start; ongoing monitoring.",
+      "risk_level": "medium"
+    },
+    {
+      "assumption": "Competition does not trigger price war or excessive CAC inflation.",
+      "rationale": "Differentiation via platform scope and integrations.",
+      "risk_level": "high"
+    }
+  ],
+  "_meta": {
+    "phase_split": true,
+    "phase1_tokens": 2428,
+    "phase2_tokens": 2296
+  }
+}

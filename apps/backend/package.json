@@ -16,20 +16,21 @@
     "test": "echo 'Backend tests temporarily disabled for deployment'"
   },
   "dependencies": {
-    "fastify": "^4.28.1",
+    "@aigilexperience/common": "*",
+    "@anthropic-ai/sdk": "^0.24.0",
     "@fastify/cors": "^8.4.2",
     "@fastify/rate-limit": "^8.0.0",
-    "zod": "^3.23.8",
-    "dotenv": "^16.4.5",
-    "lru-cache": "^11.0.1",
-    "hasha": "^5.2.2",
-    "openai": "^4.57.0",
-    "@anthropic-ai/sdk": "^0.24.0",
-    "ioredis": "^5.4.1",
-    "@aigilexperience/common": "*",
     "@types/node": "^20.0.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "hasha": "^5.2.2",
+    "ioredis": "^5.4.1",
+    "jsonrepair": "^3.13.0",
+    "lru-cache": "^11.0.1",
+    "openai": "^4.57.0",
+    "tsx": "^4.17.0",
     "typescript": "^5.5.4",
-    "tsx": "^4.17.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "vitest": "^2.0.5"

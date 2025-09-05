@@ -1,0 +1,45 @@
+{
+  "score_total": 66,
+  "verdict": "YELLOW",
+  "scores": {
+    "problem": 12,
+    "solution": 12,
+    "market": 7,
+    "gtm": 6,
+    "business_model": 6,
+    "competition": 7,
+    "team": 5,
+    "traction": 3,
+    "financials": 3,
+    "risk": 3,
+    "impact": 4,
+    "pitch_quality": 4
+  },
+  "top_strengths": [
+    "Ganzheitlicher, integrierter Ansatz für Haushaltsmanagement",
+    "Klares Wertversprechen für digital-affine Zielgruppen",
+    "Relevanz durch Trend zu Smart-Home und digitaler Organisation"
+  ],
+  "top_risks": [
+    "Unklare Zahlungsbereitschaft der Zielgruppe",
+    "Datenschutz- und Sicherheitsanforderungen bei Integration externer Dienste",
+    "Fehlende Angaben zu Team, Traktion und Finanzierungsmodell"
+  ],
+  "priority_fixes": [
+    "Validierung der Zahlungsbereitschaft durch Nutzerinterviews oder MVP-Test",
+    "Konkretes Datenschutz- und Sicherheitskonzept für Schnittstellen entwickeln",
+    "Team- und Traktionsdaten ergänzen (z.B. Gründerprofil, erste Nutzerzahlen, Pilotkunden)"
+  ],
+  "follow_up_questions": [
+    "Wie sieht das konkrete Preismodell aus und wie wurde die Zahlungsbereitschaft getestet?",
+    "Welche Datenschutzmaßnahmen werden für die Integration von Smart-Home und externen Diensten konkret umgesetzt?",
+    "Wer sind die Gründer und welches relevante Know-how bringen sie mit?",
+    "Gibt es bereits erste Nutzer, Pilotprojekte oder Partnerschaften?",
+    "Wie differenziert sich HappyNest konkret von bestehenden Productivity-Apps und Smart-Home-Plattformen?"
+  ],
+  "consistency_issues": [
+    "Keine Angaben zu Team, Traktion und Finanzierungsmodell trotz ambitionierter Ziele",
+    "Unklar, wie die Integration externer Dienstleister technisch und regulatorisch gelöst wird",
+    "Marktpotenzial und Wettbewerbsumfeld werden nicht quantifiziert"
+  ]
+}

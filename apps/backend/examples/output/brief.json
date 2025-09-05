@@ -1,0 +1,24 @@
+{
+  "facts": {
+    "target_user": "Familien, Paare und Einzelpersonen, die ihr Zuhause digital organisieren und verwalten möchten.",
+    "value_prop": "HappyNest bietet eine zentrale digitale Plattform, um alle Aspekte des Haushaltsmanagements einfach, effizient und sicher zu steuern.",
+    "core_features": [
+      "Digitale Haushaltsakte (Dokumente, Verträge, Rechnungen)",
+      "Aufgaben- und Terminverwaltung",
+      "Kommunikations- und Abstimmungsfunktionen für Haushaltsmitglieder",
+      "Schnittstellen zu Smart-Home-Geräten und externen Dienstleistern"
+    ],
+    "differentiation": "Ganzheitlicher Ansatz für das digitale Zuhause, der Organisation, Kommunikation und Smart-Home-Integration in einer Plattform vereint.",
+    "north_star": "Das digitale Zuhause als intuitives, sicheres und vernetztes Zentrum des Familienlebens etablieren.",
+    "goals_2030": "Marktführer im DACH-Raum für digitale Haushaltsorganisation mit über 2 Mio. aktiven Haushalten."
+  },
+  "open_questions": [
+    "Wie hoch ist die Zahlungsbereitschaft der Zielgruppe für eine solche Plattform?",
+    "Welche Datenschutz- und Sicherheitsanforderungen sind für die Integration externer Dienste und Smart-Home-Geräte zu erfüllen?"
+  ],
+  "assumptions": [
+    "Die Zielgruppe ist digital-affin und offen für neue Tools zur Haushaltsorganisation (basierend auf dem Trend zu Smart-Home und digitalen Services).",
+    "Haushalte empfinden die Fragmentierung von Informationen und Aufgaben als Schmerzpunkt, den eine zentrale Plattform lösen kann (Analogieschluss zu bestehenden Productivity-Apps)."
+  ],
+  "brief": "HappyNest ist eine digitale Plattform, die das Management des eigenen Zuhauses revolutioniert. Sie richtet sich an Familien, Paare und Einzelpersonen, die ihren Haushalt effizienter und stressfreier organisieren möchten. Die Lösung vereint digitale Haushaltsakte, Aufgaben- und Terminverwaltung sowie Kommunikationsfunktionen für alle Haushaltsmitglieder. Durch die Integration von Smart-Home-Geräten und externen Dienstleistern entsteht ein ganzheitliches, vernetztes Ökosystem. HappyNest differenziert sich durch den umfassenden Ansatz, der Organisation, Kommunikation und Automatisierung in einer intuitiven Plattform bündelt. Ziel ist es, das digitale Zuhause als neues Zentrum des Familienlebens zu etablieren und bis 2030 über zwei Millionen Haushalte im DACH-Raum zu erreichen. Offene Fragen bestehen hinsichtlich Zahlungsbereitschaft und Datenschutzanforderungen. Die Annahme ist, dass digital-affine Haushalte einen klaren Bedarf an zentralen, sicheren Lösungen für die Haushaltsorganisation haben."
+}

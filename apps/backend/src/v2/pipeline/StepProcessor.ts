@@ -11,6 +11,7 @@ import path from "path";
 import crypto from "crypto";
 import { EvidenceHarvester } from "./EvidenceHarvester.js";
 import { NumberValidator } from "./NumberValidator.js";
+import { traceSystem } from "../../lib/trace-system.js";
 
 export class StepProcessor {
   private cache: CacheManager;
@@ -31,6 +32,7 @@ export class StepProcessor {
     step: PipelineStep,
     inputs: Record<string, any>,
     skipCache = false,
+    jobId?: string,
   ): Promise<StepResult> {
     const startTime = Date.now();
 

@@ -1,0 +1,53 @@
+{
+  "headline": "HappyNest – Das digitale Zuhause: Preisarchitektur, Unit Economics & Skalierungspfad",
+  "bullets": [
+    "Preis-Leiter: Free, Premium (6,99 €/Monat), Family (9,99 €/Monat)",
+    "Unit-Economics-Pfad: ARPU 7,50 €, Bruttomarge 80 %, Churn 3 %/Monat, CAC 45 €",
+    "Payback-Ziel: <8 Monate",
+    "Skalierungslogik: Upsell von Free zu Premium/Family, Expansion durch Partner-Integrationen (Smart Home, Dienstleister)"
+  ],
+  "narrative": "HappyNest adressiert digital-affine Haushalte mit einer gestaffelten Preisarchitektur: Ein kostenloses Einstiegsangebot (Free), ein Premium-Modell für Einzelpersonen/Paare und ein Family-Tarif für größere Haushalte. Die Preisgestaltung orientiert sich an Benchmarks aus dem Digital-Media- und Smart-Home-Markt in Deutschland. Mit einem durchschnittlichen ARPU von 7,50 € und einer Bruttomarge von 80 % ergeben sich attraktive Unit Economics. Bei einer monatlichen Churn-Rate von 3 % und einem CAC von 45 € liegt der Payback bei unter 8 Monaten. Die Skalierung erfolgt über Upselling aus dem Free-Tier sowie Expansion durch Integration externer Partner und Smart-Home-Dienste. Datenschutz und Zahlungsbereitschaft bleiben zentrale Validierungspunkte.",
+  "data": {
+    "price_tiers": [
+      {
+        "name": "Free",
+        "eur_month": 0
+      },
+      {
+        "name": "Premium",
+        "eur_month": 6.99
+      },
+      {
+        "name": "Family",
+        "eur_month": 9.99
+      }
+    ],
+    "arpu": 7.5,
+    "gross_margin": 0.8,
+    "churn_monthly": 0.03,
+    "CAC": 45,
+    "variable_costs_per_user": 1.5,
+    "contribution_per_month": 4.5,
+    "CLV": 200,
+    "payback_months": 7.8
+  },
+  "assumptions": [
+    "ARPU orientiert sich an Digital-Media/Smart-Home-Benchmarks (Statista, Research and Markets)",
+    "Bruttomarge von 80 % bei SaaS-typischer Kostenstruktur",
+    "Churn-Rate von 3 %/Monat als Zielwert für hohe Nutzerbindung",
+    "CAC von 45 € auf Basis digitaler Plattform-Benchmarks",
+    "Variable Kosten pro Nutzer (Cloud, Support, Integrationen) ca. 1,50 €/Monat"
+  ],
+  "open_questions": [
+    "Wie hoch ist die tatsächliche Zahlungsbereitschaft der Zielgruppe für Premium/Family?",
+    "Welche spezifischen Datenschutz- und Integrationsanforderungen ergeben sich durch Smart-Home- und Drittanbieter-Anbindung?",
+    "Wie stark differenziert sich HappyNest im Vergleich zu bestehenden Productivity- und Smart-Home-Apps?"
+  ],
+  "citations": [
+    "Statista Digital Market Outlook 2024: ARPU Digital Media DE (22,10 USD/Jahr)",
+    "Research and Markets 2024: ARPU E-Commerce DE (1.158,80 USD/Jahr)",
+    "Statista Smart Home Market Germany 2024",
+    "OECD/ Springer 2023/2024: Churn- und CAC-Benchmarks Digitalbranche"
+  ],
+  "evidence_coverage": "ARPU, Churn, CAC und Kostenstruktur sind durch aktuelle Marktstudien und Benchmarks aus dem Digital- und Smart-Home-Segment gut abgedeckt; Zahlungsbereitschaft und Datenschutzanforderungen müssen noch empirisch validiert werden."
+}

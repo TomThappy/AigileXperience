@@ -1,0 +1,62 @@
+{
+  "data": {
+    "topic": "Data privacy/regulatory",
+    "sources": [
+      {
+        "title": "General Data Protection Regulation (GDPR)",
+        "publisher": "European Union",
+        "year": 2018,
+        "region": "EU",
+        "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+        "method": "Legislation",
+        "key_findings": [
+          "GDPR applies to all companies processing the personal data of data subjects residing in the Union, regardless of the company’s location.",
+          "Penalties for non-compliance can be up to 4% of annual global turnover or €20 Million (whichever is greater).",
+          "The regulation mandates that businesses must protect the personal data and privacy of EU citizens for transactions that occur within EU member states."
+        ],
+        "usage_note": "HappyNest, as a digital platform, must ensure compliance with GDPR in its handling of user data.",
+        "access": "free",
+        "reliability_score": 1,
+        "last_accessed": "2025-09-05"
+      },
+      {
+        "title": "Data Protection Act 2018",
+        "publisher": "Bundesministerium der Justiz und für Verbraucherschutz",
+        "year": 2018,
+        "region": "DE",
+        "url": "https://www.gesetze-im-internet.de/bdsg_2018/",
+        "method": "Legislation",
+        "key_findings": [
+          "The Act is designed to implement the EU’s GDPR legislation into German law.",
+          "It provides individuals with more control over their personal data and requires businesses to be transparent about how they collect, use, and store personal data."
+        ],
+        "usage_note": "HappyNest, operating in Germany, must adhere to the provisions of the Data Protection Act 2018 in addition to GDPR.",
+        "access": "free",
+        "reliability_score": 1,
+        "last_accessed": "2025-09-05"
+      },
+      {
+        "title": "The State of European Tech 2024",
+        "publisher": "Atomico",
+        "year": 2024,
+        "region": "EU",
+        "url": "https://www.atomico.com/reports/the-state-of-european-tech-2024",
+        "method": "Survey",
+        "key_findings": [
+          "Data privacy and security continue to be a major concern for European consumers.",
+          "Companies that prioritize data privacy and transparency are more likely to gain consumer trust."
+        ],
+        "usage_note": "HappyNest should prioritize data privacy and transparency to gain and maintain user trust.",
+        "access": "free",
+        "reliability_score": 0.8,
+        "last_accessed": "2025-09-05"
+      }
+    ],
+    "assumptions": [
+      "Assuming that HappyNest will be handling personal data of its users."
+    ]
+  },
+  "cached_at": "2025-09-05T14:19:49.863Z",
+  "region": "EU/DE",
+  "topic": "Data privacy/regulatory"
+}

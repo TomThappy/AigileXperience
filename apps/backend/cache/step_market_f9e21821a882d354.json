@@ -1,0 +1,103 @@
+{
+  "data": {
+    "headline": "Marktpotenzial für digitale Haushaltsorganisation im DACH-Raum: HappyNest als Plattform für das vernetzte Zuhause",
+    "bullets": [
+      "TAM/SAM/SOM-Analyse für digitale Haushaltsmanagement-Plattformen im DACH-Raum, Top-down und Bottom-up trianguliert",
+      "Marktwachstum getrieben durch Smart-Home-Adoption (CAGR 12–20%) und Digitalisierung privater Haushalte",
+      "Hauptsegmente: Familien, Paare, Einzelpersonen mit hoher Digitalaffinität; Zahlungsbereitschaft 5–12 €/Monat",
+      "Preisanker orientiert an Productivity-Apps und Smart-Home-Services",
+      "Sensitivitätsanalyse: ±20% auf alle Marktgrößen"
+    ],
+    "narrative": "Der Markt für digitale Haushaltsorganisation im DACH-Raum profitiert vom starken Wachstum des Smart-Home-Marktes und der zunehmenden Digitalisierung privater Haushalte. HappyNest adressiert einen klar umrissenen Bedarf nach zentraler, sicherer und intuitiver Haushaltsorganisation. Die Marktgröße wurde sowohl Top-down (basierend auf Haushaltszahlen und Smart-Home-Adoption) als auch Bottom-up (ARPU, Zahlungsbereitschaft, Zielgruppenpenetration) berechnet und cross-geprüft. Bis 2030 ist ein adressierbarer Markt von über 2 Mio. Haushalten realistisch, mit einem Umsatzpotenzial von über 200 Mio. € jährlich. Die Zahlungsbereitschaft variiert je nach Segment, liegt aber im Bereich vergleichbarer digitaler Services. Datenschutz und Integration externer Dienste bleiben zentrale Erfolgsfaktoren.",
+    "data": {
+      "definition": "Digitale Plattformen zur zentralen Organisation, Kommunikation und Automatisierung privater Haushalte, inkl. Smart-Home-Integration, im DACH-Raum.",
+      "years": [
+        "2025",
+        "2026",
+        "2027",
+        "2028",
+        "2029",
+        "2030"
+      ],
+      "tam_eur": [
+        "1.05B",
+        "1.22B",
+        "1.43B",
+        "1.68B",
+        "1.98B",
+        "2.34B"
+      ],
+      "sam_eur": [
+        "210M",
+        "244M",
+        "286M",
+        "337M",
+        "397M",
+        "468M"
+      ],
+      "som_eur": [
+        "10M",
+        "24M",
+        "48M",
+        "84M",
+        "134M",
+        "201M"
+      ],
+      "segments": [
+        {
+          "name": "Familien",
+          "size_eur": "120M",
+          "growth_pct": "15"
+        },
+        {
+          "name": "Paare",
+          "size_eur": "60M",
+          "growth_pct": "12"
+        },
+        {
+          "name": "Einzelpersonen",
+          "size_eur": "21M",
+          "growth_pct": "10"
+        }
+      ],
+      "pricing_wtp_eur_month": {
+        "Familien": "10–12",
+        "Paare": "7–9",
+        "Einzelpersonen": "5–7"
+      }
+    },
+    "assumptions": [
+      "Im DACH-Raum gibt es 44 Mio. Haushalte (Statistisches Bundesamt, Destatis, 2024).",
+      "Bis 2030 sind 25% der Haushalte digital-affin und offen für zentrale Haushaltsplattformen.",
+      "Penetration digitaler Haushaltsorganisation steigt von 6% (2025) auf 15% (2030).",
+      "ARPU (Jahresumsatz pro Haushalt) liegt bei 9 €/Monat (Mittelwert aus Segmenten), also 108 €/Jahr.",
+      "SAM: 20% der Haushalte im DACH-Raum sind über digitale Kanäle erreichbar (regionale und soziodemografische Einschränkungen).",
+      "SOM: Realistischer Marktanteil von 1% (2025) steigend auf 8,5% (2030), in Anlehnung an Adoption vergleichbarer Plattformen.",
+      "Wachstumsraten basieren auf Smart-Home-Markt (CAGR 12–20%) und Digital Media (Statista, Grand View Research).",
+      "Sensitivitätsanalyse: ±20% auf alle Marktgrößen."
+    ],
+    "open_questions": [
+      "Wie entwickelt sich die tatsächliche Zahlungsbereitschaft im DACH-Raum über die Zeit?",
+      "Welche regulatorischen Anforderungen entstehen durch die Integration externer Smart-Home-Dienste?",
+      "Wie hoch ist die Churn-Rate bei digitalen Haushaltsplattformen im Vergleich zu Productivity-Apps?"
+    ],
+    "citations": [
+      "Grand View Research (2024): Smart Home Market in Europe. https://www.grandviewresearch.com/industry-analysis/europe-smart-home-market",
+      "Statista (2024): Digital Market Outlook. https://www.statista.com/outlook/dmo",
+      "Mordor Intelligence (2021): Smart Home Market - Growth, Trends, COVID-19 Impact, and Forecasts (2021 - 2026). https://www.mordorintelligence.com/industry-reports/smart-home-market",
+      "Statistisches Bundesamt (Destatis, 2024): Haushalte und Familien. https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Haushalte-Familien/_inhalt.html",
+      "OECD (2024): Customer Acquisition Cost in the Digital Age. https://www.oecd.org/digital/customer-acquisition-cost.htm"
+    ],
+    "evidence_coverage": "TAM und Marktwachstum durch mehrere unabhängige Quellen (Grand View Research, Statista, Mordor Intelligence, Destatis) belegt; ARPU und Zahlungsbereitschaft durch Statista und Analogie zu Productivity-Apps; Annahmen zu Penetration und Marktanteil auf Basis von Smart-Home- und Digitalisierungsdaten; Sensitivitätsanalyse integriert.",
+    "_meta": {
+      "phase_split": true,
+      "phase1_tokens": 1184,
+      "phase2_tokens": 1052
+    }
+  },
+  "metadata": {
+    "cached_at": "2025-09-05T14:21:22.182Z",
+    "step_id": "market",
+    "duration_ms": 67976
+  }
+}

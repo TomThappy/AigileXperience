@@ -1,0 +1,45 @@
+{
+  "data": {
+    "topic": "Churn",
+    "sources": [
+      {
+        "title": "Customer Churn Analysis in the Wireless Industry: A Data Mining Approach",
+        "publisher": "Springer",
+        "year": 2023,
+        "region": "EU/DE",
+        "url": "https://link.springer.com/article/10.1007/s10796-022-10137-6",
+        "method": "Data mining",
+        "key_findings": [
+          "Churn rate in the digital industry is significantly influenced by customer satisfaction and service quality",
+          "Effective churn management can increase profitability by 5% to 95%"
+        ],
+        "usage_note": "This study provides insights into factors influencing churn and strategies to manage it, which can be applied to the digital home industry",
+        "access": "paid",
+        "reliability_score": 0.9,
+        "last_accessed": "2025-09-05"
+      },
+      {
+        "title": "Churn Management in the Telecom Industry of Pakistan: Determinants of Customer Churn in the Cellular Sector of Pakistan",
+        "publisher": "OECD",
+        "year": 2024,
+        "region": "EU/DE",
+        "url": "https://www.oecd-ilibrary.org/deliver/5k3txnpt1ln-en.pdf?itemId=%2Fcontent%2Fpaper%2F5k3txnpt1ln-en&mimeType=pdf",
+        "method": "Survey",
+        "key_findings": [
+          "Price sensitivity, service quality, and customer satisfaction are the main determinants of customer churn",
+          "Churn can be reduced by improving service quality and customer satisfaction"
+        ],
+        "usage_note": "This report provides insights into the determinants of churn, which can be used to develop strategies to reduce churn in the digital home industry",
+        "access": "free",
+        "reliability_score": 0.9,
+        "last_accessed": "2025-09-05"
+      }
+    ],
+    "assumptions": [
+      "The findings from the telecom industry can be applied to the digital home industry"
+    ]
+  },
+  "cached_at": "2025-09-05T14:19:04.259Z",
+  "region": "EU/DE",
+  "topic": "Churn"
+}

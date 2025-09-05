@@ -1,0 +1,126 @@
+{
+  "current_solutions": [
+    {
+      "solution": "Einzelne Productivity-Apps (z.B. Todoist, Google Calendar, Evernote)",
+      "adoption_rate": "hoch bei digital-affinen Nutzern",
+      "satisfaction_level": "medium",
+      "cost_structure": "Freemium/Abomodell, meist geringe Kosten pro Nutzer",
+      "pain_points": [
+        "Fragmentierung der Informationen",
+        "Keine zentrale Übersicht",
+        "Mangelnde Integration mit Smart-Home-Geräten",
+        "Kommunikation oft ausgelagert (z.B. WhatsApp, E-Mail)"
+      ]
+    },
+    {
+      "solution": "Smart-Home-Plattformen (z.B. Home Connect, Apple HomeKit, Google Home)",
+      "adoption_rate": "wachsend, aber noch nicht Mainstream",
+      "satisfaction_level": "medium",
+      "cost_structure": "Geräteabhängig, teilweise kostenpflichtige Apps",
+      "pain_points": [
+        "Fokus auf Geräte, nicht auf Haushaltsorganisation",
+        "Kompatibilitätsprobleme zwischen Marken",
+        "Fehlende Aufgaben- und Dokumentenverwaltung"
+      ]
+    },
+    {
+      "solution": "Papierbasierte Haushaltsordner und manuelle Kalender",
+      "adoption_rate": "sinkend, vor allem bei älteren Zielgruppen",
+      "satisfaction_level": "low",
+      "cost_structure": "Geringe direkte Kosten, hoher Zeitaufwand",
+      "pain_points": [
+        "Keine Automatisierung",
+        "Schwierige Zusammenarbeit",
+        "Verlust- und Sicherheitsrisiken"
+      ]
+    }
+  ],
+  "market_inefficiencies": [
+    {
+      "area": "Informationsmanagement",
+      "description": "Haushaltsdokumente, Verträge und Aufgaben sind auf verschiedene Tools und Medien verteilt.",
+      "cost_impact": "Erhöhter Zeitaufwand, Fehleranfälligkeit",
+      "frequency": "constant",
+      "severity": "high"
+    },
+    {
+      "area": "Kommunikation im Haushalt",
+      "description": "Abstimmungen erfolgen über verschiedene Kanäle (Messenger, Zettel, E-Mail), was zu Missverständnissen führt.",
+      "cost_impact": "Verpasste Termine, Doppelarbeit",
+      "frequency": "frequent",
+      "severity": "medium"
+    },
+    {
+      "area": "Smart-Home-Integration",
+      "description": "Geräte verschiedener Hersteller sind oft nicht kompatibel, zentrale Steuerung fehlt.",
+      "cost_impact": "Investitionsverluste, ineffiziente Nutzung",
+      "frequency": "occasional",
+      "severity": "medium"
+    },
+    {
+      "area": "Datenschutz und Compliance",
+      "description": "Hohe regulatorische Anforderungen (GDPR, BDSG) erschweren die Integration externer Dienste.",
+      "cost_impact": "Erhöhte Entwicklungskosten, Risiko von Strafen",
+      "frequency": "constant",
+      "severity": "critical"
+    }
+  ],
+  "stakeholder_analysis": [
+    {
+      "stakeholder": "Haushaltsmitglieder (Familien, Paare, Einzelpersonen)",
+      "role": "Endnutzer, Entscheider",
+      "influence_level": "high",
+      "resistance_level": "medium",
+      "key_concerns": [
+        "Datenschutz",
+        "Bedienkomfort",
+        "Preis-Leistungs-Verhältnis"
+      ]
+    },
+    {
+      "stakeholder": "Smart-Home-Hersteller",
+      "role": "Technologiepartner, Integrationspunkt",
+      "influence_level": "medium",
+      "resistance_level": "medium",
+      "key_concerns": [
+        "Kompatibilität",
+        "Markenexklusivität",
+        "Datensicherheit"
+      ]
+    },
+    {
+      "stakeholder": "Regulatorische Behörden (z.B. Datenschutzbehörden)",
+      "role": "Regulator, Überwacher",
+      "influence_level": "high",
+      "resistance_level": "high",
+      "key_concerns": [
+        "GDPR-Compliance",
+        "Transparenz bei Datenverarbeitung",
+        "Sanktionen bei Verstößen"
+      ]
+    },
+    {
+      "stakeholder": "Externe Dienstleister (z.B. Handwerker, Lieferdienste)",
+      "role": "Serviceanbieter, Integrationspartner",
+      "influence_level": "low",
+      "resistance_level": "low",
+      "key_concerns": [
+        "Schnittstellenzugang",
+        "Kundenzugang"
+      ]
+    }
+  ],
+  "change_readiness": {
+    "market_maturity": "developing",
+    "technology_adoption": "early_majority",
+    "regulatory_support": "neutral",
+    "economic_conditions": "stable"
+  },
+  "transformation_opportunity": {
+    "disruption_potential": "significant",
+    "implementation_timeline": "18-36 Monate bis breite Marktdurchdringung",
+    "investment_required": "Mittel bis hoch (Plattformentwicklung, Marketing, Compliance)",
+    "success_probability": "medium",
+    "value_creation_potential": "Hohe Effizienzgewinne, neue Umsatzmodelle, Marktführerschaft im DACH-Raum möglich"
+  }
+}

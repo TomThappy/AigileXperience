@@ -23,6 +23,24 @@ export async function chatComplete(
   const provider = pickProvider(model);
   const maxRetries = parseInt(process.env.LLM_RETRIES || "3");
 
+  // 🔧 DRY-RUN MODE - Return synthetic response without API calls
+  if (process.env.LLM_DRY_RUN === "true") {
+    console.log(`🏃 [DRY-RUN] Returning synthetic response for model: ${model}`);
+    await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 400)); // Simulate API latency
+    
+    return JSON.stringify({
+      title: "Sample Output",
+      description: "This is a synthetic response for DRY-RUN mode.",
+      market_size: "$1.2B",
+      competition: ["Competitor A", "Competitor B"],
+      status: "completed",
+      confidence: 85,
+      generated_by: "DRY-RUN mode",
+      model_used: model,
+      timestamp: new Date().toISOString()
+    }, null, 2);
+  }
+
   console.log("🤖 [LLM] ChatComplete called:", {
     model,
     temperature: temp,

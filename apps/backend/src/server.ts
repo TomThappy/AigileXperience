@@ -4,6 +4,38 @@ import rateLimit from "@fastify/rate-limit";
 import { ventureRoutes } from "./routes/venture.js";
 import "dotenv/config";
 
+// 🚨 API Key Detection and Warnings
+console.log("🔍 [STARTUP] Checking API Keys...");
+if (!process.env.OPENAI_API_KEY) {
+  console.error("🚨 [CRITICAL] OPENAI_API_KEY not found in environment!");
+  console.error("   Pipeline will fail without valid OpenAI API key.");
+  console.error("   Please set OPENAI_API_KEY in your .env file.");
+} else {
+  const keyStart = process.env.OPENAI_API_KEY.substring(0, 12);
+  console.log(`✅ [STARTUP] OpenAI API Key detected: ${keyStart}...`);
+}
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn("⚠️  [WARNING] ANTHROPIC_API_KEY not found in environment.");
+  console.warn("   Claude models will not be available.");
+} else {
+  const keyStart = process.env.ANTHROPIC_API_KEY.substring(0, 12);
+  console.log(`✅ [STARTUP] Anthropic API Key detected: ${keyStart}...`);
+}
+
+// DEV Bypass detection
+if (process.env.DEV_BYPASS_QUEUE === "true") {
+  console.log("🔧 [DEV] DEV_BYPASS_QUEUE enabled - Jobs will run synchronously without Redis");
+}
+
+// LLM DRY_RUN detection
+if (process.env.LLM_DRY_RUN === "true") {
+  console.log("🏃 [DEV] LLM_DRY_RUN enabled - No actual API calls, synthetic responses only");
+  console.log("   This saves costs during development and testing.");
+} else {
+  console.log("💰 [PROD] LLM_DRY_RUN disabled - Real API calls will be made");
+}
+
 const app = Fastify({
   logger: true,
   requestTimeout: 300000, // 5 minutes for long-running operations

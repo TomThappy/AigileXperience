@@ -1,0 +1,161 @@
+{
+  "direct_competitors": [
+    {
+      "name": "Nuki Home Solutions",
+      "description": "Nuki bietet eine Smart-Home-Plattform mit Fokus auf Zugangskontrolle, Haushaltsmanagement und Integration verschiedener Smart-Home-Geräte.",
+      "business_model": "Hardware-Verkauf (Smart Locks) plus App-basierte Services (Freemium/Subscription).",
+      "strengths": [
+        "Starke Smart-Home-Integration",
+        "Hohe Markenbekanntheit im DACH-Raum",
+        "Gute Hardware-Software-Kombination"
+      ],
+      "weaknesses": [
+        "Fokus auf Zugangskontrolle, weniger auf ganzheitliches Haushaltsmanagement",
+        "Begrenzte Kommunikations- und Organisationsfunktionen"
+      ],
+      "market_position": "Führend im Bereich Smart Locks und Zugangskontrolle im DACH-Raum",
+      "funding_stage": "Growth/Expansion",
+      "url": "https://nuki.io"
+    },
+    {
+      "name": "Home Connect Plus (Bosch)",
+      "description": "Plattform zur zentralen Steuerung und Organisation von Smart-Home-Geräten verschiedener Hersteller, mit Fokus auf Automatisierung und Haushaltsintegration.",
+      "business_model": "Freemium-App, Monetarisierung über Partnerschaften und Premium-Features.",
+      "strengths": [
+        "Starke OEM-Partnerschaften",
+        "Breite Gerätekompatibilität",
+        "Markenvertrauen durch Bosch"
+      ],
+      "weaknesses": [
+        "Fokus auf Geräteintegration, weniger auf Aufgaben-/Dokumentenmanagement",
+        "Weniger Kommunikationsfunktionen für Haushaltsmitglieder"
+      ],
+      "market_position": "Starke Position im Bereich Smart-Home-Ökosysteme in Europa",
+      "funding_stage": "Corporate Venture",
+      "url": "https://www.home-connect-plus.com"
+    },
+    {
+      "name": "Cozi Family Organizer",
+      "description": "Digitale Plattform für Familienorganisation: Kalender, Aufgaben, Einkaufslisten und Dokumentenmanagement.",
+      "business_model": "Freemium (kostenlose Basisversion, Premium-Subscription für Zusatzfunktionen).",
+      "strengths": [
+        "Starke Nutzerbasis in den USA/EU",
+        "Fokus auf Familienorganisation",
+        "Intuitive Bedienung"
+      ],
+      "weaknesses": [
+        "Begrenzte Smart-Home-Integration",
+        "Wenig Fokus auf externe Dienstleister",
+        "Datenschutzbedenken (US-Anbieter)"
+      ],
+      "market_position": "Etabliert im Segment Familienorganisation, weniger im Smart-Home-Bereich",
+      "funding_stage": "Profitabel/Bootstrapped",
+      "url": "https://www.cozi.com"
+    },
+    {
+      "name": "Tody",
+      "description": "App zur Aufgaben- und Reinigungsplanung im Haushalt, mit Fokus auf Gamification und Familienintegration.",
+      "business_model": "Einmalzahlung oder Subscription-Modell.",
+      "strengths": [
+        "Starke Aufgabenverwaltung",
+        "Gamification-Ansatz",
+        "Gute Nutzerbewertungen"
+      ],
+      "weaknesses": [
+        "Keine Smart-Home-Integration",
+        "Kein Dokumentenmanagement",
+        "Begrenzte Kommunikationsfunktionen"
+      ],
+      "market_position": "Nischenanbieter für Haushaltsaufgaben-Apps",
+      "funding_stage": "Bootstrapped",
+      "url": "https://www.todyapp.com"
+    }
+  ],
+  "indirect_competitors": [
+    {
+      "category": "Productivity-Apps",
+      "examples": [
+        "Trello",
+        "Notion",
+        "Google Keep",
+        "Microsoft To Do"
+      ],
+      "threat_level": "medium",
+      "description": "Allgemeine Organisations- und Kollaborationstools, die von Haushalten zweckentfremdet werden können, bieten flexible Workarounds für Aufgaben- und Dokumentenmanagement."
+    },
+    {
+      "category": "Smart-Home-Plattformen",
+      "examples": [
+        "Apple HomeKit",
+        "Google Home",
+        "Amazon Alexa"
+      ],
+      "threat_level": "high",
+      "description": "Technologiegiganten bieten zentrale Steuerung und Integration von Smart-Home-Geräten, jedoch ohne spezifische Haushaltsorganisationsfunktionen."
+    },
+    {
+      "category": "Papier/Status-quo",
+      "examples": [
+        "Papierkalender",
+        "Whiteboards",
+        "WhatsApp-Gruppen"
+      ],
+      "threat_level": "low",
+      "description": "Traditionelle Methoden und Messaging-Apps werden weiterhin als einfache, kostenfreie Lösungen genutzt, sind aber wenig effizient und nicht skalierbar."
+    },
+    {
+      "category": "Facility Management Software",
+      "examples": [
+        "Casavi",
+        "iHaus"
+      ],
+      "threat_level": "medium",
+      "description": "B2B-Lösungen für Immobilien- und Facility-Management, die teilweise in den Consumer-Bereich vordringen."
+    }
+  ],
+  "competitive_advantages": [
+    {
+      "advantage": "Ganzheitliche Plattform (Organisation, Kommunikation, Smart-Home-Integration, Dokumentenmanagement) speziell für Haushalte",
+      "defensibility": "medium",
+      "time_to_copy": "12-24 Monate",
+      "sustainability": "Hohe Nutzerbindung durch Plattformeffekte und Datenpersistenz"
+    },
+    {
+      "advantage": "Starke Fokussierung auf Datenschutz und EU/GDPR-Konformität",
+      "defensibility": "high",
+      "time_to_copy": "24+ Monate (bei konsequenter Umsetzung und Zertifizierung)",
+      "sustainability": "Vertrauensvorsprung bei europäischen Nutzern"
+    },
+    {
+      "advantage": "Offene Schnittstellen zu externen Dienstleistern und Smart-Home-Ökosystemen",
+      "defensibility": "medium",
+      "time_to_copy": "12-18 Monate",
+      "sustainability": "Netzwerkeffekte durch Partnerintegration"
+    }
+  ],
+  "market_positioning": {
+    "quadrant": "High Feature / Mid-Market Price",
+    "price_tier": "mid-market",
+    "feature_completeness": "advanced",
+    "differentiation_strategy": "Plattform-Ansatz mit umfassender Haushaltsorganisation, Kommunikation und Smart-Home-Integration, zugeschnitten auf europäische Datenschutzanforderungen"
+  },
+  "threats_opportunities": {
+    "threats": [
+      "Markteintritt großer Tech-Player (Apple, Google, Amazon) mit erweiterten Haushaltsfunktionen",
+      "Geringe Zahlungsbereitschaft der Zielgruppe",
+      "Datenschutz- und Sicherheitsbedenken",
+      "Hohe CAC im digitalen Markt"
+    ],
+    "opportunities": [
+      "Wachsender Smart-Home-Markt im DACH-Raum",
+      "Steigende Akzeptanz digitaler Haushaltslösungen",
+      "Partnerschaften mit Energieversorgern, Versicherungen und Dienstleistern",
+      "First-Mover-Advantage im Bereich ganzheitlicher Haushaltsplattformen"
+    ],
+    "market_gaps": [
+      "Fehlende All-in-One-Lösung für Haushaltsorganisation und Smart-Home-Integration",
+      "Mangel an datenschutzkonformen, europäischen Alternativen",
+      "Unzureichende Kommunikations- und Abstimmungsfunktionen in bestehenden Lösungen"
+    ]
+  }
+}

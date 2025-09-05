@@ -1,0 +1,45 @@
+{
+  "data": {
+    "topic": "TAM",
+    "sources": [
+      {
+        "title": "Smart Home Market in Germany",
+        "publisher": "Statista",
+        "year": 2024,
+        "region": "EU/DE",
+        "url": "https://www.statista.com/statistics/463845/smart-home-market-revenue-in-germany/",
+        "method": "Market analysis",
+        "key_findings": [
+          "The revenue in the Smart Home market is projected to reach US$3,647m in 2024.",
+          "The market's largest segment is Control and Connectivity with a projected market volume of US$1,543m in 2024."
+        ],
+        "usage_note": "This data can be used to estimate the total addressable market (TAM) for HappyNest in Germany.",
+        "access": "paid",
+        "reliability_score": 0.9,
+        "last_accessed": "2025-09-05"
+      },
+      {
+        "title": "Smart Home Market in Europe",
+        "publisher": "Grand View Research",
+        "year": 2024,
+        "region": "EU",
+        "url": "https://www.grandviewresearch.com/industry-analysis/europe-smart-home-market",
+        "method": "Market analysis",
+        "key_findings": [
+          "The Europe smart home market size was valued at USD 15.9 billion in 2024.",
+          "The market is expected to grow at a compound annual growth rate (CAGR) of 19.9% from 2021 to 2028."
+        ],
+        "usage_note": "This data can be used to estimate the total addressable market (TAM) for HappyNest in Europe.",
+        "access": "paid",
+        "reliability_score": 0.9,
+        "last_accessed": "2025-09-05"
+      }
+    ],
+    "assumptions": [
+      "The smart home market includes digital home solutions like HappyNest."
+    ]
+  },
+  "cached_at": "2025-09-05T14:18:43.289Z",
+  "region": "EU/DE",
+  "topic": "TAM"
+}

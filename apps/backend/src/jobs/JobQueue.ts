@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 import crypto from "crypto";
 import type { PitchInput, PipelineResult } from "../v2/types.js";
+import type { InMemoryJobQueue } from "./InMemoryJobQueue.js";
 
 export interface JobData {
   id: string;
@@ -239,12 +240,30 @@ export class JobQueue {
   }
 }
 
-// Singleton instance
-let jobQueue: JobQueue | null = null;
+// ---------------------------------------------------------------------------
+// ESM-sicheres Singleton + dynamische Importe (kein require in ESM!)
+// ---------------------------------------------------------------------------
 
-export function getJobQueue(): JobQueue {
-  if (!jobQueue) {
-    jobQueue = new JobQueue();
+let _singletonQueue: JobQueue | InMemoryJobQueue | null = null;
+
+/**
+ * Liefert die Queue als Singleton.
+ * - DEV_BYPASS_QUEUE === "true" → InMemoryJobQueue
+ * - sonst → Redis-basierte JobQueue (benötigt REDIS_URL)
+ */
+export async function getJobQueue(): Promise<JobQueue | InMemoryJobQueue> {
+  if (_singletonQueue) return _singletonQueue;
+
+  const useBypass = process.env.DEV_BYPASS_QUEUE === "true";
+
+  if (useBypass) {
+    console.log("🔧 [DEV] Using InMemoryJobQueue (DEV_BYPASS_QUEUE=true)");
+    const { InMemoryJobQueue } = await import("./InMemoryJobQueue.js");
+    _singletonQueue = new InMemoryJobQueue();
+  } else {
+    console.log("🔗 Using Redis-based JobQueue");
+    _singletonQueue = new JobQueue();
   }
-  return jobQueue;
+
+  return _singletonQueue;
 }

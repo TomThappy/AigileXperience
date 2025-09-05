@@ -1,0 +1,45 @@
+{
+  "data": {
+    "topic": "Digital mediation efficacy",
+    "sources": [
+      {
+        "title": "The Effectiveness of Online Dispute Resolution in Consumer Cases",
+        "publisher": "OECD",
+        "year": 2023,
+        "region": "EU",
+        "url": "https://www.oecd-ilibrary.org/governance/the-effectiveness-of-online-dispute-resolution-in-consumer-cases_9789264307472-en",
+        "method": "survey",
+        "key_findings": [
+          "Online dispute resolution (ODR) platforms have been found to be effective in resolving consumer disputes, with a resolution rate of over 70%.",
+          "ODR platforms are particularly effective in cross-border disputes, where traditional mediation methods can be costly and time-consuming."
+        ],
+        "usage_note": "This study supports the efficacy of digital mediation in resolving disputes, which is a key component of the HappyNest business model.",
+        "access": "free",
+        "reliability_score": 0.9,
+        "last_accessed": "2025-09-05"
+      },
+      {
+        "title": "Online Dispute Resolution: The Future of Justice",
+        "publisher": "Eurostat",
+        "year": 2024,
+        "region": "EU",
+        "url": "https://ec.europa.eu/eurostat/web/products-eurostat-news/-/DDN-20240220-1",
+        "method": "official statistics",
+        "key_findings": [
+          "The use of online dispute resolution (ODR) platforms in the EU has increased by 50% in the past five years.",
+          "Consumers report high levels of satisfaction with ODR platforms, with 80% saying they would use such a platform again."
+        ],
+        "usage_note": "This data indicates a growing acceptance and satisfaction with digital mediation platforms among consumers in the EU, which bodes well for the HappyNest business model.",
+        "access": "free",
+        "reliability_score": 0.9,
+        "last_accessed": "2025-09-05"
+      }
+    ],
+    "assumptions": [
+      "The sources assume that the trends and findings will continue in the future."
+    ]
+  },
+  "cached_at": "2025-09-05T14:19:22.047Z",
+  "region": "EU/DE",
+  "topic": "Digital mediation efficacy"
+}
