@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 function loadPrompt(relPath: string) {
-  const p = path.join(process.cwd(), "apps", "backend", "prompts", relPath);
+  const p = path.join(process.cwd(), "prompts", relPath);
   return fs.readFileSync(p, "utf8");
 }
 

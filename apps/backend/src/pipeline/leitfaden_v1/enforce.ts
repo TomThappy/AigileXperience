@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { chatComplete } from "../../lib/llm.js";
 
-const P = (...x: string[]) => path.join(process.cwd(), "apps", "backend", ...x);
+const P = (...x: string[]) => path.join(process.cwd(), ...x);
 const R = (r: string) => fs.readFileSync(P(r), "utf8");
 const strip = (s: string) =>
   s

@@ -18,7 +18,7 @@ export class StepProcessor {
     this.cache = cache;
     // Use absolute path resolution for better compatibility
     this.promptsDir =
-      promptsDir || path.resolve(process.cwd(), "apps/backend/src/v2/prompts");
+      promptsDir || path.resolve(process.cwd(), "src/v2/prompts");
     this.evidenceHarvester = new EvidenceHarvester();
     this.numberValidator = new NumberValidator();
   }

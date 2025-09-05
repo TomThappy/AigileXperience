@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { chatComplete } from "../../lib/llm.js";
 
 const p = (...xs: string[]) =>
-  path.join(process.cwd(), "apps", "backend", ...xs);
+  path.join(process.cwd(), ...xs);
 const read = (rel: string) => fs.readFileSync(p(rel), "utf8");
 const strip = (s: string) =>
   s
