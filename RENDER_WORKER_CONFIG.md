@@ -30,7 +30,7 @@ Region: Same as Backend and Redis
 
 ### Build & Start Commands
 ```bash
-Build Command: npm install --workspaces && npm run -w apps/backend build
+Build Command: npm install --workspaces && cd apps/backend && npm run build
 Start Command: node apps/backend/dist/worker.js
 ```
 
