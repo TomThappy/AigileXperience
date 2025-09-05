@@ -53,7 +53,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         body: JSON.stringify({
           project_title: title,
           elevator_pitch: pitch,
-          use_assumptions: true
+          use_assumptions: true,
         }),
       });
 
@@ -67,26 +67,28 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
       setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
 
       // 2) Progress via Server-Sent Events streamen
-      const eventSource = new EventSource(`${backendUrl}/api/jobs/${jobId}/stream`);
+      const eventSource = new EventSource(
+        `${backendUrl}/api/jobs/${jobId}/stream`,
+      );
       setData({ meta: { jobId }, sections: {} });
 
       eventSource.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        
-        if (message.type === 'progress') {
+
+        if (message.type === "progress") {
           // Update UI mit Progress
           const { step, status } = message.payload;
           if (step) {
             setSecState((s) => ({ ...s, [step]: status || "running" }));
           }
-        } else if (message.type === 'artifact') {
+        } else if (message.type === "artifact") {
           // Einzelne Section ist fertig
           const { section, data: sectionData } = message.payload;
           if (section && sectionData) {
             setData((prev: any) => {
-              const nxt = { 
-                ...prev, 
-                sections: { ...prev.sections, [section]: sectionData } 
+              const nxt = {
+                ...prev,
+                sections: { ...prev.sections, [section]: sectionData },
               };
               try {
                 localStorage.setItem("last_dossier", JSON.stringify(nxt));
@@ -95,7 +97,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
             });
             setSecState((s) => ({ ...s, [section]: "done" }));
           }
-        } else if (message.type === 'done') {
+        } else if (message.type === "done") {
           // Job komplett fertig
           const finalData = message.payload;
           if (finalData?.sections) {
@@ -106,35 +108,44 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               } catch {}
               return nxt;
             });
-            
+
             // Alle Sections als done markieren
             const doneState = Object.fromEntries(
-              SECTIONS.map((s) => [s.key, finalData.sections[s.key] ? "done" : "pending"] as [string, "pending" | "running" | "done" | "error"])
+              SECTIONS.map(
+                (s) =>
+                  [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
+                    string,
+                    "pending" | "running" | "done" | "error",
+                  ],
+              ),
             ) as Record<string, "pending" | "running" | "done" | "error">;
             setSecState(doneState);
           }
           setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
           eventSource.close();
-        } else if (message.type === 'error') {
-          setError(`Pipeline error: ${message.payload?.error || 'Unknown error'}`);
+        } else if (message.type === "error") {
+          setError(
+            `Pipeline error: ${message.payload?.error || "Unknown error"}`,
+          );
           setStages((p: any) => ({ ...p, S2: "error" }));
           eventSource.close();
         }
       };
 
       eventSource.onerror = (err) => {
-        console.error('SSE Error:', err);
-        setError('Connection lost - please refresh');
+        console.error("SSE Error:", err);
+        setError("Connection lost - please refresh");
         setStages((p: any) => ({ ...p, S2: "error" }));
         eventSource.close();
       };
 
       // Cleanup function speichern für späteren Gebrauch
       (window as any).currentEventSource = eventSource;
-      
     } catch (error) {
       setStages((p: any) => ({ ...p, S1: "error" }));
-      setError(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      setError(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

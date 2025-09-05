@@ -55,7 +55,7 @@ RATEGATE_STATS_INTERVAL_MS=30000
 ## 🔄 Was du in Render ändern musst:
 
 1. **Entfernen/Korrigieren**:
-   - `LLM_MODEL_EXECUTIVE` → `LLM_MODEL_BRIEF` 
+   - `LLM_MODEL_EXECUTIVE` → `LLM_MODEL_BRIEF`
    - `LLM_MODEL_RISKS` → `LLM_MODEL_STATUS_QUO`
 
 2. **Hinzufügen**:
@@ -66,16 +66,17 @@ RATEGATE_STATS_INTERVAL_MS=30000
 
 ## 📋 Pipeline Steps Mapping:
 
-| Deine Variable | Korrekte Variable | Pipeline Step |
-|----------------|-------------------|---------------|
-| ❌ `LLM_MODEL_EXECUTIVE` | ✅ `LLM_MODEL_BRIEF` | brief |
-| ❌ `LLM_MODEL_RISKS` | ✅ `LLM_MODEL_STATUS_QUO` | status_quo |
-| ❌ Fehlt | ✅ `LLM_MODEL_EVIDENCE` | evidence |
-| ❌ Fehlt | ✅ `LLM_MODEL_INVESTOR_SCORE` | investor_score |
+| Deine Variable           | Korrekte Variable             | Pipeline Step  |
+| ------------------------ | ----------------------------- | -------------- |
+| ❌ `LLM_MODEL_EXECUTIVE` | ✅ `LLM_MODEL_BRIEF`          | brief          |
+| ❌ `LLM_MODEL_RISKS`     | ✅ `LLM_MODEL_STATUS_QUO`     | status_quo     |
+| ❌ Fehlt                 | ✅ `LLM_MODEL_EVIDENCE`       | evidence       |
+| ❌ Fehlt                 | ✅ `LLM_MODEL_INVESTOR_SCORE` | investor_score |
 
 ## 🎯 Validierung:
 
 Nach der Korrektur solltest du in den Logs sehen:
+
 ```
 🤖 [STEP] evidence: Using model gpt-4 (from LLM_MODEL_EVIDENCE env var)
 🤖 [STEP] brief: Using model gpt-4 (from LLM_MODEL_BRIEF env var)

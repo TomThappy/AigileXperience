@@ -14,7 +14,8 @@ export default async function jobRoutes(app: FastifyInstance) {
       const pitch = body.elevator_pitch || body.pitch;
       if (!body.project_title || !pitch) {
         return reply.code(400).send({
-          error: "Missing required fields: project_title and pitch (or elevator_pitch)",
+          error:
+            "Missing required fields: project_title and pitch (or elevator_pitch)",
         });
       }
 

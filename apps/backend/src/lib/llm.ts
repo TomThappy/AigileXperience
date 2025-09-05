@@ -21,7 +21,7 @@ export async function chatComplete(
   const model = opts.model || process.env.MODEL_NAME || "gpt-4o";
   const temp = opts.temperature ?? 0.2;
   const provider = pickProvider(model);
-  const maxRetries = parseInt(process.env.LLM_RETRIES || '3');
+  const maxRetries = parseInt(process.env.LLM_RETRIES || "3");
 
   console.log("🤖 [LLM] ChatComplete called:", {
     model,
@@ -30,15 +30,21 @@ export async function chatComplete(
     promptLength: prompt.length,
     hasOpenAI: !!process.env.OPENAI_API_KEY,
     hasAnthropic: !!process.env.ANTHROPIC_API_KEY,
-    fallbackUsed: !opts.model ? `from ${process.env.MODEL_NAME ? 'MODEL_NAME' : 'hardcoded default'}` : false,
+    fallbackUsed: !opts.model
+      ? `from ${process.env.MODEL_NAME ? "MODEL_NAME" : "hardcoded default"}`
+      : false,
   });
 
   // Rate limiting - schätze Token und reserviere Budget
   const maxTokens = 1200; // Conservative estimate for output
   const { total: estimatedTokens } = rateGate.tokenEstimate(prompt, maxTokens);
   const tokenLimit = getModelLimit(model);
-  
-  const { waitedMs } = await rateGate.reserveTokens(model, estimatedTokens, tokenLimit);
+
+  const { waitedMs } = await rateGate.reserveTokens(
+    model,
+    estimatedTokens,
+    tokenLimit,
+  );
   if (waitedMs > 0) {
     console.log(`⏳ Waited ${waitedMs}ms for rate limit on ${model}`);
   }
@@ -48,14 +54,17 @@ export async function chatComplete(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       if (provider === "anthropic") {
-        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+        const client = new Anthropic({
+          apiKey: process.env.ANTHROPIC_API_KEY!,
+        });
         const res = await client.messages.create({
           model,
           max_tokens: 4000,
           temperature: temp,
           messages: [{ role: "user", content: prompt }],
         });
-        const txt = res.content?.[0]?.type === "text" ? res.content[0].text : "";
+        const txt =
+          res.content?.[0]?.type === "text" ? res.content[0].text : "";
         return txt.trim();
       } else {
         const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
@@ -74,16 +83,19 @@ export async function chatComplete(
           chatParams.temperature = temp;
         }
 
-        console.log(`🔥 [LLM] Making OpenAI API call (attempt ${attempt}/${maxRetries}):`, {
-          model,
-          supportsTemp,
-          finalTemp: chatParams.temperature,
-          apiKeyPresent: !!process.env.OPENAI_API_KEY,
-          apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
-          estimatedTokens,
-          waitedMs,
-          params: { ...chatParams, messages: "[TRUNCATED]" },
-        });
+        console.log(
+          `🔥 [LLM] Making OpenAI API call (attempt ${attempt}/${maxRetries}):`,
+          {
+            model,
+            supportsTemp,
+            finalTemp: chatParams.temperature,
+            apiKeyPresent: !!process.env.OPENAI_API_KEY,
+            apiKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+            estimatedTokens,
+            waitedMs,
+            params: { ...chatParams, messages: "[TRUNCATED]" },
+          },
+        );
 
         const res = await client.chat.completions.create(chatParams);
         console.log("✅ [LLM] OpenAI API call successful:", {
@@ -94,30 +106,39 @@ export async function chatComplete(
           choices: res.choices?.length,
           responseLength: res.choices?.[0]?.message?.content?.length || 0,
           tokensUsed: res.usage?.total_tokens,
-          efficiency: res.usage?.total_tokens ? `${Math.round((res.usage.total_tokens / estimatedTokens) * 100)}%` : 'unknown',
+          efficiency: res.usage?.total_tokens
+            ? `${Math.round((res.usage.total_tokens / estimatedTokens) * 100)}%`
+            : "unknown",
         });
         return (res.choices?.[0]?.message?.content || "").trim();
       }
     } catch (apiError: any) {
-      const isRateLimit = apiError?.status === 429 || apiError?.code === 'rate_limit_exceeded';
-      
-      console.error(`❌ LLM API call failed (attempt ${attempt}/${maxRetries}):`, {
-        model,
-        attempt,
-        isRateLimit,
-        error: apiError instanceof Error ? {
-          name: apiError.name,
-          message: apiError.message,
-          status: apiError?.status,
-          code: apiError?.code,
-        } : String(apiError),
-      });
+      const isRateLimit =
+        apiError?.status === 429 || apiError?.code === "rate_limit_exceeded";
+
+      console.error(
+        `❌ LLM API call failed (attempt ${attempt}/${maxRetries}):`,
+        {
+          model,
+          attempt,
+          isRateLimit,
+          error:
+            apiError instanceof Error
+              ? {
+                  name: apiError.name,
+                  message: apiError.message,
+                  status: apiError?.status,
+                  code: apiError?.code,
+                }
+              : String(apiError),
+        },
+      );
 
       // Retry logic für 429 Errors
       if (isRateLimit && attempt < maxRetries) {
         const backoffMs = Math.min(1000 * Math.pow(2, attempt), 30000); // Exponential backoff, max 30s
         console.log(`🔄 Rate limit hit, retrying in ${backoffMs}ms...`);
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
         continue;
       }
 

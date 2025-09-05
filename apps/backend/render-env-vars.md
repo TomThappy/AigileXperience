@@ -46,7 +46,7 @@ Falls du für große Steps Cost-Optimierung willst (Data-Generation mit Mini, Na
 LLM_MODEL_FINANCIAL_PLAN_PHASE1=gpt-4o-mini  # Daten/Zahlen
 LLM_MODEL_FINANCIAL_PLAN_PHASE2=gpt-4        # Narrative
 
-# Für market Step  
+# Für market Step
 LLM_MODEL_MARKET_PHASE1=gpt-4o-mini
 LLM_MODEL_MARKET_PHASE2=gpt-4
 
@@ -58,6 +58,7 @@ LLM_MODEL_GTM_PHASE2=gpt-4
 ## 🚨 Was passiert ohne diese Variables?
 
 **Ohne die Variables fällt das System zurück auf:**
+
 1. `MODEL_NAME` (falls gesetzt)
 2. Hardcoded Default: `gpt-4o` (nicht GPT-4!)
 

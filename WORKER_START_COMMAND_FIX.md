@@ -1,38 +1,45 @@
 # 🚨 SOFORTIGER FIX: Worker Start Command
 
 ## Problem:
+
 ```
 Error: Cannot find module '/opt/render/project/src/apps/backend/dist/worker.js'
 ```
 
 ## Ursache:
+
 Der Worker Service hat noch die **alte Start Command** und versucht eine nicht-existierende `dist/worker.js` zu starten.
 
 ## ✅ SOFORTIGE LÖSUNG:
 
 ### 1. Render Dashboard öffnen
+
 - Gehe zu deinem **Worker Service** (nicht Backend!)
 - Klicke auf **"Settings"**
 
 ### 2. Start Command ändern
 
 **Aktuell (falsch):**
+
 ```
 ❌ Start Command: node dist/worker.js
 ```
 
 **Korrekt (neu):**
+
 ```
 ✅ Start Command: npm run -w apps/backend worker:prod
 ```
 
 ### 3. Service neu starten
+
 - **"Manual Deploy"** klicken
 - Oder **"Save"** → automatischer Neustart
 
 ## 🔍 Was passiert dann:
 
 ### Erwartete Logs nach Fix:
+
 ```bash
 ==> Build completed successfully
 ==> Starting command 'npm run -w apps/backend worker:prod'
@@ -91,6 +98,7 @@ curl -X POST https://your-backend.onrender.com/api/jobs \
 ```
 
 ## ⏱️ Timing:
+
 - **Fix dauert**: < 2 Minuten
 - **Neustart dauert**: ~3-5 Minuten
 - **Total**: ~5-7 Minuten bis Worker läuft

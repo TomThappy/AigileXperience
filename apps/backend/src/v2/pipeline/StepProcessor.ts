@@ -1,7 +1,10 @@
 import { chatComplete } from "../../lib/llm.js";
 import { CacheManager } from "../cache/CacheManager.js";
 import { writeJsonFile, readJsonFile } from "../utils/hash.js";
-import { pickSourcesFor, estimateTokenSavings } from "../../lib/source-filter.js";
+import {
+  pickSourcesFor,
+  estimateTokenSavings,
+} from "../../lib/source-filter.js";
 import type { StepResult, PipelineStep } from "../types.js";
 import fs from "fs/promises";
 import path from "path";
@@ -105,7 +108,7 @@ export class StepProcessor {
     }
 
     // Check if this is a large step that needs phase-splitting
-    const largeTLMSteps = ['financial_plan', 'market', 'gtm'];
+    const largeTLMSteps = ["financial_plan", "market", "gtm"];
     if (largeTLMSteps.includes(step.id)) {
       return await this.executePhaseSplitStep(step, inputs);
     }
@@ -150,23 +153,27 @@ export class StepProcessor {
       const filteredSources = pickSourcesFor(step.id, inputs.sources, 8);
       const tokenSavings = estimateTokenSavings(
         inputs.sources.sources || [],
-        filteredSources.sources || []
+        filteredSources.sources || [],
       );
-      
+
       console.log(`🎯 Source filtering for ${step.id}:`, {
         original: inputs.sources.sources?.length || 0,
         filtered: filteredSources.sources?.length || 0,
         tokenSavings: tokenSavings.savings,
-        percentage: Math.round((tokenSavings.savings / tokenSavings.originalTokens) * 100)
+        percentage: Math.round(
+          (tokenSavings.savings / tokenSavings.originalTokens) * 100,
+        ),
       });
-      
+
       prompt += `\\n\\n## SOURCES DATA (filtered for ${step.id})\\n${JSON.stringify(filteredSources, null, 2)}`;
     }
 
     prompt += `\\n\\n## IMPORTANT\\nReturn ONLY valid JSON matching the expected output schema. No additional text or explanations.`;
 
     const model = this.getModelForStep(step.id, step.model_preference);
-    console.log(`🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`);
+    console.log(
+      `🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`,
+    );
     const response = await chatComplete(prompt, { model, temperature: 0.1 });
 
     // Parse JSON response - clean markdown code blocks first
@@ -184,7 +191,7 @@ export class StepProcessor {
         cleanResponse = cleanResponse.replace(/\s*```$/, "");
       }
 
-    return JSON.parse(cleanResponse.trim());
+      return JSON.parse(cleanResponse.trim());
     } catch (parseError) {
       console.error(
         "Failed to parse LLM response as JSON:",
@@ -204,8 +211,8 @@ export class StepProcessor {
     const phase1Result = await this.executePhase(
       step,
       inputs,
-      'data',
-      `${step.prompt_file}_phase1.txt`
+      "data",
+      `${step.prompt_file}_phase1.txt`,
     );
 
     // Phase 2: Generate narrative/text using phase 1 data
@@ -217,8 +224,8 @@ export class StepProcessor {
     const phase2Result = await this.executePhase(
       step,
       phase2Inputs,
-      'narrative',
-      `${step.prompt_file}_phase2.txt`
+      "narrative",
+      `${step.prompt_file}_phase2.txt`,
     );
 
     // Merge results - phase 2 should contain narrative text with phase 1 data
@@ -228,8 +235,8 @@ export class StepProcessor {
       _meta: {
         phase_split: true,
         phase1_tokens: this.estimateTokens(JSON.stringify(phase1Result)),
-        phase2_tokens: this.estimateTokens(JSON.stringify(phase2Result))
-      }
+        phase2_tokens: this.estimateTokens(JSON.stringify(phase2Result)),
+      },
     };
   }
 
@@ -240,7 +247,9 @@ export class StepProcessor {
     promptFileName: string,
   ): Promise<any> {
     const promptPath = path.join(this.promptsDir, promptFileName);
-    console.log(`📋 Phase ${phaseName}: Looking for prompt file: ${promptPath}`);
+    console.log(
+      `📋 Phase ${phaseName}: Looking for prompt file: ${promptPath}`,
+    );
 
     let promptTemplate: string;
     try {
@@ -250,7 +259,9 @@ export class StepProcessor {
       );
     } catch (error) {
       // Fallback to single-phase execution if phase files don't exist
-      console.warn(`⚠️  Phase file not found: ${promptPath}, falling back to single-phase`);
+      console.warn(
+        `⚠️  Phase file not found: ${promptPath}, falling back to single-phase`,
+      );
       return await this.executeSinglePhaseStep(step, inputs);
     }
 
@@ -271,23 +282,31 @@ export class StepProcessor {
       const filteredSources = pickSourcesFor(step.id, inputs.sources, 8);
       const tokenSavings = estimateTokenSavings(
         inputs.sources.sources || [],
-        filteredSources.sources || []
+        filteredSources.sources || [],
       );
-      
+
       console.log(`🎯 Source filtering for ${step.id} (${phaseName}):`, {
         original: inputs.sources.sources?.length || 0,
         filtered: filteredSources.sources?.length || 0,
         tokenSavings: tokenSavings.savings,
-        percentage: Math.round((tokenSavings.savings / tokenSavings.originalTokens) * 100)
+        percentage: Math.round(
+          (tokenSavings.savings / tokenSavings.originalTokens) * 100,
+        ),
       });
-      
+
       prompt += `\\n\\n## SOURCES DATA (filtered for ${step.id})\\n${JSON.stringify(filteredSources, null, 2)}`;
     }
 
     prompt += `\\n\\n## IMPORTANT\\nReturn ONLY valid JSON matching the expected output schema. No additional text or explanations.`;
 
-    const model = this.getModelForStep(step.id, step.model_preference, phaseName);
-    console.log(`🤖 [STEP] ${step.id} (${phaseName}): Using model ${model} (from ${this.getModelSource(step.id, step.model_preference, phaseName)})`);
+    const model = this.getModelForStep(
+      step.id,
+      step.model_preference,
+      phaseName,
+    );
+    console.log(
+      `🤖 [STEP] ${step.id} (${phaseName}): Using model ${model} (from ${this.getModelSource(step.id, step.model_preference, phaseName)})`,
+    );
     const response = await chatComplete(prompt, { model, temperature: 0.1 });
 
     // Parse JSON response
@@ -311,7 +330,9 @@ export class StepProcessor {
         `Failed to parse ${phaseName} phase response as JSON:`,
         response.substring(0, 500),
       );
-      throw new Error(`Phase ${phaseName} response is not valid JSON: ${parseError}`);
+      throw new Error(
+        `Phase ${phaseName} response is not valid JSON: ${parseError}`,
+      );
     }
   }
 
@@ -351,23 +372,27 @@ export class StepProcessor {
       const filteredSources = pickSourcesFor(step.id, inputs.sources, 8);
       const tokenSavings = estimateTokenSavings(
         inputs.sources.sources || [],
-        filteredSources.sources || []
+        filteredSources.sources || [],
       );
-      
+
       console.log(`🎯 Source filtering for ${step.id}:`, {
         original: inputs.sources.sources?.length || 0,
         filtered: filteredSources.sources?.length || 0,
         tokenSavings: tokenSavings.savings,
-        percentage: Math.round((tokenSavings.savings / tokenSavings.originalTokens) * 100)
+        percentage: Math.round(
+          (tokenSavings.savings / tokenSavings.originalTokens) * 100,
+        ),
       });
-      
+
       prompt += `\\n\\n## SOURCES DATA (filtered for ${step.id})\\n${JSON.stringify(filteredSources, null, 2)}`;
     }
 
     prompt += `\\n\\n## IMPORTANT\\nReturn ONLY valid JSON matching the expected output schema. No additional text or explanations.`;
 
     const model = this.getModelForStep(step.id, step.model_preference);
-    console.log(`🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`);
+    console.log(
+      `🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`,
+    );
     const response = await chatComplete(prompt, { model, temperature: 0.1 });
 
     // Parse JSON response - clean markdown code blocks first
@@ -400,32 +425,44 @@ export class StepProcessor {
     return Math.ceil(text.length / 4);
   }
 
-  private getModelForStep(stepId: string, defaultModel?: string, phaseName?: string): string {
+  private getModelForStep(
+    stepId: string,
+    defaultModel?: string,
+    phaseName?: string,
+  ): string {
     // For phase-split steps, check phase-specific models first
     if (phaseName) {
       const phaseEnvVar = `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()}`;
       const phaseSpecificModel = process.env[phaseEnvVar];
-      
+
       if (phaseSpecificModel) {
-        console.log(`🔀 Found phase-specific model for ${stepId} (${phaseName}): ${phaseSpecificModel}`);
+        console.log(
+          `🔀 Found phase-specific model for ${stepId} (${phaseName}): ${phaseSpecificModel}`,
+        );
         return phaseSpecificModel;
       }
     }
-    
+
     // Check for step-specific environment variable
     const envVarName = `LLM_MODEL_${stepId.toUpperCase()}`;
     const stepSpecificModel = process.env[envVarName];
-    
+
     if (stepSpecificModel) {
-      console.log(`🎯 Found step-specific model for ${stepId}: ${stepSpecificModel}`);
+      console.log(
+        `🎯 Found step-specific model for ${stepId}: ${stepSpecificModel}`,
+      );
       return stepSpecificModel;
     }
-    
+
     // Fallback to step preference, then global default
     return defaultModel || process.env.LLM_DEFAULT_MODEL || "gpt-4o";
   }
 
-  private getModelSource(stepId: string, defaultModel?: string, phaseName?: string): string {
+  private getModelSource(
+    stepId: string,
+    defaultModel?: string,
+    phaseName?: string,
+  ): string {
     // Check for phase-specific environment variable first (if applicable)
     if (phaseName) {
       const phaseEnvVar = `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()}`;
@@ -433,24 +470,24 @@ export class StepProcessor {
         return `LLM_MODEL_${stepId.toUpperCase()}_${phaseName.toUpperCase()} env var`;
       }
     }
-    
+
     // Check for step-specific environment variable
     const envVarName = `LLM_MODEL_${stepId.toUpperCase()}`;
     if (process.env[envVarName]) {
       return `LLM_MODEL_${stepId.toUpperCase()} env var`;
     }
-    
+
     // Check step preference
     if (defaultModel) {
-      return 'step model_preference';
+      return "step model_preference";
     }
-    
+
     // Check global default
     if (process.env.LLM_DEFAULT_MODEL) {
-      return 'LLM_DEFAULT_MODEL env var';
+      return "LLM_DEFAULT_MODEL env var";
     }
-    
-    return 'hardcoded fallback (gpt-4o)';
+
+    return "hardcoded fallback (gpt-4o)";
   }
 
   private async executeScriptStep(

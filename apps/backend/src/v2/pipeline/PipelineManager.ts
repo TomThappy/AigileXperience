@@ -22,7 +22,7 @@ export class PipelineManager {
     this.stepProcessor = new StepProcessor(this.cache);
     this.outputDir = outputDir;
     this.incrementalBuilder = new IncrementalBuilder();
-    
+
     // Initialize RateGate system for token budgeting
     initializeRateGate();
     console.log("🛡️ RateGate system initialized for token management");

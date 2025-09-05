@@ -3,14 +3,17 @@
 ## ❌ Häufigste Fehler bei Worker Configuration:
 
 ### Problem 1: Falsche Root Directory
+
 ```bash
 ❌ Root Directory: apps/backend
-❌ Build Command: npm run build  
+❌ Build Command: npm run build
 ❌ Start Command: node dist/worker.js
 ```
+
 **Warum das nicht funktioniert:** Render kann keine Dependencies installieren, da die package.json in der Root liegt, nicht in apps/backend.
 
 ### Problem 2: Dependencies werden nicht installiert
+
 ```bash
 ❌ Build Command: npm install && npm run build
 ❌ Missing: Workspace dependencies (packages/common)
@@ -19,6 +22,7 @@
 ## ✅ KORREKTE Konfiguration:
 
 ### Render Background Worker Settings
+
 ```
 Name: aigilexperience-worker
 Repository: AigileXperience
@@ -29,13 +33,16 @@ Region: Same as Backend and Redis
 ```
 
 ### Build & Start Commands
+
 ```bash
 Build Command: npm install --workspaces && cd apps/backend && npm run build
 Start Command: node apps/backend/dist/worker.js
 ```
 
 ### Environment Variables
+
 **Alle diese Variables kopieren vom Backend Service:**
+
 ```bash
 REDIS_URL=redis://red-xxxxx:6379
 OPENAI_API_KEY=sk-...
@@ -74,7 +81,7 @@ added 557 packages in 15s
 > @aigilexperience/common@0.0.1 build
 > tsc -p tsconfig.json
 
-> @aigilexperience/backend@0.0.1 build  
+> @aigilexperience/backend@0.0.1 build
 > tsc -p tsconfig.json
 
 ==> Build completed successfully
@@ -93,17 +100,20 @@ added 557 packages in 15s
 ## 🔧 Troubleshooting Steps:
 
 ### If Build Fails:
+
 1. Check Root Directory is `/` not `apps/backend`
 2. Check Build Command includes `--workspaces`
 3. Check that `RENDER=true` environment variable is set
 4. Look for `Cannot find module` errors → missing dependencies
 
 ### If Worker Starts but Can't Connect:
+
 1. Check `REDIS_URL` matches Backend service exactly
 2. Check Redis Service is running
 3. Check all API keys are set
 
 ### If Jobs Aren't Processing:
+
 1. Check Worker logs for `🎯 Worker ready, waiting for jobs...`
 2. Test job creation via Backend API
 3. Check Backend logs for `✅ Created job abc123`
