@@ -39,6 +39,7 @@ export default function AutoPage() {
     Record<string, "pending" | "running" | "done" | "error">
   >(() => Object.fromEntries(SECTIONS.map((s) => [s.key, "pending"])));
   const [jobId, setJobId] = useState<string | null>(null);
+  const [connectionLost, setConnectionLost] = useState(false);
 
   // Use robust SSE hook for streaming job progress
   useSSE(
@@ -143,7 +144,12 @@ export default function AutoPage() {
             "Raw data:",
             data,
           );
-        }
+        };
+      },
+      connection_lost: () => {
+        // Only show connection lost if job hasn't completed
+        setConnectionLost(true);
+        setError("Connection lost. Job may still be processing in background. Please check job status.");
       },
     },
     {
@@ -154,6 +160,7 @@ export default function AutoPage() {
 
   async function run() {
     setError(null);
+    setConnectionLost(false);
     setStages({ S1: "running", S2: "idle", S3: "idle", S4: "idle" });
     setSecState(Object.fromEntries(SECTIONS.map((s) => [s.key, "pending"])));
     setData(null);

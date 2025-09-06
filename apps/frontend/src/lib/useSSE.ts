@@ -10,8 +10,9 @@ type ListenerMap = Partial<
     | "result"
     | "error"
     | "done"
-    | "message",
-    (data: any, ev?: MessageEvent) => void
+    | "message"
+    | "connection_lost",
+    (data?: any, ev?: MessageEvent) => void
   >
 >;
 
@@ -19,7 +20,7 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ||
   "https://aigilexperience-backend.onrender.com";
 
-// Core SSE connection logic - robust against Safari/WebKit timeouts
+// Core SSE connection logic - robust against Safari/WebKit timeouts + Render.com proxy
 export function startSSE(
   url: string,
   handlers: {
@@ -29,47 +30,94 @@ export function startSSE(
     onResult?: (x: any) => void;
     onDone?: (x: any) => void;
     onError?: (x: any) => void;
+    onConnectionLost?: () => void;
   },
 ) {
   let es: EventSource | null = null;
   let stopped = false;
+  let reconnectAttempts = 0;
+  let maxReconnectAttempts = 8; // nach 8 fehlschlägen: Connection Lost
   let backoff = 1000; // 1s
-  const backoffMax = 15000; // 15s
+  const backoffMax = 20000; // 20s
   let lastTick = Date.now();
+  let jobCompleted = false;
+  
   const touch = () => {
     lastTick = Date.now();
     backoff = 1000;
+    reconnectAttempts = 0; // Reset nach erfolgreichem Event
   };
 
   const connect = () => {
     if (stopped) return;
+    
+    console.log(`[SSE] Connecting to ${url}, attempt ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
+    
     es = new EventSource(url);
+    
+    // Handle open/established connection
+    es.onopen = () => {
+      console.log('[SSE] Connection opened');
+      touch();
+    };
+    
     es.addEventListener("status", (e) => {
       touch();
-      handlers.onStatus?.(JSON.parse((e as MessageEvent).data));
+      const data = JSON.parse((e as MessageEvent).data);
+      if (data.status === 'completed' || data.status === 'failed') {
+        jobCompleted = true;
+      }
+      handlers.onStatus?.(data);
     });
+    
     es.addEventListener("progress", (e) => {
       touch();
       handlers.onProgress?.(JSON.parse((e as MessageEvent).data));
     });
+    
     es.addEventListener("artifact_written", (e) => {
       touch();
       handlers.onArtifact?.(JSON.parse((e as MessageEvent).data));
     });
+    
     es.addEventListener("result", (e) => {
       touch();
+      jobCompleted = true;
       handlers.onResult?.(JSON.parse((e as MessageEvent).data));
     });
+    
     es.addEventListener("done", (e) => {
       touch();
+      jobCompleted = true;
       handlers.onDone?.(JSON.parse((e as MessageEvent).data));
       es?.close();
       stopped = true;
     });
-    es.onerror = () => {
-      // nicht sofort „Connection lost" zeigen – erst reconnecten
+    
+    es.addEventListener("error", (e) => {
+      touch();
+      jobCompleted = true;
+      handlers.onError?.(JSON.parse((e as MessageEvent).data));
+    });
+    
+    es.onerror = (event) => {
+      console.log('[SSE] Connection error', { readyState: es?.readyState, event });
       es?.close();
-      if (stopped) return;
+      
+      if (stopped || jobCompleted) return;
+      
+      reconnectAttempts++;
+      
+      // Nach zu vielen Fehlversuchen: Connection Lost nur wenn Job nicht beendet
+      if (reconnectAttempts >= maxReconnectAttempts && !jobCompleted) {
+        console.log('[SSE] Max reconnect attempts reached, marking as connection lost');
+        handlers.onConnectionLost?.();
+        stopped = true;
+        return;
+      }
+      
+      // Sonst: reconnect mit backoff
+      console.log(`[SSE] Reconnecting in ${backoff}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
       setTimeout(connect, backoff);
       backoff = Math.min(backoff * 2, backoffMax);
     };
@@ -119,6 +167,7 @@ export function useSSE(
       onResult: listeners.result,
       onDone: listeners.done,
       onError: listeners.error,
+      onConnectionLost: listeners.connection_lost,
     });
 
     cleanupRef.current = cleanup;
