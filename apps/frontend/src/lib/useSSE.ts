@@ -104,7 +104,8 @@ export function useSSE(
       idleGuardRef.current = setInterval(() => {
         if (closed || finishedRef.current) return;
         const idleDuration = Date.now() - lastTickRef.current;
-        if (idleDuration > 30000) { // 30s without any frames (including heartbeats)
+        if (idleDuration > 30000) {
+          // 30s without any frames (including heartbeats)
           try {
             esRef.current?.close();
           } catch {}
