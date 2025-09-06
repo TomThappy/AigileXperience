@@ -41,84 +41,24 @@ export default function AutoPage() {
   const [jobId, setJobId] = useState<string | null>(null);
 
   // Use robust SSE hook for streaming job progress
-  useSSE(jobId || "", {
-    status: (data) => {
-      // Handle status updates if needed
-    },
-    progress: (data) => {
-      // Update UI with progress
-      if (data.type === "progress") {
-        const { step, status } = data.payload || data;
-        if (step) {
-          setSecState((s) => ({ ...s, [step]: status || "running" }));
-        }
-      }
-    },
-    artifact_written: (data) => {
-      // Handle individual section completion
-      if (data.type === "artifact" || data.section) {
-        const { section, data: sectionData } = data.payload || data;
-        if (section && sectionData) {
-          setData((prev: any) => {
-            const nxt = {
-              ...prev,
-              sections: { ...prev.sections, [section]: sectionData },
-            };
-            try {
-              localStorage.setItem("last_dossier", JSON.stringify(nxt));
-            } catch {}
-            return nxt;
-          });
-          setSecState((s) => ({ ...s, [section]: "done" }));
-        }
-      }
-    },
-    result: (data) => {
-      // Handle final result
-      setData((prev: any) => ({ ...prev, result: data }));
-    },
-    error: (data) => {
-      // Handle pipeline errors
-      setError(
-        `Pipeline error: ${data?.payload?.error || data?.message || "Unknown error"}`,
-      );
-      setStages((p: any) => ({ ...p, S2: "error" }));
-    },
-    done: (data) => {
-      // Job completed successfully
-      const finalData = data.payload || data;
-      if (finalData?.sections) {
-        setData((prev: any) => {
-          const nxt = { ...prev, ...finalData };
-          try {
-            localStorage.setItem("last_dossier", JSON.stringify(nxt));
-          } catch {}
-          return nxt;
-        });
-
-        // Mark all sections as done
-        const doneState = Object.fromEntries(
-          SECTIONS.map(
-            (s) =>
-              [
-                s.key,
-                finalData.sections[s.key] ? "done" : "pending",
-              ] as [string, "pending" | "running" | "done" | "error"],
-          ),
-        ) as Record<string, "pending" | "running" | "done" | "error">;
-        setSecState(doneState);
-      }
-      setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
-    },
-    message: (data) => {
-      // Handle generic messages - parse type and route accordingly
-      try {
+  useSSE(
+    jobId || "",
+    {
+      status: (data) => {
+        // Handle status updates if needed
+      },
+      progress: (data) => {
+        // Update UI with progress
         if (data.type === "progress") {
           const { step, status } = data.payload || data;
           if (step) {
             setSecState((s) => ({ ...s, [step]: status || "running" }));
           }
-        } else if (data.type === "artifact") {
+        }
+      },
+      artifact_written: (data) => {
+        // Handle individual section completion
+        if (data.type === "artifact" || data.section) {
           const { section, data: sectionData } = data.payload || data;
           if (section && sectionData) {
             setData((prev: any) => {
@@ -134,14 +74,83 @@ export default function AutoPage() {
             setSecState((s) => ({ ...s, [section]: "done" }));
           }
         }
-      } catch (parseError) {
-        console.error("Failed to parse SSE message:", parseError, "Raw data:", data);
-      }
+      },
+      result: (data) => {
+        // Handle final result
+        setData((prev: any) => ({ ...prev, result: data }));
+      },
+      error: (data) => {
+        // Handle pipeline errors
+        setError(
+          `Pipeline error: ${data?.payload?.error || data?.message || "Unknown error"}`,
+        );
+        setStages((p: any) => ({ ...p, S2: "error" }));
+      },
+      done: (data) => {
+        // Job completed successfully
+        const finalData = data.payload || data;
+        if (finalData?.sections) {
+          setData((prev: any) => {
+            const nxt = { ...prev, ...finalData };
+            try {
+              localStorage.setItem("last_dossier", JSON.stringify(nxt));
+            } catch {}
+            return nxt;
+          });
+
+          // Mark all sections as done
+          const doneState = Object.fromEntries(
+            SECTIONS.map(
+              (s) =>
+                [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
+                  string,
+                  "pending" | "running" | "done" | "error",
+                ],
+            ),
+          ) as Record<string, "pending" | "running" | "done" | "error">;
+          setSecState(doneState);
+        }
+        setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
+      },
+      message: (data) => {
+        // Handle generic messages - parse type and route accordingly
+        try {
+          if (data.type === "progress") {
+            const { step, status } = data.payload || data;
+            if (step) {
+              setSecState((s) => ({ ...s, [step]: status || "running" }));
+            }
+          } else if (data.type === "artifact") {
+            const { section, data: sectionData } = data.payload || data;
+            if (section && sectionData) {
+              setData((prev: any) => {
+                const nxt = {
+                  ...prev,
+                  sections: { ...prev.sections, [section]: sectionData },
+                };
+                try {
+                  localStorage.setItem("last_dossier", JSON.stringify(nxt));
+                } catch {}
+                return nxt;
+              });
+              setSecState((s) => ({ ...s, [section]: "done" }));
+            }
+          }
+        } catch (parseError) {
+          console.error(
+            "Failed to parse SSE message:",
+            parseError,
+            "Raw data:",
+            data,
+          );
+        }
+      },
     },
-  }, {
-    idleMs: 25000,        // 25s idle timeout
-    hardTimeoutMs: 12 * 60 * 1000, // 12 minutes max
-  });
+    {
+      idleMs: 25000, // 25s idle timeout
+      hardTimeoutMs: 12 * 60 * 1000, // 12 minutes max
+    },
+  );
 
   async function run() {
     setError(null);
@@ -174,7 +183,7 @@ export default function AutoPage() {
       const { jobId: newJobId } = await jobRes.json();
       setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
       setData({ meta: { jobId: newJobId }, sections: {} });
-      
+
       // 2) Set jobId to trigger SSE hook
       setJobId(newJobId);
     } catch (error) {
