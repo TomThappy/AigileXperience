@@ -33,11 +33,14 @@ export function useSSE(
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hardRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backoffRef = useRef(1000); // 1s -> exponentielles Backoff
+  const finishedRef = useRef(false); // Track if job is finished to avoid false errors
 
   useEffect(() => {
     // Don't connect if jobId is empty
     if (!jobId) return;
-    
+
+    // Reset finished state for new job
+    finishedRef.current = false;
     let closed = false;
 
     const url = `${BACKEND_URL}/api/jobs/${jobId}/stream?t=${Date.now()}`; // cache-bust
@@ -93,9 +96,17 @@ export function useSSE(
       };
 
       es.onerror = (_ev) => {
-        // readyState: 0 (connecting), 1 (open), 2 (closed)
-        // Browser macht auto-reconnect, aber wir forcieren, falls er zu lange hängt
-        if (es.readyState === 2) reconnect();
+        // ❗ nicht als Fehler werten, wenn schon fertig
+        if (!finishedRef.current) {
+          // readyState: 0 (connecting), 1 (open), 2 (closed)
+          // Browser macht auto-reconnect, aber wir forcieren, falls er zu lange hängt
+          if (es.readyState === 2) reconnect();
+        } else {
+          // Job ist fertig, normaler Verbindungsabschluss
+          try {
+            es.close();
+          } catch {}
+        }
       };
 
       const bind = (type: keyof ListenerMap) => {
@@ -104,7 +115,8 @@ export function useSSE(
           const data = safeParse((ev as MessageEvent).data);
           listeners[type]?.(data, ev);
           if (type === "done") {
-            // nach Abschluss sauber schließen
+            // Job ist abgeschlossen - markieren als fertig
+            finishedRef.current = true;
             closed = true;
             clearTimers();
             try {

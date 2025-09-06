@@ -141,7 +141,7 @@ export default async function jobRoutes(app: FastifyInstance) {
   });
 
   // ---------------------------------------------------------------------------
-  // SSE Stream (progress + trace + artifact_written)
+  // SSE Stream (progress + trace + artifact_written) - ROBUST VERSION
   // ---------------------------------------------------------------------------
   app.get("/api/jobs/:jobId/stream", async (req, reply) => {
     const { jobId } = req.params as { jobId: string };
@@ -152,12 +152,13 @@ export default async function jobRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "Job not found" });
       }
 
-      // SSE-Header
+      // ⚙️ Robust SSE headers (Proxy-safe)
       reply.raw.writeHead(200, {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",          // Nginx/Proxy: disable buffering
+        "Access-Control-Allow-Origin": "*", // matches EventSource without Credentials
       });
 
       const sendEvent = (event: string, data: any) => {
@@ -169,40 +170,51 @@ export default async function jobRoutes(app: FastifyInstance) {
         }
       };
 
-      // Initialstatus
-      sendEvent("status", {
-        jobId: job.id,
-        status: job.status,
-        progress: job.progress,
-      });
+      const sendComment = (text: string) => {
+        try {
+          reply.raw.write(`: ${text}\n\n`); // heartbeat/comment
+        } catch (e) {
+          // client likely disconnected
+        }
+      };
 
-      // Polling (2s)
+      // Initial status
+      sendEvent("status", { jobId: job.id, status: job.status, progress: job.progress });
+
       let lastSeenTraceCount = 0;
+      let finished = false;
+      let lastArtifactCount = 0; // Track artifacts to avoid spam
+
+      // 🔐 Heartbeat, hält Proxies und Browser wach
+      const heartbeat = setInterval(() => {
+        if (!finished) {
+          sendComment(`hb ${Date.now()}`);
+        }
+      }, 15000);
+
+      // 🔄 Polling
       const pollInterval = setInterval(async () => {
         try {
           const currentJob = await jobQueue.getJob(jobId);
           if (!currentJob) {
-            clearInterval(pollInterval);
             sendEvent("error", { message: "Job not found" });
+            finished = true;
+            clearInterval(pollInterval);
+            clearInterval(heartbeat);
             reply.raw.end();
             return;
           }
 
-          // Fortschritt
+          // Progress nur als "progress" senden (status nur initial)
           sendEvent("progress", {
             jobId: currentJob.id,
             status: currentJob.status,
             progress: currentJob.progress,
-            // Ergänzende Felder, falls Frontend sie erwartet:
             step: currentJob.progress?.step ?? null,
-            phase: null, // Phase wird über Trace-Events geliefert
-            model: null,
-            ctx_max: null,
-            est_tokens: null,
-            sources_used: null,
+            phase: currentJob.progress?.current_phase ?? null,
           });
 
-          // Trace-Events
+          // Trace-Events (nur neue)
           const trace = traceSystem.getTrace(jobId);
           if (trace && trace.entries.length > lastSeenTraceCount) {
             const newEntries = trace.entries.slice(lastSeenTraceCount);
@@ -229,24 +241,27 @@ export default async function jobRoutes(app: FastifyInstance) {
             lastSeenTraceCount = trace.entries.length;
           }
 
-          // Artefakte (einfaches Re-Emit; deduplizieren kann später erfolgen)
+          // Artefakte (only new ones)
           const artifacts = await jobQueue.getArtifacts(jobId);
-          for (const [artifactName, artifact] of Object.entries(artifacts)) {
-            sendEvent("artifact_written", {
-              key: artifactName,
-              url: `/api/jobs/${jobId}/artifacts/${artifactName}`,
-              name: artifact.name,
-              type: artifact.type,
-              size: artifact.data ? JSON.stringify(artifact.data).length : 0,
-              timestamp: artifact.timestamp,
-            });
+          const artifactKeys = Object.keys(artifacts);
+          if (artifactKeys.length > lastArtifactCount) {
+            const newArtifacts = artifactKeys.slice(lastArtifactCount);
+            for (const artifactName of newArtifacts) {
+              const artifact = artifacts[artifactName];
+              sendEvent("artifact_written", {
+                key: artifactName,
+                url: `/api/jobs/${jobId}/artifacts/${artifactName}`,
+                name: artifact.name,
+                type: artifact.type,
+                size: artifact.data ? JSON.stringify(artifact.data).length : 0,
+                timestamp: artifact.timestamp,
+              });
+            }
+            lastArtifactCount = artifactKeys.length;
           }
 
           // Abschluss
-          if (
-            currentJob.status === "completed" ||
-            currentJob.status === "failed"
-          ) {
+          if (currentJob.status === "completed" || currentJob.status === "failed") {
             if (currentJob.result) {
               sendEvent("result", currentJob.result);
             }
@@ -254,6 +269,7 @@ export default async function jobRoutes(app: FastifyInstance) {
               sendEvent("error", { message: currentJob.error });
             }
 
+            // Final trace summary
             const finalTrace = traceSystem.getTrace(jobId);
             if (finalTrace) {
               let durationMs: number | null = null;
@@ -269,8 +285,7 @@ export default async function jobRoutes(app: FastifyInstance) {
                 total_entries: finalTrace.entries.length,
                 duration_ms: durationMs,
                 status: finalTrace.status,
-                errors: finalTrace.entries.filter((e) => e.status === "error")
-                  .length,
+                errors: finalTrace.entries.filter((e) => e.status === "error").length,
                 retries: finalTrace.entries.reduce(
                   (sum, e) => sum + Math.max(0, (e.attempts || 1) - 1),
                   0,
@@ -278,21 +293,40 @@ export default async function jobRoutes(app: FastifyInstance) {
               });
             }
 
+            // Final done event and clean shutdown
             sendEvent("done", { status: currentJob.status });
+            finished = true;
             clearInterval(pollInterval);
-            reply.raw.end();
+            clearInterval(heartbeat);
+            
+            // Give a moment for the done event to be sent
+            setTimeout(() => {
+              reply.raw.end();
+            }, 100);
           }
         } catch (err) {
           console.error("Error in SSE polling:", err);
-          clearInterval(pollInterval);
           sendEvent("error", { message: "Internal server error" });
+          finished = true;
+          clearInterval(pollInterval);
+          clearInterval(heartbeat);
           reply.raw.end();
         }
       }, 2000);
 
-      // Client trennt
-      req.raw.on("close", () => clearInterval(pollInterval));
-      req.raw.on("error", () => clearInterval(pollInterval));
+      // Client disconnect cleanup
+      const cleanup = () => {
+        if (!finished) {
+          sendComment("client closed");
+        }
+        finished = true;
+        clearInterval(pollInterval);
+        clearInterval(heartbeat);
+      };
+      
+      req.raw.on("close", cleanup);
+      req.raw.on("error", cleanup);
+      
     } catch (error) {
       console.error("Error setting up SSE stream:", error);
       return reply.code(500).send({
