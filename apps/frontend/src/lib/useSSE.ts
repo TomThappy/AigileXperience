@@ -1,27 +1,43 @@
 // useSSE.ts
 import { useEffect, useRef } from "react";
 
-type ListenerMap = Partial<Record<
-  "status" | "progress" | "trace" | "artifact_written" | "result" | "error" | "done" | "message",
-  (data: any, ev?: MessageEvent) => void
->>;
+type ListenerMap = Partial<
+  Record<
+    | "status"
+    | "progress"
+    | "trace"
+    | "artifact_written"
+    | "result"
+    | "error"
+    | "done"
+    | "message",
+    (data: any, ev?: MessageEvent) => void
+  >
+>;
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ||
   "https://aigilexperience-backend.onrender.com";
 
-export function useSSE(jobId: string, listeners: ListenerMap, opts?: {
-  // max Zeit ohne Event bevor wir das UI als "verloren" markieren
-  idleMs?: number;
-  // hartes Limit für Verbindungsdauer (Failsafe)
-  hardTimeoutMs?: number;
-}) {
+export function useSSE(
+  jobId: string,
+  listeners: ListenerMap,
+  opts?: {
+    // max Zeit ohne Event bevor wir das UI als "verloren" markieren
+    idleMs?: number;
+    // hartes Limit für Verbindungsdauer (Failsafe)
+    hardTimeoutMs?: number;
+  },
+) {
   const esRef = useRef<EventSource | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hardRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backoffRef = useRef(1000); // 1s -> exponentielles Backoff
 
   useEffect(() => {
+    // Don't connect if jobId is empty
+    if (!jobId) return;
+    
     let closed = false;
 
     const url = `${BACKEND_URL}/api/jobs/${jobId}/stream?t=${Date.now()}`; // cache-bust
@@ -29,15 +45,23 @@ export function useSSE(jobId: string, listeners: ListenerMap, opts?: {
     const hardTimeoutMs = opts?.hardTimeoutMs ?? 10 * 60 * 1000;
 
     const clearTimers = () => {
-      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-      if (hardRef.current) { clearTimeout(hardRef.current); hardRef.current = null; }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      if (hardRef.current) {
+        clearTimeout(hardRef.current);
+        hardRef.current = null;
+      }
     };
 
     const scheduleIdleGuard = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         // hier kannst du optional einen UI-Hinweis setzen („Reconnecting…")
-        try { esRef.current?.close(); } catch {}
+        try {
+          esRef.current?.close();
+        } catch {}
         reconnect();
       }, idleMs);
     };
@@ -54,7 +78,9 @@ export function useSSE(jobId: string, listeners: ListenerMap, opts?: {
     };
 
     const open = () => {
-      try { esRef.current?.close(); } catch {}
+      try {
+        esRef.current?.close();
+      } catch {}
       const es = new EventSource(url, { withCredentials: false });
       esRef.current = es;
 
@@ -81,7 +107,9 @@ export function useSSE(jobId: string, listeners: ListenerMap, opts?: {
             // nach Abschluss sauber schließen
             closed = true;
             clearTimers();
-            try { es.close(); } catch {}
+            try {
+              es.close();
+            } catch {}
           }
         });
       };
@@ -92,36 +120,46 @@ export function useSSE(jobId: string, listeners: ListenerMap, opts?: {
         listeners.message?.(safeParse(ev.data), ev);
       };
 
-      ([
-        "status",
-        "progress",
-        "trace",
-        "artifact_written",
-        "result",
-        "error",
-        "done",
-      ] as const).forEach(bind);
+      (
+        [
+          "status",
+          "progress",
+          "trace",
+          "artifact_written",
+          "result",
+          "error",
+          "done",
+        ] as const
+      ).forEach(bind);
 
       // Hard timeout als Failsafe
       if (hardRef.current) clearTimeout(hardRef.current);
       hardRef.current = setTimeout(() => {
         if (!closed) {
-          try { es.close(); } catch {}
+          try {
+            es.close();
+          } catch {}
           reconnect();
         }
       }, hardTimeoutMs);
     };
 
     const safeParse = (raw: string) => {
-      try { return JSON.parse(raw); } catch { return raw; }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return raw;
+      }
     };
 
     open();
     return () => {
       closed = true;
       clearTimers();
-      try { esRef.current?.close(); } catch {}
+      try {
+        esRef.current?.close();
+      } catch {}
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 }
