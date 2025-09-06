@@ -20,14 +20,17 @@ const BACKEND_URL =
   "https://aigilexperience-backend.onrender.com";
 
 // Core SSE connection logic - robust against Safari/WebKit timeouts
-export function startSSE(url: string, handlers: {
-  onStatus?: (x: any) => void;
-  onProgress?: (x: any) => void;
-  onArtifact?: (x: any) => void;
-  onResult?: (x: any) => void;
-  onDone?: (x: any) => void;
-  onError?: (x: any) => void;
-}) {
+export function startSSE(
+  url: string,
+  handlers: {
+    onStatus?: (x: any) => void;
+    onProgress?: (x: any) => void;
+    onArtifact?: (x: any) => void;
+    onResult?: (x: any) => void;
+    onDone?: (x: any) => void;
+    onError?: (x: any) => void;
+  },
+) {
   let es: EventSource | null = null;
   let stopped = false;
   let backoff = 1000; // 1s

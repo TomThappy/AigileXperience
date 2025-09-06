@@ -152,21 +152,31 @@ export default async function jobRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "Job not found" });
       }
 
-      // ⚙️ Robust SSE headers (Proxy-safe)
+      // Set up SSE headers (ERSATZEN)
       reply.raw.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no", // Nginx/Proxy: disable buffering
-        "Access-Control-Allow-Origin": "*", // matches EventSource without Credentials
+        "Connection": "keep-alive",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Cache-Control, Content-Type, Last-Event-ID",
+        "X-Accel-Buffering": "no",           // NGINX/Proxy: nicht puffern
       });
 
-      // SSE retry hint for client reconnection (10s)
+      // Client-Reconnect-Hinweis + erster Heartbeat sofort
       reply.raw.write(`retry: 10000\n\n`);
-      reply.raw.write(`:hb ${Date.now()}\n\n`);         // sofort ein erster Heartbeat
+      reply.raw.write(`:hb ${Date.now()}\n\n`);
 
-      // für manche Proxies:
-      try { reply.raw.setHeader?.("X-Accel-Buffering", "no"); } catch { /* noop */ }
+      // regelmäßiger Heartbeat hält Safari/Proxies wach
+      const heartbeat = setInterval(() => {
+        try { reply.raw.write(`:hb ${Date.now()}\n\n`); } catch {}
+      }, 15000);
+
+      // Für manche Proxies: zusätzlicher Header
+      try {
+        reply.raw.setHeader?.("X-Accel-Buffering", "no");
+      } catch {
+        /* noop */
+      }
 
       const sendEvent = (event: string, data: any) => {
         try {
@@ -195,13 +205,6 @@ export default async function jobRoutes(app: FastifyInstance) {
       let lastSeenTraceCount = 0;
       let finished = false;
       let lastArtifactCount = 0; // Track artifacts to avoid spam
-
-      // 🔐 Heartbeat, hält Proxies und Browser wach
-      const heartbeat = setInterval(() => {
-        if (!finished) {
-          sendComment(`hb ${Date.now()}`);
-        }
-      }, 15000);
 
       // 🔄 Polling
       const pollInterval = setInterval(async () => {
