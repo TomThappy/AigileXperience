@@ -156,8 +156,8 @@ export default async function jobRoutes(app: FastifyInstance) {
       reply.raw.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
-        "Connection": "keep-alive",
-        "X-Accel-Buffering": "no",          // Nginx/Proxy: disable buffering
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no", // Nginx/Proxy: disable buffering
         "Access-Control-Allow-Origin": "*", // matches EventSource without Credentials
       });
 
@@ -179,7 +179,11 @@ export default async function jobRoutes(app: FastifyInstance) {
       };
 
       // Initial status
-      sendEvent("status", { jobId: job.id, status: job.status, progress: job.progress });
+      sendEvent("status", {
+        jobId: job.id,
+        status: job.status,
+        progress: job.progress,
+      });
 
       let lastSeenTraceCount = 0;
       let finished = false;
@@ -261,7 +265,10 @@ export default async function jobRoutes(app: FastifyInstance) {
           }
 
           // Abschluss
-          if (currentJob.status === "completed" || currentJob.status === "failed") {
+          if (
+            currentJob.status === "completed" ||
+            currentJob.status === "failed"
+          ) {
             if (currentJob.result) {
               sendEvent("result", currentJob.result);
             }
@@ -285,7 +292,8 @@ export default async function jobRoutes(app: FastifyInstance) {
                 total_entries: finalTrace.entries.length,
                 duration_ms: durationMs,
                 status: finalTrace.status,
-                errors: finalTrace.entries.filter((e) => e.status === "error").length,
+                errors: finalTrace.entries.filter((e) => e.status === "error")
+                  .length,
                 retries: finalTrace.entries.reduce(
                   (sum, e) => sum + Math.max(0, (e.attempts || 1) - 1),
                   0,
@@ -298,7 +306,7 @@ export default async function jobRoutes(app: FastifyInstance) {
             finished = true;
             clearInterval(pollInterval);
             clearInterval(heartbeat);
-            
+
             // Give a moment for the done event to be sent
             setTimeout(() => {
               reply.raw.end();
@@ -323,10 +331,9 @@ export default async function jobRoutes(app: FastifyInstance) {
         clearInterval(pollInterval);
         clearInterval(heartbeat);
       };
-      
+
       req.raw.on("close", cleanup);
       req.raw.on("error", cleanup);
-      
     } catch (error) {
       console.error("Error setting up SSE stream:", error);
       return reply.code(500).send({

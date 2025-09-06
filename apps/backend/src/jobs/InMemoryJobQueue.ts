@@ -248,7 +248,7 @@ export class InMemoryJobQueue {
    */
   startPeriodicCleanup(): void {
     if (this.cleanupTimer) return; // already started
-    
+
     // Run cleanup every hour
     this.cleanupTimer = setInterval(
       () => {
@@ -261,7 +261,7 @@ export class InMemoryJobQueue {
 
     // Don't keep process alive just for cleanup
     this.cleanupTimer.unref?.();
-    
+
     console.log("🔧 [INIT] Periodic job cleanup started (every 60 minutes)");
   }
 }
