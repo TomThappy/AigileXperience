@@ -32,8 +32,10 @@ export function useSSE(
   const esRef = useRef<EventSource | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hardRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleGuardRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backoffRef = useRef(1000); // 1s -> exponentielles Backoff
   const finishedRef = useRef(false); // Track if job is finished to avoid false errors
+  const lastTickRef = useRef(Date.now()); // Track last received event
 
   useEffect(() => {
     // Don't connect if jobId is empty
@@ -55,6 +57,10 @@ export function useSSE(
       if (hardRef.current) {
         clearTimeout(hardRef.current);
         hardRef.current = null;
+      }
+      if (idleGuardRef.current) {
+        clearInterval(idleGuardRef.current);
+        idleGuardRef.current = null;
       }
     };
 
@@ -87,8 +93,24 @@ export function useSSE(
       const es = new EventSource(url, { withCredentials: false });
       esRef.current = es;
 
-      // jedes Event resettet den Idle-Timer
-      const touch = () => scheduleIdleGuard();
+      // jedes Event resettet den Idle-Timer und aktualisiert Last-Tick
+      const touch = () => {
+        lastTickRef.current = Date.now();
+        scheduleIdleGuard();
+      };
+
+      // Idle-Guard: Check every 5 seconds if we've been idle too long
+      // This handles heartbeat frames (comments) that don't trigger events
+      idleGuardRef.current = setInterval(() => {
+        if (closed || finishedRef.current) return;
+        const idleDuration = Date.now() - lastTickRef.current;
+        if (idleDuration > 30000) { // 30s without any frames (including heartbeats)
+          try {
+            esRef.current?.close();
+          } catch {}
+          reconnect();
+        }
+      }, 5000);
 
       es.onopen = () => {
         backoffRef.current = 1000; // Reset Backoff

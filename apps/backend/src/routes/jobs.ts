@@ -161,6 +161,9 @@ export default async function jobRoutes(app: FastifyInstance) {
         "Access-Control-Allow-Origin": "*", // matches EventSource without Credentials
       });
 
+      // SSE retry hint for client reconnection (10s)
+      reply.raw.write(`retry: 10000\n\n`);
+
       const sendEvent = (event: string, data: any) => {
         try {
           reply.raw.write(`event: ${event}\n`);

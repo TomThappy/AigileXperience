@@ -9,11 +9,11 @@ import React from "react";
  */
 
 const modules = [
-  { href: "/auto", label: "Venture Dossier" },
-  { href: "/strategy", label: "Strategie (bald)" },
-  { href: "/roadmap", label: "Roadmap (bald)" },
-  { href: "/backlog", label: "Backlog (bald)" },
-  { href: "/pm", label: "Projekt Mgmt (bald)" },
+  { href: "/auto", label: "Venture Dossier", implemented: true },
+  { href: "/strategy", label: "Strategie (bald)", implemented: true },
+  { href: "/roadmap", label: "Roadmap (bald)", implemented: true },
+  { href: "/backlog", label: "Backlog (bald)", implemented: true },
+  { href: "/pm", label: "Projekt Mgmt (bald)", implemented: true },
 ];
 
 export default function AppShell({
@@ -45,6 +45,7 @@ export default function AppShell({
                 <Link
                   key={m.href}
                   href={m.href as any}
+                  prefetch={m.implemented} // Only prefetch implemented routes
                   className={`block rounded px-3 py-2 text-sm ${active ? "bg-indigo-600 text-white" : "hover:bg-slate-100"}`}
                 >
                   {m.label}
