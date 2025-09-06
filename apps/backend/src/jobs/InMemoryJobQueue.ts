@@ -8,6 +8,7 @@ export class InMemoryJobQueue {
   private artifacts = new Map<string, Record<string, any>>();
   private readonly maxStoredJobs = 1000; // Prevent memory bloat
   private readonly jobRetentionMs = 24 * 60 * 60 * 1000; // 24 hours
+  private cleanupTimer: NodeJS.Timeout | null = null;
 
   async createJob(
     input: PitchInput,
@@ -183,12 +184,10 @@ export class InMemoryJobQueue {
   async getQueueStats() {
     const all = [...this.store.values()];
     return {
-      pending: all.filter((j) => j.status === "queued").length,
-      processing: all.filter((j) => j.status === "running").length,
-      completed: all.filter((j) => j.status === "completed").length,
-      failed: all.filter((j) => j.status === "failed").length,
       queued: all.filter((j) => j.status === "queued").length,
       running: all.filter((j) => j.status === "running").length,
+      completed: all.filter((j) => j.status === "completed").length,
+      failed: all.filter((j) => j.status === "failed").length,
       total: all.length,
       memoryUsageMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
     };
@@ -204,9 +203,10 @@ export class InMemoryJobQueue {
 
     // Find jobs older than retention period
     for (const [jobId, job] of this.store) {
-      const jobAge = now - job.createdAt;
+      const referenceTime = job.completedAt ?? job.createdAt;
+      const jobAge = now - referenceTime;
       const isCompleted = job.status === "completed" || job.status === "failed";
-      
+
       if (isCompleted && jobAge > this.jobRetentionMs) {
         jobsToRemove.push(jobId);
       }
@@ -215,9 +215,11 @@ export class InMemoryJobQueue {
     // If still over limit, remove oldest completed jobs
     if (this.store.size > this.maxStoredJobs) {
       const completedJobs = [...this.store.entries()]
-        .filter(([_, job]) => job.status === "completed" || job.status === "failed")
+        .filter(
+          ([_, job]) => job.status === "completed" || job.status === "failed",
+        )
         .sort(([_, a], [__, b]) => a.createdAt - b.createdAt);
-        
+
       const excess = this.store.size - this.maxStoredJobs;
       for (let i = 0; i < Math.min(excess, completedJobs.length); i++) {
         const [jobId] = completedJobs[i];
@@ -245,13 +247,21 @@ export class InMemoryJobQueue {
    * Start periodic cleanup (call this once during initialization)
    */
   startPeriodicCleanup(): void {
+    if (this.cleanupTimer) return; // already started
+    
     // Run cleanup every hour
-    setInterval(() => {
-      this.cleanup().catch(err => {
-        console.error('🚨 [CLEANUP] Error during periodic cleanup:', err);
-      });
-    }, 60 * 60 * 1000);
+    this.cleanupTimer = setInterval(
+      () => {
+        this.cleanup().catch((err) => {
+          console.error("🚨 [CLEANUP] Error during periodic cleanup:", err);
+        });
+      },
+      60 * 60 * 1000,
+    );
 
-    console.log('🔧 [INIT] Periodic job cleanup started (every 60 minutes)');
+    // Don't keep process alive just for cleanup
+    this.cleanupTimer.unref?.();
+    
+    console.log("🔧 [INIT] Periodic job cleanup started (every 60 minutes)");
   }
 }
