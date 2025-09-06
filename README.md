@@ -34,6 +34,12 @@
 └────────────┴────────────┘
 ```
 
+### 📋 Detailed Architecture Documentation
+
+- **[🔌 SSE Job Lifecycle](./docs/architecture/sse-job-lifecycle.md)** - Real-time job processing with robust Server-Sent Events
+- **[🧹 Memory Management](./docs/architecture/memory-management.md)** - Automatic cleanup system preventing memory leaks
+- **[📚 Architecture Overview](./docs/architecture/)** - Complete system architecture documentation
+
 ## 🎨 UI Modes
 
 1. **Live (LLM only)**: Basic AI analysis
