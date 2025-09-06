@@ -163,6 +163,10 @@ export default async function jobRoutes(app: FastifyInstance) {
 
       // SSE retry hint for client reconnection (10s)
       reply.raw.write(`retry: 10000\n\n`);
+      reply.raw.write(`:hb ${Date.now()}\n\n`);         // sofort ein erster Heartbeat
+
+      // für manche Proxies:
+      try { reply.raw.setHeader?.("X-Accel-Buffering", "no"); } catch { /* noop */ }
 
       const sendEvent = (event: string, data: any) => {
         try {
