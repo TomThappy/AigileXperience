@@ -41,7 +41,7 @@ export function startSSE(
   const backoffMax = 20000; // 20s
   let lastTick = Date.now();
   let jobCompleted = false;
-  
+
   const touch = () => {
     lastTick = Date.now();
     backoff = 1000;
@@ -50,42 +50,44 @@ export function startSSE(
 
   const connect = () => {
     if (stopped) return;
-    
-    console.log(`[SSE] Connecting to ${url}, attempt ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
-    
+
+    console.log(
+      `[SSE] Connecting to ${url}, attempt ${reconnectAttempts + 1}/${maxReconnectAttempts}`,
+    );
+
     es = new EventSource(url);
-    
+
     // Handle open/established connection
     es.onopen = () => {
-      console.log('[SSE] Connection opened');
+      console.log("[SSE] Connection opened");
       touch();
     };
-    
+
     es.addEventListener("status", (e) => {
       touch();
       const data = JSON.parse((e as MessageEvent).data);
-      if (data.status === 'completed' || data.status === 'failed') {
+      if (data.status === "completed" || data.status === "failed") {
         jobCompleted = true;
       }
       handlers.onStatus?.(data);
     });
-    
+
     es.addEventListener("progress", (e) => {
       touch();
       handlers.onProgress?.(JSON.parse((e as MessageEvent).data));
     });
-    
+
     es.addEventListener("artifact_written", (e) => {
       touch();
       handlers.onArtifact?.(JSON.parse((e as MessageEvent).data));
     });
-    
+
     es.addEventListener("result", (e) => {
       touch();
       jobCompleted = true;
       handlers.onResult?.(JSON.parse((e as MessageEvent).data));
     });
-    
+
     es.addEventListener("done", (e) => {
       touch();
       jobCompleted = true;
@@ -93,31 +95,38 @@ export function startSSE(
       es?.close();
       stopped = true;
     });
-    
+
     es.addEventListener("error", (e) => {
       touch();
       jobCompleted = true;
       handlers.onError?.(JSON.parse((e as MessageEvent).data));
     });
-    
+
     es.onerror = (event) => {
-      console.log('[SSE] Connection error', { readyState: es?.readyState, event });
+      console.log("[SSE] Connection error", {
+        readyState: es?.readyState,
+        event,
+      });
       es?.close();
-      
+
       if (stopped || jobCompleted) return;
-      
+
       reconnectAttempts++;
-      
+
       // Nach zu vielen Fehlversuchen: Connection Lost nur wenn Job nicht beendet
       if (reconnectAttempts >= maxReconnectAttempts && !jobCompleted) {
-        console.log('[SSE] Max reconnect attempts reached, marking as connection lost');
+        console.log(
+          "[SSE] Max reconnect attempts reached, marking as connection lost",
+        );
         handlers.onConnectionLost?.();
         stopped = true;
         return;
       }
-      
+
       // Sonst: reconnect mit backoff
-      console.log(`[SSE] Reconnecting in ${backoff}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+      console.log(
+        `[SSE] Reconnecting in ${backoff}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`,
+      );
       setTimeout(connect, backoff);
       backoff = Math.min(backoff * 2, backoffMax);
     };

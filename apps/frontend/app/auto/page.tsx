@@ -144,12 +144,14 @@ export default function AutoPage() {
             "Raw data:",
             data,
           );
-        };
+        }
       },
       connection_lost: () => {
         // Only show connection lost if job hasn't completed
         setConnectionLost(true);
-        setError("Connection lost. Job may still be processing in background. Please check job status.");
+        setError(
+          "Connection lost. Job may still be processing in background. Please check job status.",
+        );
       },
     },
     {
