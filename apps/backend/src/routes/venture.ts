@@ -56,10 +56,7 @@ export async function ventureRoutes(fastify: FastifyInstance) {
         return reply.send(assumed);
       }
 
-      if (
-        body.mode === "assume_llm" ||
-        envFlag("USE_ASSUMPTIONS_LLM", false)
-      ) {
+      if (body.mode === "assume_llm" || envFlag("USE_ASSUMPTIONS_LLM", false)) {
         const { applyBestAssumptions } = await import(
           "../pipeline/autoAssumptions.js"
         );

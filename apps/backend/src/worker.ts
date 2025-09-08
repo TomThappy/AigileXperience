@@ -102,7 +102,9 @@ class PipelineWorker {
   async start() {
     try {
       console.log("🚀 Pipeline Worker starting...");
-      console.log(`🔎 Flags @boot -> LLM_DRY_RUN=${envFlag("LLM_DRY_RUN", false)} DEV_BYPASS_QUEUE=${envFlag("DEV_BYPASS_QUEUE", false)} USE_ASSUMPTIONS_LLM=${envFlag("USE_ASSUMPTIONS_LLM", false)}`);
+      console.log(
+        `🔎 Flags @boot -> LLM_DRY_RUN=${envFlag("LLM_DRY_RUN", false)} DEV_BYPASS_QUEUE=${envFlag("DEV_BYPASS_QUEUE", false)} USE_ASSUMPTIONS_LLM=${envFlag("USE_ASSUMPTIONS_LLM", false)}`,
+      );
 
       // Validate environment
       this.validateEnvironment();
