@@ -20,14 +20,17 @@ const SECTIONS = [
 ];
 
 // Component to render section content nicely
-function SectionContent({ section, status }: { 
-  section: any; 
-  status: "pending" | "running" | "done" | "error"; 
+function SectionContent({
+  section,
+  status,
+}: {
+  section: any;
+  status: "pending" | "running" | "done" | "error";
 }) {
   if (status === "pending") {
     return <div className="text-slate-400 italic">—</div>;
   }
-  
+
   if (status === "running") {
     return (
       <div className="animate-pulse space-y-2">
@@ -36,21 +39,21 @@ function SectionContent({ section, status }: {
       </div>
     );
   }
-  
+
   if (status === "error") {
     return <div className="text-red-500 italic">Error loading content</div>;
   }
-  
+
   if (!section) {
     return <div className="text-slate-400 italic">No content available</div>;
   }
-  
+
   return (
     <div className="space-y-3">
       {section.headline && (
         <h4 className="font-medium text-slate-900">{section.headline}</h4>
       )}
-      
+
       {section.bullets && Array.isArray(section.bullets) && (
         <ul className="space-y-1 text-sm">
           {section.bullets.map((bullet: string, i: number) => (
@@ -61,22 +64,30 @@ function SectionContent({ section, status }: {
           ))}
         </ul>
       )}
-      
+
       {section.narrative && (
-        <p className="text-sm text-slate-600 leading-relaxed">{section.narrative}</p>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          {section.narrative}
+        </p>
       )}
-      
+
       {section.data && (
         <div className="bg-slate-50 rounded p-3 space-y-2">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">Key Data</div>
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Key Data
+          </div>
           <div className="text-sm space-y-1">
             {Object.entries(section.data).map(([key, value]) => {
-              if (key.startsWith('_')) return null; // skip meta keys
+              if (key.startsWith("_")) return null; // skip meta keys
               return (
                 <div key={key} className="flex justify-between">
-                  <span className="text-slate-600 capitalize">{key.replace(/_/g, ' ')}:</span>
+                  <span className="text-slate-600 capitalize">
+                    {key.replace(/_/g, " ")}:
+                  </span>
                   <span className="text-slate-900 font-medium">
-                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                    {typeof value === "object"
+                      ? JSON.stringify(value)
+                      : String(value)}
                   </span>
                 </div>
               );
@@ -84,37 +95,54 @@ function SectionContent({ section, status }: {
           </div>
         </div>
       )}
-      
+
       {section.assumptions && Array.isArray(section.assumptions) && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">Assumptions</div>
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Assumptions
+          </div>
           <div className="flex flex-wrap gap-1">
-            {section.assumptions.slice(0, 3).map((assumption: string, i: number) => (
-              <span key={i} className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                {assumption.slice(0, 40)}{assumption.length > 40 ? '...' : ''}
-              </span>
-            ))}
+            {section.assumptions
+              .slice(0, 3)
+              .map((assumption: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
+                >
+                  {assumption.slice(0, 40)}
+                  {assumption.length > 40 ? "..." : ""}
+                </span>
+              ))}
           </div>
         </div>
       )}
-      
+
       {section.open_questions && Array.isArray(section.open_questions) && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">Open Questions</div>
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+            Open Questions
+          </div>
           <div className="flex flex-wrap gap-1">
-            {section.open_questions.slice(0, 2).map((question: string, i: number) => (
-              <span key={i} className="inline-block bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs">
-                {question.slice(0, 50)}{question.length > 50 ? '...' : ''}
-              </span>
-            ))}
+            {section.open_questions
+              .slice(0, 2)
+              .map((question: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-block bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs"
+                >
+                  {question.slice(0, 50)}
+                  {question.length > 50 ? "..." : ""}
+                </span>
+              ))}
           </div>
         </div>
       )}
-      
+
       {section.citations && Array.isArray(section.citations) && (
         <div className="pt-2 border-t border-slate-100">
           <div className="text-xs text-slate-400">
-            {section.citations.length} source{section.citations.length !== 1 ? 's' : ''} cited
+            {section.citations.length} source
+            {section.citations.length !== 1 ? "s" : ""} cited
           </div>
         </div>
       )}
@@ -392,9 +420,9 @@ export default function AutoPage() {
           <div className="text-sm text-slate-500">Ergebnis</div>
           {SECTIONS.map((s) => (
             <SectionCard key={s.key} title={s.label} status={secState[s.key]}>
-              <SectionContent 
-                section={data?.sections?.[s.key]} 
-                status={secState[s.key]} 
+              <SectionContent
+                section={data?.sections?.[s.key]}
+                status={secState[s.key]}
               />
             </SectionCard>
           ))}

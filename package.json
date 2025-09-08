@@ -22,8 +22,13 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.35.0",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
     "concurrently": "^9.0.0",
     "eslint": "^9.10.0",
+    "globals": "^16.3.0",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.9",
     "prettier": "^3.6.2"

@@ -182,6 +182,6 @@ export function useSSE(
     cleanupRef.current = cleanup;
 
     return cleanup;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [jobId]);
 }
