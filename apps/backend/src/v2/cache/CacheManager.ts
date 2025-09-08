@@ -49,10 +49,15 @@ export class CacheManager {
     inputs: Record<string, any>,
     promptVersion?: string,
   ): Promise<string> {
+    // Include environment flags in cache key to separate dry-run from real results
     const hashInput = {
       stepId,
       inputs,
       promptVersion: promptVersion || "1.0",
+      envFlags: {
+        LLM_DRY_RUN: process.env.LLM_DRY_RUN || "false",
+        USE_ASSUMPTIONS_LLM: process.env.USE_ASSUMPTIONS_LLM || "false",
+      },
     };
     return `step_${stepId}_${createHash(hashInput)}`;
   }
