@@ -194,7 +194,10 @@ export default function AutoPage() {
       progress: (evt) => {
         const { step, status } = evt.payload || evt;
         if (step && STEP_TO_STAGE[step]) {
-          setStages((s: any) => ({ ...s, [STEP_TO_STAGE[step]]: status || "running" }));
+          setStages((s: any) => ({
+            ...s,
+            [STEP_TO_STAGE[step]]: status || "running",
+          }));
         }
       },
       artifact_written: async (evt) => {

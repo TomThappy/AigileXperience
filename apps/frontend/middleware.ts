@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   // Since matcher only runs for /workspaces, always redirect
   return NextResponse.redirect(
     new URL(`/auto${request.nextUrl.search}`, request.url),
-    308
+    308,
   );
 }
 
