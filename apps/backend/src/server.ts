@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { ventureRoutes } from "./routes/venture.js";
+import { envFlag } from "./utils/envFlag.js";
 import "dotenv/config";
 
 // 🚨 API Key Detection and Warnings
@@ -24,14 +25,14 @@ if (!process.env.ANTHROPIC_API_KEY) {
 }
 
 // DEV Bypass detection
-if (process.env.DEV_BYPASS_QUEUE === "true") {
+if (envFlag("DEV_BYPASS_QUEUE", false)) {
   console.log(
     "🔧 [DEV] DEV_BYPASS_QUEUE enabled - Jobs will run synchronously without Redis",
   );
 }
 
 // LLM DRY_RUN detection
-if (process.env.LLM_DRY_RUN === "true") {
+if (envFlag("LLM_DRY_RUN", false)) {
   console.log(
     "🏃 [DEV] LLM_DRY_RUN enabled - No actual API calls, synthetic responses only",
   );

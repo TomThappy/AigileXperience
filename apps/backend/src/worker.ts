@@ -2,6 +2,7 @@
 import "dotenv/config";
 import { getJobQueue } from "./jobs/JobQueue.js";
 import { getEnhancedWorker } from "./jobs/PipelineWorker.js";
+import { envFlag } from "./utils/envFlag.js";
 import type { JobData, JobArtifact } from "./jobs/JobQueue.js";
 
 class PipelineWorker {
@@ -101,6 +102,7 @@ class PipelineWorker {
   async start() {
     try {
       console.log("🚀 Pipeline Worker starting...");
+      console.log(`🔎 Flags @boot -> LLM_DRY_RUN=${envFlag("LLM_DRY_RUN", false)} DEV_BYPASS_QUEUE=${envFlag("DEV_BYPASS_QUEUE", false)} USE_ASSUMPTIONS_LLM=${envFlag("USE_ASSUMPTIONS_LLM", false)}`);
 
       // Validate environment
       this.validateEnvironment();

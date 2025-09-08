@@ -573,6 +573,13 @@ export default async function jobRoutes(app: FastifyInstance) {
           : null,
       },
 
+      // Environment Flags - Critical for debugging
+      env_flags: {
+        LLM_DRY_RUN: process.env.LLM_DRY_RUN ?? "false",
+        DEV_BYPASS_QUEUE: process.env.DEV_BYPASS_QUEUE ?? "false",
+        USE_ASSUMPTIONS_LLM: process.env.USE_ASSUMPTIONS_LLM ?? "false",
+      },
+
       effective_routing: {
         evidence: getModelWithContext("EVIDENCE", "gpt-4o"),
         brief: getModelWithContext("BRIEF", "gpt-4o"),

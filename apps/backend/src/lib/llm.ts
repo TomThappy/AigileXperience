@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { rateGate, getModelLimit } from "./rate-gate.js";
+import { envFlag } from "../utils/envFlag.js";
 
 export type Provider = "openai" | "anthropic";
 type ChatOptions = { model?: string; temperature?: number };
@@ -24,7 +25,7 @@ export async function chatComplete(
   const maxRetries = parseInt(process.env.LLM_RETRIES || "3");
 
   // 🔧 DRY-RUN MODE - Return synthetic response without API calls
-  if (process.env.LLM_DRY_RUN === "true") {
+  if (envFlag("LLM_DRY_RUN", false)) {
     console.log(
       `🏃 [DRY-RUN] Returning synthetic response for model: ${model}`,
     );

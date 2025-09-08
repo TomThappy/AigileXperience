@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { buildDeckFromPitch } from "../pipeline/buildDeck.js";
+import { envFlag } from "../utils/envFlag.js";
 
 export async function ventureRoutes(fastify: FastifyInstance) {
   fastify.post(
@@ -57,7 +58,7 @@ export async function ventureRoutes(fastify: FastifyInstance) {
 
       if (
         body.mode === "assume_llm" ||
-        process.env.USE_ASSUMPTIONS_LLM === "true"
+        envFlag("USE_ASSUMPTIONS_LLM", false)
       ) {
         const { applyBestAssumptions } = await import(
           "../pipeline/autoAssumptions.js"

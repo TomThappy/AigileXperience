@@ -254,7 +254,8 @@ let _singletonQueue: JobQueue | InMemoryJobQueue | null = null;
 export async function getJobQueue(): Promise<JobQueue | InMemoryJobQueue> {
   if (_singletonQueue) return _singletonQueue;
 
-  const useBypass = process.env.DEV_BYPASS_QUEUE === "true";
+  const { envFlag } = await import("../utils/envFlag.js");
+  const useBypass = envFlag("DEV_BYPASS_QUEUE", false);
 
   if (useBypass) {
     console.log("🔧 [DEV] Using InMemoryJobQueue (DEV_BYPASS_QUEUE=true)");
