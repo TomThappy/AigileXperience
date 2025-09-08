@@ -156,12 +156,13 @@ export default async function jobRoutes(app: FastifyInstance) {
       reply.raw.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Cache-Control, Content-Type, Last-Event-ID",
-        "X-Accel-Buffering": "no",           // NGINX/Proxy: nicht puffern
-        "Transfer-Encoding": "chunked",      // Force HTTP/1.1 chunked (not HTTP/2)
-        "HTTP2-Settings": "",                 // Disable HTTP/2 for this response
+        "Access-Control-Allow-Headers":
+          "Cache-Control, Content-Type, Last-Event-ID",
+        "X-Accel-Buffering": "no", // NGINX/Proxy: nicht puffern
+        "Transfer-Encoding": "chunked", // Force HTTP/1.1 chunked (not HTTP/2)
+        "HTTP2-Settings": "", // Disable HTTP/2 for this response
       });
 
       // Client-Reconnect-Hinweis + erster Heartbeat sofort

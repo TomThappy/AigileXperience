@@ -3,6 +3,7 @@ import { useState } from "react";
 import Subnav from "@/components/layout/Subnav";
 import StageTimeline from "@/components/dossier/StageTimeline";
 import SectionCard from "@/components/dossier/SectionCard";
+import { useSSE } from "@/lib/useSSE";
 
 /**
  * Configuration for all venture dossier sections
@@ -37,16 +38,141 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
   const [secState, setSecState] = useState<
     Record<string, "pending" | "running" | "done" | "error">
   >(() => Object.fromEntries(SECTIONS.map((s) => [s.key, "pending"])));
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [connectionLost, setConnectionLost] = useState(false);
+
+  // Use robust SSE hook for streaming job progress
+  useSSE(
+    jobId || "",
+    {
+      status: (data) => {
+        // Handle status updates if needed
+      },
+      progress: (data) => {
+        // Update UI with progress
+        if (data.type === "progress") {
+          const { step, status } = data.payload || data;
+          if (step) {
+            setSecState((s) => ({ ...s, [step]: status || "running" }));
+          }
+        }
+      },
+      artifact_written: (data) => {
+        // Handle individual section completion
+        if (data.type === "artifact" || data.section) {
+          const { section, data: sectionData } = data.payload || data;
+          if (section && sectionData) {
+            setData((prev: any) => {
+              const nxt = {
+                ...prev,
+                sections: { ...prev.sections, [section]: sectionData },
+              };
+              try {
+                localStorage.setItem("last_dossier", JSON.stringify(nxt));
+              } catch {}
+              return nxt;
+            });
+            setSecState((s) => ({ ...s, [section]: "done" }));
+          }
+        }
+      },
+      result: (data) => {
+        // Handle final result
+        setData((prev: any) => ({ ...prev, result: data }));
+      },
+      error: (data) => {
+        // Handle pipeline errors
+        setError(
+          `Pipeline error: ${data?.payload?.error || data?.message || "Unknown error"}`,
+        );
+        setStages((p: any) => ({ ...p, S2: "error" }));
+      },
+      done: (data) => {
+        // Job completed successfully
+        const finalData = data.payload || data;
+        if (finalData?.sections) {
+          setData((prev: any) => {
+            const nxt = { ...prev, ...finalData };
+            try {
+              localStorage.setItem("last_dossier", JSON.stringify(nxt));
+            } catch {}
+            return nxt;
+          });
+
+          // Mark all sections as done
+          const doneState = Object.fromEntries(
+            SECTIONS.map(
+              (s) =>
+                [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
+                  string,
+                  "pending" | "running" | "done" | "error",
+                ],
+            ),
+          ) as Record<string, "pending" | "running" | "done" | "error">;
+          setSecState(doneState);
+        }
+        setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
+      },
+      message: (data) => {
+        // Handle generic messages - parse type and route accordingly
+        try {
+          if (data.type === "progress") {
+            const { step, status } = data.payload || data;
+            if (step) {
+              setSecState((s) => ({ ...s, [step]: status || "running" }));
+            }
+          } else if (data.type === "artifact") {
+            const { section, data: sectionData } = data.payload || data;
+            if (section && sectionData) {
+              setData((prev: any) => {
+                const nxt = {
+                  ...prev,
+                  sections: { ...prev.sections, [section]: sectionData },
+                };
+                try {
+                  localStorage.setItem("last_dossier", JSON.stringify(nxt));
+                } catch {}
+                return nxt;
+              });
+              setSecState((s) => ({ ...s, [section]: "done" }));
+            }
+          }
+        } catch (parseError) {
+          console.error(
+            "Failed to parse SSE message:",
+            parseError,
+            "Raw data:",
+            data,
+          );
+        }
+      },
+      connection_lost: () => {
+        // Only show connection lost if job hasn't completed
+        setConnectionLost(true);
+        setError(
+          "Connection lost. Job may still be processing in background. Please check job status.",
+        );
+      },
+    },
+    {
+      idleMs: 25000, // 25s idle timeout
+      hardTimeoutMs: 12 * 60 * 1000, // 12 minutes max
+    },
+  );
 
   async function run() {
     setError(null);
+    setConnectionLost(false);
     setStages({ S1: "running", S2: "idle", S3: "idle", S4: "idle" });
     setSecState(Object.fromEntries(SECTIONS.map((s) => [s.key, "pending"])));
     setData(null);
+    setJobId(null);
 
     try {
-      // 1) Job anlegen (asynchron über Render Backend direkt)
-      const backendUrl = "https://aigilexperience-backend.onrender.com";
+      // 1) Create job (async via Render Backend)
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        "https://aigilexperience-backend.onrender.com";
       const jobRes = await fetch(`${backendUrl}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -63,84 +189,12 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         return;
       }
 
-      const { jobId } = await jobRes.json();
+      const { jobId: newJobId } = await jobRes.json();
       setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
+      setData({ meta: { jobId: newJobId }, sections: {} });
 
-      // 2) Progress via Server-Sent Events streamen
-      const eventSource = new EventSource(
-        `${backendUrl}/api/jobs/${jobId}/stream`,
-      );
-      setData({ meta: { jobId }, sections: {} });
-
-      eventSource.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-
-        if (message.type === "progress") {
-          // Update UI mit Progress
-          const { step, status } = message.payload;
-          if (step) {
-            setSecState((s) => ({ ...s, [step]: status || "running" }));
-          }
-        } else if (message.type === "artifact") {
-          // Einzelne Section ist fertig
-          const { section, data: sectionData } = message.payload;
-          if (section && sectionData) {
-            setData((prev: any) => {
-              const nxt = {
-                ...prev,
-                sections: { ...prev.sections, [section]: sectionData },
-              };
-              try {
-                localStorage.setItem("last_dossier", JSON.stringify(nxt));
-              } catch {}
-              return nxt;
-            });
-            setSecState((s) => ({ ...s, [section]: "done" }));
-          }
-        } else if (message.type === "done") {
-          // Job komplett fertig
-          const finalData = message.payload;
-          if (finalData?.sections) {
-            setData((prev: any) => {
-              const nxt = { ...prev, ...finalData };
-              try {
-                localStorage.setItem("last_dossier", JSON.stringify(nxt));
-              } catch {}
-              return nxt;
-            });
-
-            // Alle Sections als done markieren
-            const doneState = Object.fromEntries(
-              SECTIONS.map(
-                (s) =>
-                  [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
-                    string,
-                    "pending" | "running" | "done" | "error",
-                  ],
-              ),
-            ) as Record<string, "pending" | "running" | "done" | "error">;
-            setSecState(doneState);
-          }
-          setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
-          eventSource.close();
-        } else if (message.type === "error") {
-          setError(
-            `Pipeline error: ${message.payload?.error || "Unknown error"}`,
-          );
-          setStages((p: any) => ({ ...p, S2: "error" }));
-          eventSource.close();
-        }
-      };
-
-      eventSource.onerror = (err) => {
-        console.error("SSE Error:", err);
-        setError("Connection lost - please refresh");
-        setStages((p: any) => ({ ...p, S2: "error" }));
-        eventSource.close();
-      };
-
-      // Cleanup function speichern für späteren Gebrauch
-      (window as any).currentEventSource = eventSource;
+      // 2) Set jobId to trigger SSE hook
+      setJobId(newJobId);
     } catch (error) {
       setStages((p: any) => ({ ...p, S1: "error" }));
       setError(
