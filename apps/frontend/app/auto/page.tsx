@@ -259,7 +259,7 @@ export default function AutoPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold">
-          Venture Dossier · Elevator Pitch
+          Venture Dossier
         </h1>
         <StageTimeline state={stages} />
       </div>
