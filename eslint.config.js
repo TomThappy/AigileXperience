@@ -38,6 +38,12 @@ export default [
     rules: {},
   },
   {
-    ignores: ["dist/", "node_modules/", ".next/", ".vercel/", "apps/frontend/.next/"],
+    ignores: [
+      "dist/",
+      "node_modules/",
+      ".next/",
+      ".vercel/",
+      "apps/frontend/.next/",
+    ],
   },
 ];

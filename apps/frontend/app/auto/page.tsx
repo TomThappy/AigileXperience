@@ -19,6 +19,15 @@ const SECTIONS = [
   { key: "financial_plan", label: "Financials" },
 ];
 
+// Step to stage mapping for consistent S-badge updates
+type StageKey = "S1" | "S2" | "S3" | "S4";
+const STEP_TO_STAGE: Record<string, StageKey> = {
+  analyze: "S1",
+  integration: "S2",
+  polish: "S3",
+  scoring: "S4",
+};
+
 // Component to render section content nicely
 function SectionContent({
   section,
@@ -184,15 +193,8 @@ export default function AutoPage() {
       },
       progress: (evt) => {
         const { step, status } = evt.payload || evt;
-        // Map pipeline step to S badges
-        const map: Record<string, keyof typeof stages> = {
-          analyze: "S1",
-          integration: "S2",
-          polish: "S3",
-          scoring: "S4",
-        };
-        if (step && map[step]) {
-          setStages((s: any) => ({ ...s, [map[step]]: status || "running" }));
+        if (step && STEP_TO_STAGE[step]) {
+          setStages((s: any) => ({ ...s, [STEP_TO_STAGE[step]]: status || "running" }));
         }
       },
       artifact_written: async (evt) => {
@@ -315,27 +317,6 @@ export default function AutoPage() {
         }
         setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
       },
-      message: (evt) => {
-        try {
-          if (evt.type === "progress") {
-            const { step, status } = evt.payload || evt;
-            const map: Record<string, keyof typeof stages> = {
-              analyze: "S1",
-              integration: "S2",
-              polish: "S3",
-              scoring: "S4",
-            };
-            if (step && map[step]) {
-              setStages((s: any) => ({
-                ...s,
-                [map[step]]: status || "running",
-              }));
-            }
-          }
-        } catch (err) {
-          console.error("Failed to parse SSE message:", err, "Raw data:", evt);
-        }
-      },
       connection_lost: () => {
         setConnectionLost(true);
         setError(
@@ -409,7 +390,8 @@ export default function AutoPage() {
           />
           <button
             onClick={run}
-            className="rounded bg-indigo-600 text-white px-3 py-2"
+            disabled={stages.S1 === "running" || stages.S2 === "running"}
+            className="rounded bg-indigo-600 text-white px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Generate (Auto)
           </button>

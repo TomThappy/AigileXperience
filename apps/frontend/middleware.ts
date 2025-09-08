@@ -2,14 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Redirect all workspace routes to /auto
-  if (pathname.startsWith("/workspaces")) {
-    return NextResponse.redirect(new URL("/auto", request.url));
-  }
-
-  return NextResponse.next();
+  // Since matcher only runs for /workspaces, always redirect
+  return NextResponse.redirect(
+    new URL(`/auto${request.nextUrl.search}`, request.url),
+    308
+  );
 }
 
 export const config = {
