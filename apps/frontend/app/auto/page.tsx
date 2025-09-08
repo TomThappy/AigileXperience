@@ -69,18 +69,28 @@ export default function AutoPage() {
         const key = evt?.payload?.key || evt?.key;
         if (key === "final_dossier" && jobId) {
           try {
-            const res = await fetch(`${backendUrl}/api/jobs/${jobId}/artifacts/final_dossier`);
+            const res = await fetch(
+              `${backendUrl}/api/jobs/${jobId}/artifacts/final_dossier`,
+            );
             if (res.ok) {
               const artifact = await res.json();
               const sections = artifact?.sections || {};
               setData((prev: any) => {
-                const nxt = { ...prev, sections: { ...(prev?.sections || {}), ...sections } };
-                try { localStorage.setItem("last_dossier", JSON.stringify(nxt)); } catch {}
+                const nxt = {
+                  ...prev,
+                  sections: { ...(prev?.sections || {}), ...sections },
+                };
+                try {
+                  localStorage.setItem("last_dossier", JSON.stringify(nxt));
+                } catch {}
                 return nxt;
               });
               // mark any received sections as done
               setSecState((s) => {
-                const next = { ...s } as Record<string, "pending" | "running" | "done" | "error">;
+                const next = { ...s } as Record<
+                  string,
+                  "pending" | "running" | "done" | "error"
+                >;
                 Object.keys(sections).forEach((k) => {
                   if (k in next) next[k] = "done";
                 });
@@ -88,7 +98,9 @@ export default function AutoPage() {
               });
             }
           } catch (e) {
-            setError(`Artifact fetch failed: ${e instanceof Error ? e.message : String(e)}`);
+            setError(
+              `Artifact fetch failed: ${e instanceof Error ? e.message : String(e)}`,
+            );
           }
           return;
         }
@@ -96,8 +108,13 @@ export default function AutoPage() {
         const { section, data: sectionData } = evt.payload || evt;
         if (section && sectionData) {
           setData((prev: any) => {
-            const nxt = { ...prev, sections: { ...(prev?.sections || {}), [section]: sectionData } };
-            try { localStorage.setItem("last_dossier", JSON.stringify(nxt)); } catch {}
+            const nxt = {
+              ...prev,
+              sections: { ...(prev?.sections || {}), [section]: sectionData },
+            };
+            try {
+              localStorage.setItem("last_dossier", JSON.stringify(nxt));
+            } catch {}
             return nxt;
           });
           setSecState((s) => ({ ...s, [section]: "done" }));
@@ -109,13 +126,23 @@ export default function AutoPage() {
         const sections = payload?.data?.sections || payload?.sections;
         if (sections) {
           setData((prev: any) => {
-            const nxt = { ...prev, sections: { ...(prev?.sections || {}), ...sections } };
-            try { localStorage.setItem("last_dossier", JSON.stringify(nxt)); } catch {}
+            const nxt = {
+              ...prev,
+              sections: { ...(prev?.sections || {}), ...sections },
+            };
+            try {
+              localStorage.setItem("last_dossier", JSON.stringify(nxt));
+            } catch {}
             return nxt;
           });
           setSecState((s) => {
-            const next = { ...s } as Record<string, "pending" | "running" | "done" | "error">;
-            Object.keys(sections).forEach((k) => { if (k in next) next[k] = "done"; });
+            const next = { ...s } as Record<
+              string,
+              "pending" | "running" | "done" | "error"
+            >;
+            Object.keys(sections).forEach((k) => {
+              if (k in next) next[k] = "done";
+            });
             return next;
           });
         }
@@ -131,15 +158,27 @@ export default function AutoPage() {
         const finalData = evt.payload || evt;
         if (finalData?.sections) {
           setData((prev: any) => {
-            const nxt = { ...prev, ...finalData, sections: { ...(prev?.sections || {}), ...(finalData.sections || {}) } };
-            try { localStorage.setItem("last_dossier", JSON.stringify(nxt)); } catch {}
+            const nxt = {
+              ...prev,
+              ...finalData,
+              sections: {
+                ...(prev?.sections || {}),
+                ...(finalData.sections || {}),
+              },
+            };
+            try {
+              localStorage.setItem("last_dossier", JSON.stringify(nxt));
+            } catch {}
             return nxt;
           });
           const doneState = Object.fromEntries(
-            SECTIONS.map((s) => [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
-              string,
-              "pending" | "running" | "done" | "error",
-            ]),
+            SECTIONS.map(
+              (s) =>
+                [s.key, finalData.sections[s.key] ? "done" : "pending"] as [
+                  string,
+                  "pending" | "running" | "done" | "error",
+                ],
+            ),
           ) as Record<string, "pending" | "running" | "done" | "error">;
           setSecState(doneState);
         }
@@ -156,7 +195,10 @@ export default function AutoPage() {
               scoring: "S4",
             };
             if (step && map[step]) {
-              setStages((s: any) => ({ ...s, [map[step]]: status || "running" }));
+              setStages((s: any) => ({
+                ...s,
+                [map[step]]: status || "running",
+              }));
             }
           }
         } catch (err) {
@@ -165,7 +207,9 @@ export default function AutoPage() {
       },
       connection_lost: () => {
         setConnectionLost(true);
-        setError("Connection lost. Job may still be processing in background. Please check job status.");
+        setError(
+          "Connection lost. Job may still be processing in background. Please check job status.",
+        );
       },
     },
     {
@@ -205,14 +249,18 @@ export default function AutoPage() {
       setJobId(newJobId); // triggers SSE
     } catch (error) {
       setStages((p: any) => ({ ...p, S1: "error" }));
-      setError(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      setError(
+        `Error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Venture Dossier · Elevator Pitch</h1>
+        <h1 className="text-xl font-semibold">
+          Venture Dossier · Elevator Pitch
+        </h1>
         <StageTimeline state={stages} />
       </div>
 
@@ -230,7 +278,10 @@ export default function AutoPage() {
             value={pitch}
             onChange={(e) => setPitch(e.target.value)}
           />
-          <button onClick={run} className="rounded bg-indigo-600 text-white px-3 py-2">
+          <button
+            onClick={run}
+            className="rounded bg-indigo-600 text-white px-3 py-2"
+          >
             Generate (Auto)
           </button>
           {error && <p className="text-sm text-red-600">⚠️ {error}</p>}
@@ -242,7 +293,8 @@ export default function AutoPage() {
             <SectionCard key={s.key} title={s.label} status={secState[s.key]}>
               <pre className="bg-slate-50 p-2 rounded text-xs overflow-auto">
                 {JSON.stringify(
-                  data?.sections?.[s.key] ?? (secState[s.key] === "running" ? "…" : "—"),
+                  data?.sections?.[s.key] ??
+                    (secState[s.key] === "running" ? "…" : "—"),
                   null,
                   2,
                 )}
