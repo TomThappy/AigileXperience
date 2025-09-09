@@ -65,15 +65,17 @@ export class CacheManager {
   async clearAllStepCaches(): Promise<void> {
     try {
       const cacheFiles = await fs.readdir(this.cacheDir);
-      const stepCacheFiles = cacheFiles.filter(file => file.startsWith('step_') && file.endsWith('.json'));
-      
+      const stepCacheFiles = cacheFiles.filter(
+        (file) => file.startsWith("step_") && file.endsWith(".json"),
+      );
+
       for (const file of stepCacheFiles) {
         await fs.unlink(path.join(this.cacheDir, file));
       }
-      
+
       console.log(`🗑️  Cleared ${stepCacheFiles.length} step cache files`);
     } catch (error) {
-      console.warn('Failed to clear step caches:', error);
+      console.warn("Failed to clear step caches:", error);
     }
   }
 
