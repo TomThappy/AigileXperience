@@ -4,21 +4,27 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
-
-  # Allow manual trigger for testing
+  
+  # Allow manual trigger for testing  
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: false
+        default: ''
 
 jobs:
-  coderabbit-review:
-    name: CodeRabbit Analysis
+  pre-coderabbit-checks:
+    name: Pre-CodeRabbit Quality Checks
     runs-on: ubuntu-latest
+    outputs:
+      has_critical_issues: ${{ steps.quality-gate.outputs.has_critical_issues }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Fetch full history for better analysis
           fetch-depth: 0
-
+          
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,14 +34,76 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linting
-        run: npm run lint || true
+      - name: Run TypeScript checks
+        id: type-check
+        run: |
+          echo "::group::TypeScript Compilation"
+          npm run type-check
+          echo "::endgroup::"
+        continue-on-error: true
 
-      - name: Run type checking
-        run: npm run type-check || true
+      - name: Run linting with error collection
+        id: lint-check
+        run: |
+          echo "::group::ESLint Analysis"
+          npm run lint -- --format=json --output-file=lint-results.json || true
+          if [ -f lint-results.json ]; then
+            ERROR_COUNT=$(jq '[.[] | .errorCount] | add' lint-results.json 2>/dev/null || echo "0")
+            WARNING_COUNT=$(jq '[.[] | .warningCount] | add' lint-results.json 2>/dev/null || echo "0")
+            echo "errors=$ERROR_COUNT" >> $GITHUB_OUTPUT
+            echo "warnings=$WARNING_COUNT" >> $GITHUB_OUTPUT
+            echo "Found $ERROR_COUNT errors and $WARNING_COUNT warnings"
+          fi
+          echo "::endgroup::"
+        continue-on-error: true
 
       - name: Generate documentation
-        run: npm run docs:gen || true
+        run: |
+          echo "::group::Documentation Generation"
+          npm run docs:gen || true
+          echo "::endgroup::"
 
-      # CodeRabbit automatically analyzes PRs via GitHub App integration
-      # No additional steps needed if properly configured
+      - name: Quality Gate Assessment
+        id: quality-gate
+        run: |
+          CRITICAL_ISSUES="false"
+          
+          # Check TypeScript errors
+          if [ "${{ steps.type-check.outcome }}" = "failure" ]; then
+            echo "⚠️ TypeScript compilation failed - marking as critical"
+            CRITICAL_ISSUES="true"
+          fi
+          
+          # Check lint errors (warnings are OK, errors are critical)
+          if [ "${{ steps.lint-check.outputs.errors }}" != "0" ] && [ "${{ steps.lint-check.outputs.errors }}" != "" ]; then
+            echo "⚠️ ESLint found ${{ steps.lint-check.outputs.errors }} errors - marking as critical"
+            CRITICAL_ISSUES="true"
+          fi
+          
+          echo "has_critical_issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
+          
+          if [ "$CRITICAL_ISSUES" = "true" ]; then
+            echo "::error::🚨 Critical quality issues found. CodeRabbit review may be less effective with broken code."
+            echo "::notice::Fix TypeScript/ESLint errors first, then request CodeRabbit review."
+          else
+            echo "✅ Pre-checks passed. Code is ready for CodeRabbit analysis."
+          fi
+
+  coderabbit-ready:
+    name: CodeRabbit Analysis Ready
+    runs-on: ubuntu-latest
+    needs: pre-coderabbit-checks
+    steps:
+      - name: CodeRabbit Status Check
+        run: |
+          if [ "${{ needs.pre-coderabbit-checks.outputs.has_critical_issues }}" = "true" ]; then
+            echo "::warning::⚠️ Code has quality issues. CodeRabbit will still run but fix basic issues first for better analysis."
+          else
+            echo "✅ Code quality pre-checks passed. CodeRabbit analysis will be most effective."
+          fi
+          
+          echo "::notice::CodeRabbit will automatically analyze this PR. Check the 'Files changed' tab for AI-generated comments."
+          echo "::notice::Use @coderabbit commands in PR comments to interact with the AI reviewer."
+
+      # CodeRabbit runs automatically via GitHub App - no explicit step needed
+      # This job serves as a status check that can be required in branch protection

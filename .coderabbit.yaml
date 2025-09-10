@@ -22,7 +22,7 @@ review:
   max_context_lines: 1200
   priority:
     - security
-    - correctness
+    - correctness  
     - performance
     - reliability
     - maintainability
@@ -31,6 +31,14 @@ review:
     code: suggestions
     tests: required # fordert Tests ein, wenn riskant
   severity_threshold: medium
+  
+  # Special focus areas for this project
+  focus_areas:
+    - "React infinite re-render loops"
+    - "history.replaceState excessive calls"
+    - "SSE connection cleanup and memory leaks"
+    - "useEffect dependency arrays"
+    - "State update cascades"
 
 rules:
   - match: "**/*.ts"
@@ -42,19 +50,43 @@ rules:
       - "ESM/CommonJS mismatch"
       - "Uncaught promise / missing await"
       - "JSON-only output from LLM steps"
+      - "Rate limiting and throttling patterns"
   - match: "apps/frontend/**"
     checks:
       - "SSE usage resilient (reconnect, backoff)"
       - "env NEXT_PUBLIC_* guarded"
+      - "React.memo usage for expensive components"
+      - "useCallback/useMemo for performance"
+      - "History API usage patterns"
+      - "Browser API override safety"
+  - match: "**/*page.tsx"
+    severity: high
+    checks:
+      - "No infinite loops in useEffect"
+      - "Proper cleanup in useEffect return"
+      - "State update frequency analysis"
+      - "Router navigation patterns"
 
 ci:
   re_review_on_push: true
   block_merge_if:
     - status != "approved"
     - has_unresolved_threads == true
+    - has_critical_issues == true
   labels:
     deep-review: triggers_full_scan
     skip-review: bypass
+    performance-critical: "focus=performance,memory"
+    security-review: "focus=security,validation"
+  
+  # Auto-assign labels based on changes
+  auto_labels:
+    - match: "apps/frontend/**/page.tsx"
+      label: "performance-critical"
+    - match: "**/*useSSE*"
+      label: "performance-critical"
+    - match: "**/*auth*"
+      label: "security-review"
 
 messages:
   pr_summary: true

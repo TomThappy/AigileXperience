@@ -9,27 +9,30 @@ import { MarketBar, KPILine } from "@/components/Charts";
  * CRITICAL: Override Next.js router behavior to prevent loops
  * This completely blocks any router.replace calls that might cause infinite loops
  */
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   const originalReplaceState = window.history.replaceState;
   let replaceCount = 0;
   let lastReplaceTime = 0;
-  
-  window.history.replaceState = function(...args) {
+
+  window.history.replaceState = function (...args) {
     const now = Date.now();
-    
+
     // Reset counter every 10 seconds
     if (now - lastReplaceTime > 10000) {
       replaceCount = 0;
     }
-    
+
     replaceCount++;
-    
+
     // Prevent more than 5 replaceState calls per 10 seconds
     if (replaceCount > 5) {
-      console.warn('[BLOCKED] Excessive replaceState calls prevented:', replaceCount);
+      console.warn(
+        "[BLOCKED] Excessive replaceState calls prevented:",
+        replaceCount,
+      );
       return;
     }
-    
+
     lastReplaceTime = now;
     return originalReplaceState.apply(this, args);
   };
@@ -41,27 +44,27 @@ if (typeof window !== 'undefined') {
  */
 const useThrottledRouter = () => {
   const lastUpdateRef = useRef(0);
-  const lastUrlRef = useRef('');
-  
+  const lastUrlRef = useRef("");
+
   const throttledReplace = useCallback((url: string) => {
     const now = Date.now();
-    
+
     // Skip if URL is the same
     if (lastUrlRef.current === url) return;
-    
+
     // Skip if less than 3 seconds since last update
     if (now - lastUpdateRef.current < 3000) {
-      console.log('[Router] Throttled URL update:', url);
+      console.log("[Router] Throttled URL update:", url);
       return;
     }
-    
+
     lastUpdateRef.current = now;
     lastUrlRef.current = url;
-    
+
     // Do NOT use router.replace - keep URL completely stable
-    console.log('[Router] URL update blocked for stability:', url);
+    console.log("[Router] URL update blocked for stability:", url);
   }, []);
-  
+
   return { throttledReplace };
 };
 
@@ -327,7 +330,7 @@ function ProgressBar({ progress }: { progress: number }) {
 
 function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
   const { throttledReplace } = useThrottledRouter();
-  
+
   const [title, setTitle] = useState("HappyNest");
   const [pitch, setPitch] = useState(
     "HappyNest ist das digitale Zuhause für moderne Familien...",
@@ -353,32 +356,38 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  
+
   // Prevent excessive re-renders
   const stableBackendUrl = useRef(
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://aigilexperience-backend.onrender.com"
+      "https://aigilexperience-backend.onrender.com",
   ).current;
-  
+
   // URL update protection - only allow jobId and terminal states
-  const urlUpdateRef = useRef({ hasUpdatedForJob: false, lastJobId: '' });
-  
-  const updateUrlIfNeeded = useCallback((newJobId: string | null, isTerminal = false) => {
-    if (!newJobId) return;
-    
-    const { hasUpdatedForJob, lastJobId } = urlUpdateRef.current;
-    
-    // Only update URL once per jobId, and once on completion
-    if (newJobId !== lastJobId) {
-      urlUpdateRef.current = { hasUpdatedForJob: false, lastJobId: newJobId };
-    }
-    
-    if (!hasUpdatedForJob || isTerminal) {
-      // Block all URL updates for maximum stability
-      console.log('[URL] Blocked update for stability:', { jobId: newJobId, isTerminal });
-      urlUpdateRef.current.hasUpdatedForJob = true;
-    }
-  }, []);
+  const urlUpdateRef = useRef({ hasUpdatedForJob: false, lastJobId: "" });
+
+  const updateUrlIfNeeded = useCallback(
+    (newJobId: string | null, isTerminal = false) => {
+      if (!newJobId) return;
+
+      const { hasUpdatedForJob, lastJobId } = urlUpdateRef.current;
+
+      // Only update URL once per jobId, and once on completion
+      if (newJobId !== lastJobId) {
+        urlUpdateRef.current = { hasUpdatedForJob: false, lastJobId: newJobId };
+      }
+
+      if (!hasUpdatedForJob || isTerminal) {
+        // Block all URL updates for maximum stability
+        console.log("[URL] Blocked update for stability:", {
+          jobId: newJobId,
+          isTerminal,
+        });
+        urlUpdateRef.current.hasUpdatedForJob = true;
+      }
+    },
+    [],
+  );
 
   // Check for dry run mode on mount
   useEffect(() => {
@@ -450,15 +459,15 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
         // Update S-badges based on step - prevent unnecessary updates + NO URL UPDATES
         if (step && STEP_TO_STAGE[step]) {
           const stage = STEP_TO_STAGE[step];
-          
+
           setStages((currentStages: any) => {
             // Only update if stage status is actually changing
             if (currentStages[stage] === "running") {
               return currentStages; // No change needed
             }
-            
+
             const newStages = { ...currentStages, [stage]: "running" };
-            
+
             // Mark previous stages as done
             const stageOrder = ["S1", "S2", "S3", "S4"];
             const currentIndex = stageOrder.indexOf(stage);
@@ -469,10 +478,10 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
                 }
               }
             }
-            
+
             return newStages;
           });
-          
+
           // NO URL UPDATES - Keep URL completely stable during progress
         }
       },
@@ -589,7 +598,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
         setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
         setProgress(100);
         setTimeout(() => setProgress(0), 2000);
-        
+
         // Update URL only on terminal completion
         if (jobId) {
           updateUrlIfNeeded(jobId, true);
@@ -638,7 +647,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
       setDossier({ meta: { jobId: newJobId }, sections: {} });
       setJobId(newJobId);
       setProgress(10);
-      
+
       // Update URL only ONCE when jobId is first available
       updateUrlIfNeeded(newJobId, false);
     } catch (error) {
