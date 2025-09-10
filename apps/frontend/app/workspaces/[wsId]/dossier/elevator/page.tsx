@@ -288,14 +288,16 @@ function ChartsSection({ charts }: { charts?: Array<any> }) {
                   />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {(chart.x || []).slice(0, 3).map((label: string, idx: number) => (
-                      <div key={idx} className="p-3 bg-white border rounded">
-                        <div className="text-xs text-slate-500">{label}</div>
-                        <div className="text-lg font-semibold">
-                          {Number(chart.series?.[0]?.values?.[idx]) || 0}
+                    {(chart.x || [])
+                      .slice(0, 3)
+                      .map((label: string, idx: number) => (
+                        <div key={idx} className="p-3 bg-white border rounded">
+                          <div className="text-xs text-slate-500">{label}</div>
+                          <div className="text-lg font-semibold">
+                            {Number(chart.series?.[0]?.values?.[idx]) || 0}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </>

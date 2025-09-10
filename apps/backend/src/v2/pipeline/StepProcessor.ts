@@ -47,32 +47,34 @@ export class StepProcessor {
             }, timeoutMs);
           }),
         ]);
-        
+
         if (attempt > 1) {
           console.log(`✅ [${stepName}] Succeeded on attempt ${attempt}`);
         }
         return result;
       } catch (error: any) {
-        const isTimeout = error instanceof Error && error.message.includes('timed out');
-        const isRateLimit = error?.status === 429 || error?.code === "rate_limit_exceeded";
-        
+        const isTimeout =
+          error instanceof Error && error.message.includes("timed out");
+        const isRateLimit =
+          error?.status === 429 || error?.code === "rate_limit_exceeded";
+
         console.warn(`⚠️ [${stepName}] Attempt ${attempt} failed:`, {
           isTimeout,
           isRateLimit,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         });
-        
+
         if (attempt <= maxRetries && (isTimeout || isRateLimit)) {
           const backoffMs = Math.min(2000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
           console.log(`🔄 [${stepName}] Retrying in ${backoffMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
           continue;
         }
-        
+
         throw error;
       }
     }
-    
+
     throw new Error(`All retry attempts failed for ${stepName}`);
   }
 
