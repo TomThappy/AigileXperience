@@ -337,10 +337,8 @@ function ProgressBar({ progress }: { progress: number }) {
 function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
   const { throttledReplace } = useThrottledRouter();
 
-  const [title, setTitle] = useState("HappyNest");
-  const [pitch, setPitch] = useState(
-    "HappyNest ist das digitale Zuhause für moderne Familien...",
-  );
+  const [title, setTitle] = useState("");
+  const [pitch, setPitch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dryRunWarning, setDryRunWarning] = useState(false);
 
@@ -402,23 +400,9 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
 
     const initializeData = async () => {
       await checkBackendConfig();
-
-      // Load last dossier from localStorage
-      try {
-        const stored = localStorage.getItem("last_dossier");
-        if (stored && mounted) {
-          const parsed = JSON.parse(stored);
-          setDossier(parsed);
-          // Mark existing sections as done
-          const newSecState: any = {};
-          Object.keys(parsed.sections || {}).forEach((key) => {
-            newSecState[key] = "done";
-          });
-          setSecState(newSecState);
-        }
-      } catch (e) {
-        console.warn("Failed to load last dossier:", e);
-      }
+      
+      // Start with clean state - don't load cached data on app start
+      // User should explicitly start a new generation
     };
 
     initializeData();
