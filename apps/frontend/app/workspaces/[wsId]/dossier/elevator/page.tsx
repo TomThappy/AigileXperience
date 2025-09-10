@@ -9,13 +9,28 @@ import { MarketBar, KPILine } from "@/components/Charts";
  * Dossier structure type definition
  */
 type Dossier = {
-  sections: Partial<Record<
-    | 'executive_summary' | 'problem' | 'solution' | 'market'
-    | 'gtm' | 'business_model' | 'competition' | 'team'
-    | 'status_quo' | 'financial_plan',
-    { headline?: string; bullets?: string[]; narrative?: string; data?: any; }
-  >>;
-  charts?: Array<{ id: string; type: 'line'|'bar'; title: string; x: string[]; series: Array<{name:string; values:number[]}> }>;
+  sections: Partial<
+    Record<
+      | "executive_summary"
+      | "problem"
+      | "solution"
+      | "market"
+      | "gtm"
+      | "business_model"
+      | "competition"
+      | "team"
+      | "status_quo"
+      | "financial_plan",
+      { headline?: string; bullets?: string[]; narrative?: string; data?: any }
+    >
+  >;
+  charts?: Array<{
+    id: string;
+    type: "line" | "bar";
+    title: string;
+    x: string[];
+    series: Array<{ name: string; values: number[] }>;
+  }>;
   meta?: { version?: string; generated_at?: string; jobId?: string };
 };
 
@@ -43,7 +58,7 @@ const STEP_TO_STAGE: Record<string, StageKey> = {
   evidence: "S1",
   brief: "S1",
   problem: "S2",
-  solution: "S2", 
+  solution: "S2",
   team: "S2",
   market: "S2",
   business_model: "S2",
@@ -53,7 +68,7 @@ const STEP_TO_STAGE: Record<string, StageKey> = {
   financial_plan: "S2",
   validate: "S3",
   investor_score: "S4",
-  assembly: "S4"
+  assembly: "S4",
 };
 
 /**
@@ -92,13 +107,13 @@ function SectionContent({
   return (
     <div className="space-y-4">
       {section.headline && (
-        <h4 className="font-semibold text-slate-900 text-lg">{section.headline}</h4>
+        <h4 className="font-semibold text-slate-900 text-lg">
+          {section.headline}
+        </h4>
       )}
 
       {section.narrative && (
-        <p className="text-slate-700 leading-relaxed">
-          {section.narrative}
-        </p>
+        <p className="text-slate-700 leading-relaxed">{section.narrative}</p>
       )}
 
       {section.bullets && Array.isArray(section.bullets) && (
@@ -137,7 +152,9 @@ function SectionContent({
 
       {section.assumptions && Array.isArray(section.assumptions) && (
         <div className="space-y-3">
-          <div className="text-sm font-medium text-slate-700">Key Assumptions</div>
+          <div className="text-sm font-medium text-slate-700">
+            Key Assumptions
+          </div>
           <div className="flex flex-wrap gap-2">
             {section.assumptions
               .slice(0, 4)
@@ -156,7 +173,9 @@ function SectionContent({
 
       {section.open_questions && Array.isArray(section.open_questions) && (
         <div className="space-y-3">
-          <div className="text-sm font-medium text-slate-700">Open Questions</div>
+          <div className="text-sm font-medium text-slate-700">
+            Open Questions
+          </div>
           <div className="flex flex-wrap gap-2">
             {section.open_questions
               .slice(0, 3)
@@ -189,7 +208,7 @@ function ChartsSection({ charts }: { charts?: Array<any> }) {
           <div key={i} className="space-y-3">
             <h5 className="font-medium text-slate-900">{chart.title}</h5>
             {chart.type === "bar" && (
-              <MarketBar 
+              <MarketBar
                 tam={chart.series[0]?.values[0] || 0}
                 sam={chart.series[0]?.values[1] || 0}
                 som={chart.series[0]?.values[2] || 0}
@@ -214,20 +233,20 @@ function ChartsSection({ charts }: { charts?: Array<any> }) {
  */
 function generateExecutiveSummary(sections: any): string {
   const parts = [];
-  
+
   if (sections.problem?.narrative) {
-    parts.push(sections.problem.narrative.split('.')[0] + '.');
+    parts.push(sections.problem.narrative.split(".")[0] + ".");
   }
-  
+
   if (sections.solution?.narrative) {
-    parts.push(sections.solution.narrative.split('.')[0] + '.');
+    parts.push(sections.solution.narrative.split(".")[0] + ".");
   }
-  
+
   if (sections.market?.data?.tam) {
     parts.push(`The total addressable market is ${sections.market.data.tam}.`);
   }
 
-  return parts.slice(0, 3).join(' ');
+  return parts.slice(0, 3).join(" ");
 }
 
 /**
@@ -238,7 +257,7 @@ function ProgressBar({ progress }: { progress: number }) {
 
   return (
     <div className="w-full bg-slate-200 rounded-full h-1 mb-6">
-      <div 
+      <div
         className="bg-indigo-600 h-1 rounded-full transition-all duration-300"
         style={{ width: `${Math.min(progress, 100)}%` }}
       />
@@ -248,21 +267,23 @@ function ProgressBar({ progress }: { progress: number }) {
 
 export default function ElevatorPage({ params }: { params: { wsId: string } }) {
   const [title, setTitle] = useState("HappyNest");
-  const [pitch, setPitch] = useState("HappyNest ist das digitale Zuhause für moderne Familien...");
+  const [pitch, setPitch] = useState(
+    "HappyNest ist das digitale Zuhause für moderne Familien...",
+  );
   const [error, setError] = useState<string | null>(null);
   const [dryRunWarning, setDryRunWarning] = useState(false);
-  
+
   // Stage management for S-badges
   const [stages, setStages] = useState({
     S1: "idle",
-    S2: "idle", 
+    S2: "idle",
     S3: "idle",
     S4: "idle",
   } as any);
 
   // Main dossier state
   const [dossier, setDossier] = useState<Dossier>({ sections: {} });
-  
+
   // Section status tracking
   const [secState, setSecState] = useState<
     Record<string, "pending" | "running" | "done" | "error">
@@ -278,7 +299,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
   // Check for dry run mode on mount
   useEffect(() => {
     checkBackendConfig();
-    
+
     // Load last dossier from localStorage
     try {
       const stored = localStorage.getItem("last_dossier");
@@ -324,18 +345,19 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         }
       },
       progress: (evt) => {
-        const { step, percentage, currentStep, totalSteps } = evt.payload || evt;
-        
+        const { step, percentage, currentStep, totalSteps } =
+          evt.payload || evt;
+
         // Update progress bar
         if (percentage) {
           setProgress(percentage);
         }
-        
+
         // Update S-badges based on step
         if (step && STEP_TO_STAGE[step]) {
           const stage = STEP_TO_STAGE[step];
           setStages((s: any) => ({ ...s, [stage]: "running" }));
-          
+
           // Mark previous stages as done
           const stageOrder = ["S1", "S2", "S3", "S4"];
           const currentIndex = stageOrder.indexOf(stage);
@@ -359,20 +381,20 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               const artifact = await res.json();
               const sections = artifact?.sections || {};
               const charts = artifact?.charts;
-              
+
               setDossier((prev) => {
                 const updated = {
                   ...prev,
                   sections: { ...prev.sections, ...sections },
                   ...(charts && { charts }),
-                  meta: artifact.meta
+                  meta: artifact.meta,
                 };
-                
-                // Store in localStorage  
+
+                // Store in localStorage
                 try {
                   localStorage.setItem("last_dossier", JSON.stringify(updated));
                 } catch {}
-                
+
                 return updated;
               });
 
@@ -386,7 +408,9 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               });
             }
           } catch (e) {
-            setError(`Artifact fetch failed: ${e instanceof Error ? e.message : String(e)}`);
+            setError(
+              `Artifact fetch failed: ${e instanceof Error ? e.message : String(e)}`,
+            );
           }
         }
       },
@@ -397,13 +421,13 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
           setDossier((prev) => {
             const updated = {
               ...prev,
-              sections: { ...prev.sections, ...sections }
+              sections: { ...prev.sections, ...sections },
             };
-            
+
             try {
               localStorage.setItem("last_dossier", JSON.stringify(updated));
             } catch {}
-            
+
             return updated;
           });
 
@@ -429,9 +453,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         setTimeout(() => setProgress(0), 2000);
       },
       connection_lost: () => {
-        setError(
-          "Connection lost. Job may still be processing in background.",
-        );
+        setError("Connection lost. Job may still be processing in background.");
       },
     },
     {
@@ -483,16 +505,19 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
   }
 
   // Generate executive summary if not present
-  const executiveSummary = dossier.sections.executive_summary || 
-    (Object.keys(dossier.sections).length > 2 ? {
-      narrative: generateExecutiveSummary(dossier.sections)
-    } : null);
+  const executiveSummary =
+    dossier.sections.executive_summary ||
+    (Object.keys(dossier.sections).length > 2
+      ? {
+          narrative: generateExecutiveSummary(dossier.sections),
+        }
+      : null);
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Progress Bar */}
       <ProgressBar progress={progress} />
-      
+
       {/* Warning Banners */}
       {dryRunWarning && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
@@ -512,7 +537,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               <span className="text-red-600">❌</span>
               <span className="text-red-800 text-sm">{error}</span>
             </div>
-            <button 
+            <button
               onClick={run}
               className="text-red-600 hover:text-red-800 text-sm font-medium"
             >
@@ -524,7 +549,6 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
       {/* Main Content - Single Column Layout */}
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">Venture Dossier</h1>
@@ -534,7 +558,9 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         {/* Input Section */}
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Project Title</label>
+            <label className="text-sm font-medium text-slate-700">
+              Project Title
+            </label>
             <input
               className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               value={title}
@@ -542,9 +568,11 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               placeholder="Enter your project title..."
             />
           </div>
-          
+
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Elevator Pitch</label>
+            <label className="text-sm font-medium text-slate-700">
+              Elevator Pitch
+            </label>
             <textarea
               className="w-full border border-slate-300 rounded-lg px-3 py-2 h-32 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               value={pitch}
@@ -552,7 +580,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               placeholder="Describe your venture in a compelling pitch..."
             />
           </div>
-          
+
           <button
             onClick={run}
             disabled={stages.S1 === "running" || stages.S2 === "running"}
@@ -570,14 +598,19 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         )}
 
         {SECTIONS.map((section) => {
-          const sectionData = dossier.sections[section.key as keyof typeof dossier.sections];
+          const sectionData =
+            dossier.sections[section.key as keyof typeof dossier.sections];
           const status = secState[section.key] || "pending";
-          
+
           // Only render if we have data or it's currently running
           if (!sectionData && status === "pending") return null;
-          
+
           return (
-            <SectionCard key={section.key} title={section.label} status={status}>
+            <SectionCard
+              key={section.key}
+              title={section.label}
+              status={status}
+            >
               <SectionContent section={sectionData} status={status} />
             </SectionCard>
           );
