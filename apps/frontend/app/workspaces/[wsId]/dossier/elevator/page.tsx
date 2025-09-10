@@ -13,33 +13,35 @@ if (typeof window !== "undefined") {
   // Throttle history API calls to prevent excessive usage
   if (!(window as any).__HISTORY_THROTTLED__) {
     (window as any).__HISTORY_THROTTLED__ = true;
-    
+
     const originalReplaceState = window.history.replaceState;
     let replaceCount = 0;
     let lastReplaceTime = 0;
-    
+
     window.history.replaceState = function (...args) {
       const now = Date.now();
-      
+
       // Reset counter every 10 seconds
       if (now - lastReplaceTime > 10000) {
         replaceCount = 0;
       }
-      
+
       replaceCount++;
-      
+
       // Allow reasonable number of calls (10 per 10 seconds)
       if (replaceCount > 10) {
         if (replaceCount === 11) {
-          console.warn("[THROTTLED] Excessive replaceState calls - throttling active");
+          console.warn(
+            "[THROTTLED] Excessive replaceState calls - throttling active",
+          );
         }
         return; // Throttle but don't completely block
       }
-      
+
       lastReplaceTime = now;
       return originalReplaceState.apply(this, args);
     };
-    
+
     console.log("✅ History API throttling enabled (10 calls/10s limit)");
   }
 }
@@ -400,7 +402,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
 
     const initializeData = async () => {
       await checkBackendConfig();
-      
+
       // Start with clean state - don't load cached data on app start
       // User should explicitly start a new generation
     };
