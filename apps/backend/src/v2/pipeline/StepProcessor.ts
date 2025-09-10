@@ -28,6 +28,54 @@ export class StepProcessor {
     this.numberValidator = new NumberValidator();
   }
 
+  /**
+   * Execute function with timeout and retry logic
+   */
+  private async executeWithTimeout<T>(
+    fn: () => Promise<T>,
+    timeoutMs: number,
+    stepName: string,
+    maxRetries: number = 2,
+  ): Promise<T> {
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        const result = await Promise.race([
+          fn(),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => {
+              reject(new Error(`LLM call timed out after ${timeoutMs}ms`));
+            }, timeoutMs);
+          }),
+        ]);
+        
+        if (attempt > 1) {
+          console.log(`✅ [${stepName}] Succeeded on attempt ${attempt}`);
+        }
+        return result;
+      } catch (error: any) {
+        const isTimeout = error instanceof Error && error.message.includes('timed out');
+        const isRateLimit = error?.status === 429 || error?.code === "rate_limit_exceeded";
+        
+        console.warn(`⚠️ [${stepName}] Attempt ${attempt} failed:`, {
+          isTimeout,
+          isRateLimit,
+          error: error instanceof Error ? error.message : String(error)
+        });
+        
+        if (attempt <= maxRetries && (isTimeout || isRateLimit)) {
+          const backoffMs = Math.min(2000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
+          console.log(`🔄 [${stepName}] Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        
+        throw error;
+      }
+    }
+    
+    throw new Error(`All retry attempts failed for ${stepName}`);
+  }
+
   async executeStep(
     step: PipelineStep,
     inputs: Record<string, any>,
@@ -57,7 +105,9 @@ export class StepProcessor {
         console.log(`❌ Cache miss for step: ${step.name} (cache_used=false)`);
       }
     } else {
-      console.log(`⏭️  Cache bypassed for step: ${step.name} (skipCache=true, cache_used=false)`);
+      console.log(
+        `⏭️  Cache bypassed for step: ${step.name} (skipCache=true, cache_used=false)`,
+      );
     }
 
     try {
@@ -181,7 +231,11 @@ export class StepProcessor {
     console.log(
       `🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`,
     );
-    const response = await chatComplete(prompt, { model, temperature: 0.1 });
+    const response = await this.executeWithTimeout(
+      () => chatComplete(prompt, { model, temperature: 0.1 }),
+      25000, // 25 second timeout per call
+      `${step.id}-step`,
+    );
 
     // Parse JSON response - clean markdown code blocks first
     try {
@@ -314,7 +368,11 @@ export class StepProcessor {
     console.log(
       `🤖 [STEP] ${step.id} (${phaseName}): Using model ${model} (from ${this.getModelSource(step.id, step.model_preference, phaseName)})`,
     );
-    const response = await chatComplete(prompt, { model, temperature: 0.1 });
+    const response = await this.executeWithTimeout(
+      () => chatComplete(prompt, { model, temperature: 0.1 }),
+      25000, // 25 second timeout per call
+      `${step.id}-${phaseName}`,
+    );
 
     // Parse JSON response
     try {
@@ -400,7 +458,11 @@ export class StepProcessor {
     console.log(
       `🤖 [STEP] ${step.id}: Using model ${model} (from ${this.getModelSource(step.id, step.model_preference)})`,
     );
-    const response = await chatComplete(prompt, { model, temperature: 0.1 });
+    const response = await this.executeWithTimeout(
+      () => chatComplete(prompt, { model, temperature: 0.1 }),
+      25000, // 25 second timeout per call
+      `${step.id}-single`,
+    );
 
     // Parse JSON response - clean markdown code blocks first
     try {

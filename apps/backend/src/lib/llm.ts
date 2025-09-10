@@ -129,15 +129,16 @@ export async function chatComplete(
           model,
           attempt,
           duration: `${Date.now() - startTime}ms`,
-          "usage.total_tokens": res.usage?.total_tokens || 0,
-          "usage.completion_tokens": res.usage?.completion_tokens || 0,
-          "usage.prompt_tokens": res.usage?.prompt_tokens || 0,
+          usage: {
+            total_tokens: res.usage?.total_tokens ?? 0,
+            completion_tokens: res.usage?.completion_tokens ?? 0,
+            prompt_tokens: res.usage?.prompt_tokens ?? 0,
+          },
           responseLength: res.choices?.[0]?.message?.content?.length || 0,
           choices: res.choices?.length,
           efficiency: res.usage?.total_tokens
             ? `${Math.round((res.usage.total_tokens / estimatedTokens) * 100)}%`
             : "unknown",
-          "cache_used": false,
         });
         return (res.choices?.[0]?.message?.content || "").trim();
       }

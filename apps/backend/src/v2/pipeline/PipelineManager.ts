@@ -28,6 +28,15 @@ export class PipelineManager {
     console.log("🛡️ RateGate system initialized for token management");
   }
 
+  /**
+   * Sanitize nonce to safe characters and length
+   */
+  private sanitizeNonce(nonce: string): string {
+    if (!nonce) return "";
+    // Keep only alphanumeric, underscore, hyphen characters and limit to 64 chars
+    return nonce.replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 64);
+  }
+
   private getPipelineDefinition(): PipelineStep[] {
     return [
       {
@@ -197,7 +206,7 @@ export class PipelineManager {
       timeoutMs?: number;
       pipelineId?: string;
       resumeFromCheckpoint?: boolean;
-      // New: cache-busting nonce propagated to step cache keys
+      // New: cache-busting nonce propagated to step cache keys (should be sanitized to [-A-Za-z0-9_] and <=64 chars)
       nonce?: string;
     } = {},
   ): Promise<{
@@ -299,7 +308,7 @@ export class PipelineManager {
       target: input.target || "Pre-Seed/Seed VCs",
       geo: input.geo || "EU/DACH",
       // New: carry nonce through pipeline state for cache-key context
-      nonce: options.nonce,
+      nonce: options.nonce || "",
     };
 
     try {
@@ -431,6 +440,10 @@ export class PipelineManager {
               project_title: state.artifacts.project_title,
               elevator_pitch: state.artifacts.elevator_pitch,
               nonce: state.artifacts.nonce || "",
+              input_hash: this.cache.generatePitchHash({
+                project_title: state.artifacts.project_title,
+                elevator_pitch: state.artifacts.elevator_pitch,
+              }),
             };
             const inputsWithCtx = { ...stepInputs, __ctx: cacheCtx };
 
