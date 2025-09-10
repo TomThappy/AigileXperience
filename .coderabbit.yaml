@@ -22,7 +22,7 @@ review:
   max_context_lines: 1200
   priority:
     - security
-    - correctness  
+    - correctness
     - performance
     - reliability
     - maintainability
@@ -31,7 +31,7 @@ review:
     code: suggestions
     tests: required # fordert Tests ein, wenn riskant
   severity_threshold: medium
-  
+
   # Special focus areas for this project
   focus_areas:
     - "React infinite re-render loops"
@@ -78,7 +78,7 @@ ci:
     skip-review: bypass
     performance-critical: "focus=performance,memory"
     security-review: "focus=security,validation"
-  
+
   # Auto-assign labels based on changes
   auto_labels:
     - match: "apps/frontend/**/page.tsx"

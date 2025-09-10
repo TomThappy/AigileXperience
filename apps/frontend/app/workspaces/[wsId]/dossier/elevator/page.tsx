@@ -8,6 +8,8 @@ import { MarketBar, KPILine } from "@/components/Charts";
 /**
  * CRITICAL: Override Next.js router behavior to prevent loops
  * This completely blocks any router.replace calls that might cause infinite loops
+ * 
+ * TEST: CodeRabbit Review Integration - analyzing browser API overrides
  */
 if (typeof window !== "undefined") {
   const originalReplaceState = window.history.replaceState;
