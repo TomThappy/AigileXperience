@@ -172,7 +172,7 @@ function SectionContent({
   }
 
   if (!section) {
-    return null; // Don't render if no data
+    return <div className="text-slate-400 text-sm">(no data yet)</div>;
   }
 
   return (
@@ -617,15 +617,19 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     setProgress(5);
 
     try {
+      const nowNonce = Date.now().toString();
       const jobRes = await fetch(`${stableBackendUrl}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          project_title: title,
-          pitch,
+          project_title: String(title || "").trim(),
+          elevator_pitch: String(pitch || "").trim(),
           language: "de",
           target: "Pre-Seed VCs",
           geo: "EU/DE",
+          // Cache-busting controls
+          force_rebuild: true,
+          nonce: nowNonce,
         }),
       });
 

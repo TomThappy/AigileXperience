@@ -125,17 +125,19 @@ export async function chatComplete(
         );
 
         const res = await client.chat.completions.create(chatParams);
-        console.log("✅ [LLM] OpenAI API call successful:", {
+        console.log("✅ [LLM] OpenAI call successful:", {
           model,
           attempt,
           duration: `${Date.now() - startTime}ms`,
-          usage: res.usage,
-          choices: res.choices?.length,
+          "usage.total_tokens": res.usage?.total_tokens || 0,
+          "usage.completion_tokens": res.usage?.completion_tokens || 0,
+          "usage.prompt_tokens": res.usage?.prompt_tokens || 0,
           responseLength: res.choices?.[0]?.message?.content?.length || 0,
-          tokensUsed: res.usage?.total_tokens,
+          choices: res.choices?.length,
           efficiency: res.usage?.total_tokens
             ? `${Math.round((res.usage.total_tokens / estimatedTokens) * 100)}%`
             : "unknown",
+          "cache_used": false,
         });
         return (res.choices?.[0]?.message?.content || "").trim();
       }

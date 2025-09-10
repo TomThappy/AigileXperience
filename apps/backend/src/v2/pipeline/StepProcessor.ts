@@ -45,6 +45,7 @@ export class StepProcessor {
 
       if (cached?.data) {
         console.log(`🎯 Cache hit for step: ${step.name}`);
+        console.log(`🎯 [STEP] ${step.id}: cache_used=true`);
         return {
           success: true,
           data: cached.data,
@@ -52,7 +53,11 @@ export class StepProcessor {
           cache_hit: true,
           hash: cacheKey,
         };
+      } else {
+        console.log(`❌ Cache miss for step: ${step.name} (cache_used=false)`);
       }
+    } else {
+      console.log(`⏭️  Cache bypassed for step: ${step.name} (skipCache=true, cache_used=false)`);
     }
 
     try {
@@ -557,12 +562,28 @@ export class StepProcessor {
   }
 
   private assembleResults(inputs: Record<string, any>): any {
+    const sections = inputs.sections || {};
+
+    // Collect charts from sections if present and de-duplicate by id
+    const chartMap = new Map<string, any>();
+    for (const [secKey, secVal] of Object.entries<any>(sections)) {
+      const charts = secVal?.data?.charts;
+      if (Array.isArray(charts)) {
+        for (const c of charts) {
+          if (c && c.id && !chartMap.has(c.id)) chartMap.set(c.id, c);
+        }
+      }
+    }
+
+    const mergedCharts = Array.from(chartMap.values());
+
     return {
       pitch: inputs.pitch,
       sources: inputs.sources || { sources: [] },
       brief: inputs.brief,
-      sections: inputs.sections || {},
+      sections,
       investor_score: inputs.investor_score,
+      charts: mergedCharts.length > 0 ? mergedCharts : undefined,
       meta: {
         version: "1.0",
         generated_at: new Date().toISOString(),

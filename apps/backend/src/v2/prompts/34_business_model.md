@@ -38,7 +38,16 @@ BRIEF_JSON, FACTS, ASSUMPTIONS, SOURCES (Benchmarks für ARPU, Churn, CAC)
     "variable_costs_per_user": "…",
     "contribution_per_month": "…",
     "CLV": "…",
-    "payback_months": "…"
+    "payback_months": "…",
+    "charts": [
+      {
+        "id": "unit_economics",
+        "type": "bar",
+        "title": "Unit Economics (EUR)",
+        "x": ["ARPU", "Contribution", "CAC"],
+        "series": [{ "name": "EUR", "values": ["…", "…", "…"] }]
+      }
+    ]
   },
   "assumptions": ["…"],
   "open_questions": ["…"],

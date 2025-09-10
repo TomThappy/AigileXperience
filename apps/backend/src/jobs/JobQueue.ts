@@ -10,6 +10,9 @@ export interface JobData {
     skipCache?: boolean;
     parallelLimit?: number;
     timeoutMs?: number;
+    // New cache-busting controls
+    forceRebuild?: boolean;
+    nonce?: string;
   };
   status: "queued" | "running" | "completed" | "failed";
   progress: {
@@ -68,6 +71,8 @@ export class JobQueue {
         skipCache: options.skipCache || false,
         parallelLimit: options.parallelLimit || 2,
         timeoutMs: options.timeoutMs || 300000, // 5 minutes
+        forceRebuild: options.forceRebuild || false,
+        nonce: options.nonce,
         ...options,
       },
       status: "queued",
