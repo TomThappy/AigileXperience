@@ -299,7 +299,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
   // Check for dry run mode on mount
   useEffect(() => {
     let mounted = true;
-    
+
     const initializeData = async () => {
       await checkBackendConfig();
 
@@ -320,9 +320,9 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         console.warn("Failed to load last dossier:", e);
       }
     };
-    
+
     initializeData();
-    
+
     return () => {
       mounted = false;
     };
@@ -366,15 +366,15 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         // Update S-badges based on step - prevent unnecessary updates
         if (step && STEP_TO_STAGE[step]) {
           const stage = STEP_TO_STAGE[step];
-          
+
           setStages((currentStages: any) => {
             // Only update if stage status is actually changing
             if (currentStages[stage] === "running") {
               return currentStages; // No change needed
             }
-            
+
             const newStages = { ...currentStages, [stage]: "running" };
-            
+
             // Mark previous stages as done
             const stageOrder = ["S1", "S2", "S3", "S4"];
             const currentIndex = stageOrder.indexOf(stage);
@@ -385,7 +385,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
                 }
               }
             }
-            
+
             return newStages;
           });
         }
@@ -404,15 +404,17 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
               setDossier((prev) => {
                 // Prevent unnecessary updates
-                const hasNewData = Object.keys(sections).some(key => 
-                  !prev.sections[key] || 
-                  JSON.stringify(prev.sections[key]) !== JSON.stringify(sections[key])
+                const hasNewData = Object.keys(sections).some(
+                  (key) =>
+                    !prev.sections[key] ||
+                    JSON.stringify(prev.sections[key]) !==
+                      JSON.stringify(sections[key]),
                 );
-                
+
                 if (!hasNewData && !charts) {
                   return prev; // No changes needed
                 }
-                
+
                 const updated = {
                   ...prev,
                   sections: { ...prev.sections, ...sections },
@@ -422,11 +424,19 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
                 // Store in localStorage with throttling
                 try {
-                  const lastStored = localStorage.getItem("last_dossier_timestamp");
+                  const lastStored = localStorage.getItem(
+                    "last_dossier_timestamp",
+                  );
                   const now = Date.now();
                   if (!lastStored || now - parseInt(lastStored) > 1000) {
-                    localStorage.setItem("last_dossier", JSON.stringify(updated));
-                    localStorage.setItem("last_dossier_timestamp", now.toString());
+                    localStorage.setItem(
+                      "last_dossier",
+                      JSON.stringify(updated),
+                    );
+                    localStorage.setItem(
+                      "last_dossier_timestamp",
+                      now.toString(),
+                    );
                   }
                 } catch {}
 
@@ -435,11 +445,13 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
               // Mark received sections as done - prevent unnecessary updates
               setSecState((currentState) => {
-                const hasChanges = Object.keys(sections).some(k => currentState[k] !== "done");
+                const hasChanges = Object.keys(sections).some(
+                  (k) => currentState[k] !== "done",
+                );
                 if (!hasChanges) {
                   return currentState; // No changes needed
                 }
-                
+
                 const next = { ...currentState };
                 Object.keys(sections).forEach((k) => {
                   next[k] = "done";

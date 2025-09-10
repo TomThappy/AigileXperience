@@ -162,7 +162,7 @@ export function useSSE(
 ) {
   const cleanupRef = useRef<(() => void) | null>(null);
   const listenersRef = useRef(listeners);
-  
+
   // Update listeners ref without triggering reconnection
   listenersRef.current = listeners;
 
