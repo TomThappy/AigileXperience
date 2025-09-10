@@ -62,6 +62,23 @@ export class CacheManager {
     return `step_${stepId}_${createHash(hashInput)}`;
   }
 
+  async clearAllStepCaches(): Promise<void> {
+    try {
+      const cacheFiles = await fs.readdir(this.cacheDir);
+      const stepCacheFiles = cacheFiles.filter(
+        (file) => file.startsWith("step_") && file.endsWith(".json"),
+      );
+
+      for (const file of stepCacheFiles) {
+        await fs.unlink(path.join(this.cacheDir, file));
+      }
+
+      console.log(`🗑️  Cleared ${stepCacheFiles.length} step cache files`);
+    } catch (error) {
+      console.warn("Failed to clear step caches:", error);
+    }
+  }
+
   async invalidatePattern(pattern: string): Promise<void> {
     // For now, simple implementation - in production, you'd scan cache directory
     console.log(`TODO: Invalidate cache pattern: ${pattern}`);
