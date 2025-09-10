@@ -4,14 +4,14 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
-  
-  # Allow manual trigger for testing  
+
+  # Allow manual trigger for testing
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to review'
+        description: "PR number to review"
         required: false
-        default: ''
+        default: ""
 
 jobs:
   pre-coderabbit-checks:
@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -66,22 +66,23 @@ jobs:
       - name: Quality Gate Assessment
         id: quality-gate
         run: |
+          set -euo pipefail
           CRITICAL_ISSUES="false"
-          
+
           # Check TypeScript errors
           if [ "${{ steps.type-check.outcome }}" = "failure" ]; then
             echo "⚠️ TypeScript compilation failed - marking as critical"
             CRITICAL_ISSUES="true"
           fi
-          
+
           # Check lint errors (warnings are OK, errors are critical)
           if [ "${{ steps.lint-check.outputs.errors }}" != "0" ] && [ "${{ steps.lint-check.outputs.errors }}" != "" ]; then
             echo "⚠️ ESLint found ${{ steps.lint-check.outputs.errors }} errors - marking as critical"
             CRITICAL_ISSUES="true"
           fi
-          
+
           echo "has_critical_issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
-          
+
           if [ "$CRITICAL_ISSUES" = "true" ]; then
             echo "::error::🚨 Critical quality issues found. CodeRabbit review may be less effective with broken code."
             echo "::notice::Fix TypeScript/ESLint errors first, then request CodeRabbit review."
@@ -96,12 +97,15 @@ jobs:
     steps:
       - name: CodeRabbit Status Check
         run: |
+          if [ -n "${{ inputs.pr_number }}" ]; then
+            echo "::notice::Manual run for PR #${{ inputs.pr_number }}."
+          fi
           if [ "${{ needs.pre-coderabbit-checks.outputs.has_critical_issues }}" = "true" ]; then
             echo "::warning::⚠️ Code has quality issues. CodeRabbit will still run but fix basic issues first for better analysis."
           else
             echo "✅ Code quality pre-checks passed. CodeRabbit analysis will be most effective."
           fi
-          
+
           echo "::notice::CodeRabbit will automatically analyze this PR. Check the 'Files changed' tab for AI-generated comments."
           echo "::notice::Use @coderabbit commands in PR comments to interact with the AI reviewer."
 

@@ -8,9 +8,24 @@ import { MarketBar, KPILine } from "@/components/Charts";
 /**
  * CRITICAL: Override Next.js router behavior to prevent loops
  * This completely blocks any router.replace calls that might cause infinite loops
+ *
+ * TEST: CodeRabbit Review Integration - analyzing browser API overrides
  */
 if (typeof window !== "undefined") {
-  const originalReplaceState = window.history.replaceState;
+  // Avoid double-wrapping during HMR
+  if (!(window as any).__HISTORY_REPLACE_PATCHED__) {
+    (window as any).__HISTORY_REPLACE_PATCHED__ = true;
+  } else {
+    // Already patched; skip
+    // Optionally: expose a hook to update thresholds without re-wrapping
+    console.debug("[History] replaceState already patched");
+    // early exit
+    // eslint-disable-next-line no-useless-return
+    return;
+  }
+  const originalReplaceState =
+    (window as any).__ORIG_REPLACE_STATE__ ?? window.history.replaceState;
+  (window as any).__ORIG_REPLACE_STATE__ = originalReplaceState;
   let replaceCount = 0;
   let lastReplaceTime = 0;
 
@@ -26,10 +41,12 @@ if (typeof window !== "undefined") {
 
     // Prevent more than 5 replaceState calls per 10 seconds
     if (replaceCount > 5) {
-      console.warn(
-        "[BLOCKED] Excessive replaceState calls prevented:",
-        replaceCount,
-      );
+      // Only warn once when limit exceeded to prevent console spam
+      if (replaceCount === 6) {
+        console.warn(
+          "[BLOCKED] Excessive replaceState calls prevented - throttling active",
+        );
+      }
       return;
     }
 
@@ -366,6 +383,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
   // URL update protection - only allow jobId and terminal states
   const urlUpdateRef = useRef({ hasUpdatedForJob: false, lastJobId: "" });
 
+  // Optimized with useCallback for expensive operations (CodeRabbit suggestion)
   const updateUrlIfNeeded = useCallback(
     (newJobId: string | null, isTerminal = false) => {
       if (!newJobId) return;
@@ -386,7 +404,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
         urlUpdateRef.current.hasUpdatedForJob = true;
       }
     },
-    [],
+    [], // Empty dependency array for maximum stability
   );
 
   // Check for dry run mode on mount
@@ -421,6 +439,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     };
   }, []);
 
+  // Optimized with useCallback for expensive operations (CodeRabbit suggestion)
   const checkBackendConfig = useCallback(async () => {
     try {
       const res = await fetch(`${stableBackendUrl}/api/config`);
@@ -433,7 +452,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     } catch (e) {
       console.warn("Could not fetch backend config:", e);
     }
-  }, [stableBackendUrl]);
+  }, [stableBackendUrl]); // Stable dependency for optimal performance
 
   // Robust SSE hook for streaming job progress
   useSSE(

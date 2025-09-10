@@ -5,14 +5,16 @@ Kurzbeschreibung des Changes (Problem → Lösung).
 ## CodeRabbit Review Pflicht ⚠️
 
 **VOR MERGE:**
+
 - [ ] CodeRabbit-Kommentare gelesen und verstanden
 - [ ] Wichtige Findings umgesetzt oder begründet ignoriert (mit Kommentar warum)
 - [ ] Keine `High` oder `Critical` Issues unbehandelt
 - [ ] Code-Qualität/Performance-Verbesserungen berücksichtigt
 
 **CodeRabbit Kommandos:**
+
 - `@coderabbit review` - Vollständige Analyse
-- `@coderabbit focus=security,performance` - Schwerpunkt auf Security/Performance  
+- `@coderabbit review: focus=security,performance` - Schwerpunkt auf Security/Performance
 - `@coderabbit ignore` - Issue als "won't fix" markieren
 - `@coderabbit resolve` - Issue als behoben markieren
 
@@ -42,8 +44,9 @@ Kurzbeschreibung des Changes (Problem → Lösung).
 ## Review-Hinweise für CodeRabbit
 
 > @coderabbit review: focus=security,performance,maintainability
-> 
+>
 > Besonders auf folgende Aspekte achten:
+>
 > - [ ] Infinite Loops / Performance
 > - [ ] Memory Leaks
 > - [ ] Error Handling
