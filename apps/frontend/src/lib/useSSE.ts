@@ -161,6 +161,10 @@ export function useSSE(
   },
 ) {
   const cleanupRef = useRef<(() => void) | null>(null);
+  const listenersRef = useRef(listeners);
+  
+  // Update listeners ref without triggering reconnection
+  listenersRef.current = listeners;
 
   useEffect(() => {
     // Don't connect if jobId is empty
@@ -168,20 +172,20 @@ export function useSSE(
 
     const url = `${BACKEND_URL}/api/jobs/${jobId}/stream?t=${Date.now()}`; // cache-bust
 
-    // Use the robust startSSE function
+    // Use the robust startSSE function with stable listener references
     const cleanup = startSSE(url, {
-      onStatus: listeners.status,
-      onProgress: listeners.progress,
-      onArtifact: listeners.artifact_written,
-      onResult: listeners.result,
-      onDone: listeners.done,
-      onError: listeners.error,
-      onConnectionLost: listeners.connection_lost,
+      onStatus: (data) => listenersRef.current.status?.(data),
+      onProgress: (data) => listenersRef.current.progress?.(data),
+      onArtifact: (data) => listenersRef.current.artifact_written?.(data),
+      onResult: (data) => listenersRef.current.result?.(data),
+      onDone: (data) => listenersRef.current.done?.(data),
+      onError: (data) => listenersRef.current.error?.(data),
+      onConnectionLost: () => listenersRef.current.connection_lost?.(),
     });
 
     cleanupRef.current = cleanup;
 
     return cleanup;
-    // eslint-disable-next-line
+    // Only reconnect when jobId changes, not when listeners change
   }, [jobId]);
 }

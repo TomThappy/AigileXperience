@@ -298,27 +298,37 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
   // Check for dry run mode on mount
   useEffect(() => {
-    checkBackendConfig();
+    let mounted = true;
+    
+    const initializeData = async () => {
+      await checkBackendConfig();
 
-    // Load last dossier from localStorage
-    try {
-      const stored = localStorage.getItem("last_dossier");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setDossier(parsed);
-        // Mark existing sections as done
-        const newSecState: any = {};
-        Object.keys(parsed.sections || {}).forEach((key) => {
-          newSecState[key] = "done";
-        });
-        setSecState(newSecState);
+      // Load last dossier from localStorage
+      try {
+        const stored = localStorage.getItem("last_dossier");
+        if (stored && mounted) {
+          const parsed = JSON.parse(stored);
+          setDossier(parsed);
+          // Mark existing sections as done
+          const newSecState: any = {};
+          Object.keys(parsed.sections || {}).forEach((key) => {
+            newSecState[key] = "done";
+          });
+          setSecState(newSecState);
+        }
+      } catch (e) {
+        console.warn("Failed to load last dossier:", e);
       }
-    } catch (e) {
-      console.warn("Failed to load last dossier:", e);
-    }
+    };
+    
+    initializeData();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  async function checkBackendConfig() {
+  const checkBackendConfig = async () => {
     try {
       const res = await fetch(`${backendUrl}/api/config`);
       if (res.ok) {
@@ -330,7 +340,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
     } catch (e) {
       console.warn("Could not fetch backend config:", e);
     }
-  }
+  };
 
   // Robust SSE hook for streaming job progress
   useSSE(
@@ -353,21 +363,31 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
           setProgress(percentage);
         }
 
-        // Update S-badges based on step
+        // Update S-badges based on step - prevent unnecessary updates
         if (step && STEP_TO_STAGE[step]) {
           const stage = STEP_TO_STAGE[step];
-          setStages((s: any) => ({ ...s, [stage]: "running" }));
-
-          // Mark previous stages as done
-          const stageOrder = ["S1", "S2", "S3", "S4"];
-          const currentIndex = stageOrder.indexOf(stage);
-          if (currentIndex > 0) {
-            const updates: any = {};
-            for (let i = 0; i < currentIndex; i++) {
-              updates[stageOrder[i]] = "done";
+          
+          setStages((currentStages: any) => {
+            // Only update if stage status is actually changing
+            if (currentStages[stage] === "running") {
+              return currentStages; // No change needed
             }
-            setStages((s: any) => ({ ...s, ...updates }));
-          }
+            
+            const newStages = { ...currentStages, [stage]: "running" };
+            
+            // Mark previous stages as done
+            const stageOrder = ["S1", "S2", "S3", "S4"];
+            const currentIndex = stageOrder.indexOf(stage);
+            if (currentIndex > 0) {
+              for (let i = 0; i < currentIndex; i++) {
+                if (newStages[stageOrder[i]] !== "done") {
+                  newStages[stageOrder[i]] = "done";
+                }
+              }
+            }
+            
+            return newStages;
+          });
         }
       },
       artifact_written: async (evt) => {
@@ -383,6 +403,16 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
               const charts = artifact?.charts;
 
               setDossier((prev) => {
+                // Prevent unnecessary updates
+                const hasNewData = Object.keys(sections).some(key => 
+                  !prev.sections[key] || 
+                  JSON.stringify(prev.sections[key]) !== JSON.stringify(sections[key])
+                );
+                
+                if (!hasNewData && !charts) {
+                  return prev; // No changes needed
+                }
+                
                 const updated = {
                   ...prev,
                   sections: { ...prev.sections, ...sections },
@@ -390,17 +420,27 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
                   meta: artifact.meta,
                 };
 
-                // Store in localStorage
+                // Store in localStorage with throttling
                 try {
-                  localStorage.setItem("last_dossier", JSON.stringify(updated));
+                  const lastStored = localStorage.getItem("last_dossier_timestamp");
+                  const now = Date.now();
+                  if (!lastStored || now - parseInt(lastStored) > 1000) {
+                    localStorage.setItem("last_dossier", JSON.stringify(updated));
+                    localStorage.setItem("last_dossier_timestamp", now.toString());
+                  }
                 } catch {}
 
                 return updated;
               });
 
-              // Mark received sections as done
-              setSecState((s) => {
-                const next = { ...s };
+              // Mark received sections as done - prevent unnecessary updates
+              setSecState((currentState) => {
+                const hasChanges = Object.keys(sections).some(k => currentState[k] !== "done");
+                if (!hasChanges) {
+                  return currentState; // No changes needed
+                }
+                
+                const next = { ...currentState };
                 Object.keys(sections).forEach((k) => {
                   next[k] = "done";
                 });
