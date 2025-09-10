@@ -14,7 +14,7 @@ Kurzbeschreibung des Changes (Problem → Lösung).
 **CodeRabbit Kommandos:**
 
 - `@coderabbit review` - Vollständige Analyse
-- `@coderabbit focus=security,performance` - Schwerpunkt auf Security/Performance
+- `@coderabbit review: focus=security,performance` - Schwerpunkt auf Security/Performance
 - `@coderabbit ignore` - Issue als "won't fix" markieren
 - `@coderabbit resolve` - Issue als behoben markieren
 

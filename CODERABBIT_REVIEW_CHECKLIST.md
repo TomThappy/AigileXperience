@@ -54,13 +54,13 @@ useEffect(() => {
 
 ### Standard Review
 
-```
+```text
 @coderabbit review: focus=performance,security,maintainability
 ```
 
 ### Performance-Critical Changes
 
-```
+```text
 @coderabbit focus=performance,memory
 Pay special attention to:
 - Infinite loops and excessive API calls
@@ -71,7 +71,7 @@ Pay special attention to:
 
 ### Security Review
 
-```
+```text
 @coderabbit focus=security,validation
 Check for:
 - API endpoint exposure

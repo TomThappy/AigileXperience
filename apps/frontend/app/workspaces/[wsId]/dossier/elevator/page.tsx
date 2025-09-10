@@ -12,7 +12,20 @@ import { MarketBar, KPILine } from "@/components/Charts";
  * TEST: CodeRabbit Review Integration - analyzing browser API overrides
  */
 if (typeof window !== "undefined") {
-  const originalReplaceState = window.history.replaceState;
+  // Avoid double-wrapping during HMR
+  if (!(window as any).__HISTORY_REPLACE_PATCHED__) {
+    (window as any).__HISTORY_REPLACE_PATCHED__ = true;
+  } else {
+    // Already patched; skip
+    // Optionally: expose a hook to update thresholds without re-wrapping
+    console.debug("[History] replaceState already patched");
+    // early exit
+    // eslint-disable-next-line no-useless-return
+    return;
+  }
+  const originalReplaceState =
+    (window as any).__ORIG_REPLACE_STATE__ ?? window.history.replaceState;
+  (window as any).__ORIG_REPLACE_STATE__ = originalReplaceState;
   let replaceCount = 0;
   let lastReplaceTime = 0;
 
@@ -30,7 +43,9 @@ if (typeof window !== "undefined") {
     if (replaceCount > 5) {
       // Only warn once when limit exceeded to prevent console spam
       if (replaceCount === 6) {
-        console.warn("[BLOCKED] Excessive replaceState calls prevented - throttling active");
+        console.warn(
+          "[BLOCKED] Excessive replaceState calls prevented - throttling active",
+        );
       }
       return;
     }

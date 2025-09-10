@@ -66,6 +66,7 @@ jobs:
       - name: Quality Gate Assessment
         id: quality-gate
         run: |
+          set -euo pipefail
           CRITICAL_ISSUES="false"
 
           # Check TypeScript errors
@@ -96,6 +97,9 @@ jobs:
     steps:
       - name: CodeRabbit Status Check
         run: |
+          if [ -n "${{ inputs.pr_number }}" ]; then
+            echo "::notice::Manual run for PR #${{ inputs.pr_number }}."
+          fi
           if [ "${{ needs.pre-coderabbit-checks.outputs.has_critical_issues }}" = "true" ]; then
             echo "::warning::⚠️ Code has quality issues. CodeRabbit will still run but fix basic issues first for better analysis."
           else
