@@ -6,47 +6,41 @@ import SectionCard from "@/components/dossier/SectionCard";
 import { MarketBar, KPILine } from "@/components/Charts";
 
 /**
- * EMERGENCY: COMPLETE ROUTER SHUTDOWN
- * Block ALL router navigation to prevent infinite loops
- * This is a NUCLEAR OPTION to stop the SecurityError
+ * Throttled history API protection
+ * Prevents excessive replaceState calls while allowing normal navigation
  */
 if (typeof window !== "undefined") {
-  // NUCLEAR OPTION: Block ALL history API calls completely
-  if (!(window as any).__HISTORY_COMPLETELY_DISABLED__) {
-    (window as any).__HISTORY_COMPLETELY_DISABLED__ = true;
+  // Throttle history API calls to prevent excessive usage
+  if (!(window as any).__HISTORY_THROTTLED__) {
+    (window as any).__HISTORY_THROTTLED__ = true;
     
     const originalReplaceState = window.history.replaceState;
-    const originalPushState = window.history.pushState;
+    let replaceCount = 0;
+    let lastReplaceTime = 0;
     
-    // COMPLETELY BLOCK all router navigation
     window.history.replaceState = function (...args) {
-      console.warn("[EMERGENCY] ALL router navigation BLOCKED to prevent infinite loop");
-      return; // Do absolutely nothing
+      const now = Date.now();
+      
+      // Reset counter every 10 seconds
+      if (now - lastReplaceTime > 10000) {
+        replaceCount = 0;
+      }
+      
+      replaceCount++;
+      
+      // Allow reasonable number of calls (10 per 10 seconds)
+      if (replaceCount > 10) {
+        if (replaceCount === 11) {
+          console.warn("[THROTTLED] Excessive replaceState calls - throttling active");
+        }
+        return; // Throttle but don't completely block
+      }
+      
+      lastReplaceTime = now;
+      return originalReplaceState.apply(this, args);
     };
     
-    window.history.pushState = function (...args) {
-      console.warn("[EMERGENCY] ALL router navigation BLOCKED to prevent infinite loop");
-      return; // Do absolutely nothing  
-    };
-    
-    // Also override any router methods we can find
-    if ((window as any).next && (window as any).next.router) {
-      const router = (window as any).next.router;
-      const originalReplace = router.replace;
-      const originalPush = router.push;
-      
-      router.replace = function(...args: any[]) {
-        console.warn("[EMERGENCY] Next.js router.replace() BLOCKED");
-        return Promise.resolve(true);
-      };
-      
-      router.push = function(...args: any[]) {
-        console.warn("[EMERGENCY] Next.js router.push() BLOCKED");
-        return Promise.resolve(true);
-      };
-    }
-    
-    console.warn("🚨 EMERGENCY MODE: ALL router navigation disabled to prevent infinite loop");
+    console.log("✅ History API throttling enabled (10 calls/10s limit)");
   }
 }
 

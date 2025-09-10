@@ -6,7 +6,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to the new Workspace Dossier interface
+    // Redirect to elevator dossier - middleware now allows dossier routes
     router.replace("/workspaces/demo/dossier/elevator");
   }, [router]);
 
@@ -16,7 +16,7 @@ export default function Home() {
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
         <p className="mt-4 text-gray-600">
-          Redirecting to Workspace Dossier...
+          Redirecting to Venture Dossier...
         </p>
       </div>
     </div>
