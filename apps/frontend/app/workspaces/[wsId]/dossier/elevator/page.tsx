@@ -8,7 +8,7 @@ import { MarketBar, KPILine } from "@/components/Charts";
 /**
  * CRITICAL: Override Next.js router behavior to prevent loops
  * This completely blocks any router.replace calls that might cause infinite loops
- * 
+ *
  * TEST: CodeRabbit Review Integration - analyzing browser API overrides
  */
 if (typeof window !== "undefined") {
@@ -28,10 +28,10 @@ if (typeof window !== "undefined") {
 
     // Prevent more than 5 replaceState calls per 10 seconds
     if (replaceCount > 5) {
-      console.warn(
-        "[BLOCKED] Excessive replaceState calls prevented:",
-        replaceCount,
-      );
+      // Only warn once when limit exceeded to prevent console spam
+      if (replaceCount === 6) {
+        console.warn("[BLOCKED] Excessive replaceState calls prevented - throttling active");
+      }
       return;
     }
 
@@ -368,6 +368,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
   // URL update protection - only allow jobId and terminal states
   const urlUpdateRef = useRef({ hasUpdatedForJob: false, lastJobId: "" });
 
+  // Optimized with useCallback for expensive operations (CodeRabbit suggestion)
   const updateUrlIfNeeded = useCallback(
     (newJobId: string | null, isTerminal = false) => {
       if (!newJobId) return;
@@ -388,7 +389,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
         urlUpdateRef.current.hasUpdatedForJob = true;
       }
     },
-    [],
+    [], // Empty dependency array for maximum stability
   );
 
   // Check for dry run mode on mount
@@ -423,6 +424,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     };
   }, []);
 
+  // Optimized with useCallback for expensive operations (CodeRabbit suggestion)
   const checkBackendConfig = useCallback(async () => {
     try {
       const res = await fetch(`${stableBackendUrl}/api/config`);
@@ -435,7 +437,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     } catch (e) {
       console.warn("Could not fetch backend config:", e);
     }
-  }, [stableBackendUrl]);
+  }, [stableBackendUrl]); // Stable dependency for optimal performance
 
   // Robust SSE hook for streaming job progress
   useSSE(
