@@ -15,44 +15,41 @@ if (typeof window !== "undefined") {
   // Avoid double-wrapping during HMR
   if (!(window as any).__HISTORY_REPLACE_PATCHED__) {
     (window as any).__HISTORY_REPLACE_PATCHED__ = true;
-  } else {
-    // Already patched; skip
-    // Optionally: expose a hook to update thresholds without re-wrapping
-    console.debug("[History] replaceState already patched");
-    // early exit
-    // eslint-disable-next-line no-useless-return
-    return;
-  }
-  const originalReplaceState =
-    (window as any).__ORIG_REPLACE_STATE__ ?? window.history.replaceState;
-  (window as any).__ORIG_REPLACE_STATE__ = originalReplaceState;
-  let replaceCount = 0;
-  let lastReplaceTime = 0;
+    
+    const originalReplaceState =
+      (window as any).__ORIG_REPLACE_STATE__ ?? window.history.replaceState;
+    (window as any).__ORIG_REPLACE_STATE__ = originalReplaceState;
+    let replaceCount = 0;
+    let lastReplaceTime = 0;
 
-  window.history.replaceState = function (...args) {
-    const now = Date.now();
+    window.history.replaceState = function (...args) {
+      const now = Date.now();
 
-    // Reset counter every 10 seconds
-    if (now - lastReplaceTime > 10000) {
-      replaceCount = 0;
-    }
-
-    replaceCount++;
-
-    // Prevent more than 5 replaceState calls per 10 seconds
-    if (replaceCount > 5) {
-      // Only warn once when limit exceeded to prevent console spam
-      if (replaceCount === 6) {
-        console.warn(
-          "[BLOCKED] Excessive replaceState calls prevented - throttling active",
-        );
+      // Reset counter every 10 seconds
+      if (now - lastReplaceTime > 10000) {
+        replaceCount = 0;
       }
-      return;
-    }
 
-    lastReplaceTime = now;
-    return originalReplaceState.apply(this, args);
-  };
+      replaceCount++;
+
+      // Prevent more than 5 replaceState calls per 10 seconds
+      if (replaceCount > 5) {
+        // Only warn once when limit exceeded to prevent console spam
+        if (replaceCount === 6) {
+          console.warn(
+            "[BLOCKED] Excessive replaceState calls prevented - throttling active",
+          );
+        }
+        return;
+      }
+
+      lastReplaceTime = now;
+      return originalReplaceState.apply(this, args);
+    };
+  } else {
+    // Already patched; skip the rest of the patching logic
+    console.debug("[History] replaceState already patched");
+  }
 }
 
 /**
