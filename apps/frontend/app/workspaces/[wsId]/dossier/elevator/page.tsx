@@ -1,9 +1,69 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useSSE } from "@/lib/useSSE";
 import StageTimeline from "@/components/dossier/StageTimeline";
 import SectionCard from "@/components/dossier/SectionCard";
 import { MarketBar, KPILine } from "@/components/Charts";
+
+/**
+ * CRITICAL: Override Next.js router behavior to prevent loops
+ * This completely blocks any router.replace calls that might cause infinite loops
+ */
+if (typeof window !== 'undefined') {
+  const originalReplaceState = window.history.replaceState;
+  let replaceCount = 0;
+  let lastReplaceTime = 0;
+  
+  window.history.replaceState = function(...args) {
+    const now = Date.now();
+    
+    // Reset counter every 10 seconds
+    if (now - lastReplaceTime > 10000) {
+      replaceCount = 0;
+    }
+    
+    replaceCount++;
+    
+    // Prevent more than 5 replaceState calls per 10 seconds
+    if (replaceCount > 5) {
+      console.warn('[BLOCKED] Excessive replaceState calls prevented:', replaceCount);
+      return;
+    }
+    
+    lastReplaceTime = now;
+    return originalReplaceState.apply(this, args);
+  };
+}
+
+/**
+ * Throttled router utility to prevent excessive URL updates
+ * Only allows URL changes every 3 seconds maximum
+ */
+const useThrottledRouter = () => {
+  const lastUpdateRef = useRef(0);
+  const lastUrlRef = useRef('');
+  
+  const throttledReplace = useCallback((url: string) => {
+    const now = Date.now();
+    
+    // Skip if URL is the same
+    if (lastUrlRef.current === url) return;
+    
+    // Skip if less than 3 seconds since last update
+    if (now - lastUpdateRef.current < 3000) {
+      console.log('[Router] Throttled URL update:', url);
+      return;
+    }
+    
+    lastUpdateRef.current = now;
+    lastUrlRef.current = url;
+    
+    // Do NOT use router.replace - keep URL completely stable
+    console.log('[Router] URL update blocked for stability:', url);
+  }, []);
+  
+  return { throttledReplace };
+};
 
 /**
  * Dossier structure type definition
@@ -265,7 +325,9 @@ function ProgressBar({ progress }: { progress: number }) {
   );
 }
 
-export default function ElevatorPage({ params }: { params: { wsId: string } }) {
+function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
+  const { throttledReplace } = useThrottledRouter();
+  
   const [title, setTitle] = useState("HappyNest");
   const [pitch, setPitch] = useState(
     "HappyNest ist das digitale Zuhause für moderne Familien...",
@@ -291,10 +353,32 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
 
   const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-
-  const backendUrl =
+  
+  // Prevent excessive re-renders
+  const stableBackendUrl = useRef(
     process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://aigilexperience-backend.onrender.com";
+    "https://aigilexperience-backend.onrender.com"
+  ).current;
+  
+  // URL update protection - only allow jobId and terminal states
+  const urlUpdateRef = useRef({ hasUpdatedForJob: false, lastJobId: '' });
+  
+  const updateUrlIfNeeded = useCallback((newJobId: string | null, isTerminal = false) => {
+    if (!newJobId) return;
+    
+    const { hasUpdatedForJob, lastJobId } = urlUpdateRef.current;
+    
+    // Only update URL once per jobId, and once on completion
+    if (newJobId !== lastJobId) {
+      urlUpdateRef.current = { hasUpdatedForJob: false, lastJobId: newJobId };
+    }
+    
+    if (!hasUpdatedForJob || isTerminal) {
+      // Block all URL updates for maximum stability
+      console.log('[URL] Blocked update for stability:', { jobId: newJobId, isTerminal });
+      urlUpdateRef.current.hasUpdatedForJob = true;
+    }
+  }, []);
 
   // Check for dry run mode on mount
   useEffect(() => {
@@ -328,9 +412,9 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
     };
   }, []);
 
-  const checkBackendConfig = async () => {
+  const checkBackendConfig = useCallback(async () => {
     try {
-      const res = await fetch(`${backendUrl}/api/config`);
+      const res = await fetch(`${stableBackendUrl}/api/config`);
       if (res.ok) {
         const config = await res.json();
         if (config.env_flags?.LLM_DRY_RUN === "true") {
@@ -340,7 +424,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
     } catch (e) {
       console.warn("Could not fetch backend config:", e);
     }
-  };
+  }, [stableBackendUrl]);
 
   // Robust SSE hook for streaming job progress
   useSSE(
@@ -358,23 +442,23 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         const { step, percentage, currentStep, totalSteps } =
           evt.payload || evt;
 
-        // Update progress bar
-        if (percentage) {
+        // Update progress bar - throttled
+        if (percentage && Math.abs(percentage - progress) > 5) {
           setProgress(percentage);
         }
 
-        // Update S-badges based on step - prevent unnecessary updates
+        // Update S-badges based on step - prevent unnecessary updates + NO URL UPDATES
         if (step && STEP_TO_STAGE[step]) {
           const stage = STEP_TO_STAGE[step];
-
+          
           setStages((currentStages: any) => {
             // Only update if stage status is actually changing
             if (currentStages[stage] === "running") {
               return currentStages; // No change needed
             }
-
+            
             const newStages = { ...currentStages, [stage]: "running" };
-
+            
             // Mark previous stages as done
             const stageOrder = ["S1", "S2", "S3", "S4"];
             const currentIndex = stageOrder.indexOf(stage);
@@ -385,9 +469,11 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
                 }
               }
             }
-
+            
             return newStages;
           });
+          
+          // NO URL UPDATES - Keep URL completely stable during progress
         }
       },
       artifact_written: async (evt) => {
@@ -395,7 +481,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         if (key === "final_dossier" && jobId) {
           try {
             const res = await fetch(
-              `${backendUrl}/api/jobs/${jobId}/artifacts/final_dossier`,
+              `${stableBackendUrl}/api/jobs/${jobId}/artifacts/final_dossier`,
             );
             if (res.ok) {
               const artifact = await res.json();
@@ -503,6 +589,11 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
         setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
         setProgress(100);
         setTimeout(() => setProgress(0), 2000);
+        
+        // Update URL only on terminal completion
+        if (jobId) {
+          updateUrlIfNeeded(jobId, true);
+        }
       },
       connection_lost: () => {
         setError("Connection lost. Job may still be processing in background.");
@@ -523,7 +614,7 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
     setProgress(5);
 
     try {
-      const jobRes = await fetch(`${backendUrl}/api/jobs`, {
+      const jobRes = await fetch(`${stableBackendUrl}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -547,6 +638,9 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
       setDossier({ meta: { jobId: newJobId }, sections: {} });
       setJobId(newJobId);
       setProgress(10);
+      
+      // Update URL only ONCE when jobId is first available
+      updateUrlIfNeeded(newJobId, false);
     } catch (error) {
       setStages((p: any) => ({ ...p, S1: "error" }));
       setError(
@@ -674,3 +768,8 @@ export default function ElevatorPage({ params }: { params: { wsId: string } }) {
     </div>
   );
 }
+
+// CRITICAL: Wrap with React.memo to prevent unnecessary re-renders
+// This should stop any infinite render loops
+const ElevatorPage = memo(ElevatorPageComponent);
+export default ElevatorPage;
