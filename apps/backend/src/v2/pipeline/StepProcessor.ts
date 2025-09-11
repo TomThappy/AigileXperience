@@ -235,7 +235,7 @@ export class StepProcessor {
     );
     const response = await this.executeWithTimeout(
       () => chatComplete(prompt, { model, temperature: 0.1 }),
-      25000, // 25 second timeout per call
+      60000, // 60 second timeout per call for complex steps
       `${step.id}-step`,
     );
 
@@ -372,7 +372,7 @@ export class StepProcessor {
     );
     const response = await this.executeWithTimeout(
       () => chatComplete(prompt, { model, temperature: 0.1 }),
-      25000, // 25 second timeout per call
+      60000, // 60 second timeout per call for complex phases
       `${step.id}-${phaseName}`,
     );
 
@@ -462,7 +462,7 @@ export class StepProcessor {
     );
     const response = await this.executeWithTimeout(
       () => chatComplete(prompt, { model, temperature: 0.1 }),
-      25000, // 25 second timeout per call
+      60000, // 60 second timeout per call for complex single-phase steps
       `${step.id}-single`,
     );
 
