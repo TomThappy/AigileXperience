@@ -28,6 +28,15 @@ export class PipelineManager {
     console.log("🛡️ RateGate system initialized for token management");
   }
 
+  /**
+   * Sanitize nonce to safe characters and length
+   */
+  private sanitizeNonce(nonce: string): string {
+    if (!nonce) return "";
+    // Keep only alphanumeric, underscore, hyphen characters and limit to 64 chars
+    return nonce.replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 64);
+  }
+
   private getPipelineDefinition(): PipelineStep[] {
     return [
       {
@@ -62,7 +71,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.problem"],
         prompt_file: "30_problem.md",
-        model_preference: "gpt-4o", // Using GPT-4o for testing
+        model_preference: "gpt-4o-mini", // Performance: Use gpt-4o-mini for faster problem step
       },
       {
         id: "solution",
@@ -71,7 +80,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.solution"],
         prompt_file: "31_solution.md",
-        model_preference: "gpt-4o", // Using GPT-4o for testing
+        model_preference: "gpt-4o-mini", // Performance: Use gpt-4o-mini for faster solution step
       },
       {
         id: "team",
@@ -80,7 +89,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.team"],
         prompt_file: "32_team.md",
-        model_preference: "gpt-4o", // Using GPT-4o for testing
+        model_preference: "gpt-4o-mini", // Performance: Use gpt-4o-mini for faster team step
       },
       {
         id: "market",
@@ -107,7 +116,7 @@ export class PipelineManager {
         inputs: ["brief", "sources", "sections.market"],
         outputs: ["sections.competition"],
         prompt_file: "35_competition.md",
-        model_preference: "gpt-4o", // Using GPT-4o for testing
+        model_preference: "gpt-4o-mini", // Performance: Use gpt-4o-mini for faster competition step
       },
       {
         id: "status_quo",
@@ -116,7 +125,7 @@ export class PipelineManager {
         inputs: ["brief", "sources"],
         outputs: ["sections.status_quo"],
         prompt_file: "37_status_quo.md",
-        model_preference: "gpt-4o", // Using GPT-4o for testing
+        model_preference: "gpt-4o-mini", // Performance: Use gpt-4o-mini for faster status_quo step
       },
       {
         id: "gtm",
@@ -130,7 +139,7 @@ export class PipelineManager {
         ],
         outputs: ["sections.gtm"],
         prompt_file: "36_go-to-market.md",
-        model_preference: "gpt-4o-mini", // Temporary: Use gpt-4o-mini to avoid TPM rate limits
+        model_preference: "gpt-4o-mini", // Performance: Use gpt-4o-mini for faster gtm step
       },
       {
         id: "financial_plan",
@@ -197,6 +206,8 @@ export class PipelineManager {
       timeoutMs?: number;
       pipelineId?: string;
       resumeFromCheckpoint?: boolean;
+      // New: cache-busting nonce propagated to step cache keys (should be sanitized to [-A-Za-z0-9_] and <=64 chars)
+      nonce?: string;
     } = {},
   ): Promise<{
     success: boolean;
@@ -296,6 +307,8 @@ export class PipelineManager {
       language: input.language || "de",
       target: input.target || "Pre-Seed/Seed VCs",
       geo: input.geo || "EU/DACH",
+      // New: carry nonce through pipeline state for cache-key context
+      nonce: options.nonce || "",
     };
 
     try {
@@ -422,9 +435,21 @@ export class PipelineManager {
               }
             }
 
+            // Attach cache-busting context to inputs so cache keys change with nonce and input identity
+            const cacheCtx = {
+              project_title: state.artifacts.project_title,
+              elevator_pitch: state.artifacts.elevator_pitch,
+              nonce: state.artifacts.nonce || "",
+              input_hash: this.cache.generatePitchHash({
+                project_title: state.artifacts.project_title,
+                elevator_pitch: state.artifacts.elevator_pitch,
+              }),
+            };
+            const inputsWithCtx = { ...stepInputs, __ctx: cacheCtx };
+
             const result = await this.stepProcessor.executeStep(
               step,
-              stepInputs,
+              inputsWithCtx,
               skipCache,
             );
 

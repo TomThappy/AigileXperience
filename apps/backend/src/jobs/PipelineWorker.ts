@@ -48,9 +48,12 @@ export class EnhancedPipelineWorker {
 
       // Execute the actual pipeline
       const result = await this.pipelineManager.executePipeline(input, {
-        skipCache: options.skipCache,
+        // Bypass caches when either flag is set
+        skipCache: options.skipCache || options.forceRebuild,
         parallelLimit: options.parallelLimit,
         timeoutMs: options.timeoutMs,
+        // Plumb nonce for cache-key diversification
+        nonce: options.nonce,
       });
 
       if (result.success && result.data) {

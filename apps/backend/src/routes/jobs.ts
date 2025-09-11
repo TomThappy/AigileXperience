@@ -24,20 +24,24 @@ export default async function jobRoutes(app: FastifyInstance) {
       }
 
       const input: PitchInput = {
-        project_title: body.project_title,
-        elevator_pitch: pitch,
+        project_title: String(body.project_title || "").trim(),
+        elevator_pitch: String(pitch || "").trim(),
         language: body.language || "de",
         target: body.target || "Pre-Seed/Seed VCs",
         geo: body.geo || "EU/DACH",
       };
 
       const options = {
-        skipCache: body.skip_cache === true,
+        // Back-compat: skip_cache OR the new force_rebuild will bypass caches entirely
+        skipCache: body.skip_cache === true || body.force_rebuild === true,
         parallelLimit:
           typeof body.parallel_limit === "number" ? body.parallel_limit : 2,
         timeoutMs:
           typeof body.timeout_ms === "number" ? body.timeout_ms : 300000, // 5m
-      };
+        // New: propagate nonce for cache-busting in step cache keys
+        nonce: typeof body.nonce === "string" ? body.nonce : undefined,
+        forceRebuild: body.force_rebuild === true,
+      } as any;
 
       const jobId = await jobQueue.createJob(input, options);
 

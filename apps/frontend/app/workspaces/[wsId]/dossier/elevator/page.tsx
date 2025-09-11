@@ -13,33 +13,35 @@ if (typeof window !== "undefined") {
   // Throttle history API calls to prevent excessive usage
   if (!(window as any).__HISTORY_THROTTLED__) {
     (window as any).__HISTORY_THROTTLED__ = true;
-    
+
     const originalReplaceState = window.history.replaceState;
     let replaceCount = 0;
     let lastReplaceTime = 0;
-    
+
     window.history.replaceState = function (...args) {
       const now = Date.now();
-      
+
       // Reset counter every 10 seconds
       if (now - lastReplaceTime > 10000) {
         replaceCount = 0;
       }
-      
+
       replaceCount++;
-      
+
       // Allow reasonable number of calls (10 per 10 seconds)
       if (replaceCount > 10) {
         if (replaceCount === 11) {
-          console.warn("[THROTTLED] Excessive replaceState calls - throttling active");
+          console.warn(
+            "[THROTTLED] Excessive replaceState calls - throttling active",
+          );
         }
         return; // Throttle but don't completely block
       }
-      
+
       lastReplaceTime = now;
       return originalReplaceState.apply(this, args);
     };
-    
+
     console.log("✅ History API throttling enabled (10 calls/10s limit)");
   }
 }
@@ -170,7 +172,7 @@ function SectionContent({
   }
 
   if (!section) {
-    return null; // Don't render if no data
+    return <div className="text-slate-400 text-sm">(no data yet)</div>;
   }
 
   return (
@@ -277,17 +279,34 @@ function ChartsSection({ charts }: { charts?: Array<any> }) {
           <div key={i} className="space-y-3">
             <h5 className="font-medium text-slate-900">{chart.title}</h5>
             {chart.type === "bar" && (
-              <MarketBar
-                tam={chart.series[0]?.values[0] || 0}
-                sam={chart.series[0]?.values[1] || 0}
-                som={chart.series[0]?.values[2] || 0}
-              />
+              <>
+                {chart.id === "tam_sam_som" ? (
+                  <MarketBar
+                    tam={Number(chart.series[0]?.values[0]) || 0}
+                    sam={Number(chart.series[0]?.values[1]) || 0}
+                    som={Number(chart.series[0]?.values[2]) || 0}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {(chart.x || [])
+                      .slice(0, 3)
+                      .map((label: string, idx: number) => (
+                        <div key={idx} className="p-3 bg-white border rounded">
+                          <div className="text-xs text-slate-500">{label}</div>
+                          <div className="text-lg font-semibold">
+                            {Number(chart.series?.[0]?.values?.[idx]) || 0}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </>
             )}
             {chart.type === "line" && (
               <KPILine
-                y1={chart.series[0]?.values[0] || 0}
-                y2={chart.series[0]?.values[1] || 0}
-                y3={chart.series[0]?.values[2] || 0}
+                y1={Number(chart.series[0]?.values[0]) || 0}
+                y2={Number(chart.series[0]?.values[1]) || 0}
+                y3={Number(chart.series[0]?.values[2]) || 0}
               />
             )}
           </div>
@@ -337,10 +356,8 @@ function ProgressBar({ progress }: { progress: number }) {
 function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
   const { throttledReplace } = useThrottledRouter();
 
-  const [title, setTitle] = useState("HappyNest");
-  const [pitch, setPitch] = useState(
-    "HappyNest ist das digitale Zuhause für moderne Familien...",
-  );
+  const [title, setTitle] = useState("");
+  const [pitch, setPitch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [dryRunWarning, setDryRunWarning] = useState(false);
 
@@ -403,22 +420,8 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     const initializeData = async () => {
       await checkBackendConfig();
 
-      // Load last dossier from localStorage
-      try {
-        const stored = localStorage.getItem("last_dossier");
-        if (stored && mounted) {
-          const parsed = JSON.parse(stored);
-          setDossier(parsed);
-          // Mark existing sections as done
-          const newSecState: any = {};
-          Object.keys(parsed.sections || {}).forEach((key) => {
-            newSecState[key] = "done";
-          });
-          setSecState(newSecState);
-        }
-      } catch (e) {
-        console.warn("Failed to load last dossier:", e);
-      }
+      // Start with clean state - don't load cached data on app start
+      // User should explicitly start a new generation
     };
 
     initializeData();
@@ -631,15 +634,19 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
     setProgress(5);
 
     try {
+      const nowNonce = Date.now().toString();
       const jobRes = await fetch(`${stableBackendUrl}/api/jobs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          project_title: title,
-          pitch,
+          project_title: String(title || "").trim(),
+          elevator_pitch: String(pitch || "").trim(),
           language: "de",
           target: "Pre-Seed VCs",
           geo: "EU/DE",
+          // Cache-busting controls
+          force_rebuild: true,
+          nonce: nowNonce,
         }),
       });
 
