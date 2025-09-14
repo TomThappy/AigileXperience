@@ -98,12 +98,17 @@ export class StepProcessor {
     const cacheInputs = nonce ? { ...inputs, __cache_nonce: nonce } : inputs;
 
     if (forceRebuild && nonce) {
-      console.log(`🔄 Cache bust requested with nonce: ${nonce.substring(0, 8)}...`);
+      console.log(
+        `🔄 Cache bust requested with nonce: ${nonce.substring(0, 8)}...`,
+      );
     }
 
     // Check cache first
     if (!effectiveSkipCache) {
-      const cacheKey = await this.cache.createStepCacheKey(step.id, cacheInputs);
+      const cacheKey = await this.cache.createStepCacheKey(
+        step.id,
+        cacheInputs,
+      );
       const cached = await this.cache.get(cacheKey);
 
       if (cached?.data) {
@@ -120,7 +125,7 @@ export class StepProcessor {
         console.log(`❌ Cache miss for step: ${step.name} (cache_used=false)`);
       }
     } else {
-      const reason = forceRebuild ? 'forceRebuild=true' : 'skipCache=true';
+      const reason = forceRebuild ? "forceRebuild=true" : "skipCache=true";
       console.log(
         `⏭️  Cache bypassed for step: ${step.name} (${reason}, cache_used=false)`,
       );
@@ -644,17 +649,17 @@ export class StepProcessor {
 
     // Enhanced chart collection from both section.data.charts and section.charts
     const chartMap = new Map<string, any>();
-    
+
     for (const [secKey, secVal] of Object.entries<any>(sections)) {
       // Check both data.charts and direct charts property
       const dataCharts = secVal?.data?.charts;
       const directCharts = secVal?.charts;
-      
+
       const allCharts = [
         ...(Array.isArray(dataCharts) ? dataCharts : []),
         ...(Array.isArray(directCharts) ? directCharts : []),
       ];
-      
+
       for (const chart of allCharts) {
         if (chart && chart.id && !chartMap.has(chart.id)) {
           // Ensure chart has proper structure
@@ -679,7 +684,7 @@ export class StepProcessor {
       executiveSummary = this.generateExecutiveSummary(sections);
     }
 
-    const finalSections = executiveSummary 
+    const finalSections = executiveSummary
       ? { executive_summary: executiveSummary, ...sections }
       : sections;
 
@@ -705,28 +710,32 @@ export class StepProcessor {
     const parts = [];
 
     if (sections.problem?.narrative) {
-      parts.push(sections.problem.narrative.split('.')[0] + '.');
+      parts.push(sections.problem.narrative.split(".")[0] + ".");
     }
 
     if (sections.solution?.narrative) {
-      parts.push(sections.solution.narrative.split('.')[0] + '.');
+      parts.push(sections.solution.narrative.split(".")[0] + ".");
     }
 
     if (sections.market?.data?.tam) {
-      parts.push(`The total addressable market is ${sections.market.data.tam}.`);
+      parts.push(
+        `The total addressable market is ${sections.market.data.tam}.`,
+      );
     }
 
-    const narrative = parts.slice(0, 3).join(' ');
-    
-    return narrative ? {
-      headline: "Executive Summary",
-      narrative,
-      bullets: [
-        "Innovative approach to solving market problems",
-        "Strong market opportunity with clear demand",
-        "Scalable business model with growth potential"
-      ]
-    } : null;
+    const narrative = parts.slice(0, 3).join(" ");
+
+    return narrative
+      ? {
+          headline: "Executive Summary",
+          narrative,
+          bullets: [
+            "Innovative approach to solving market problems",
+            "Strong market opportunity with clear demand",
+            "Scalable business model with growth potential",
+          ],
+        }
+      : null;
   }
 
   private validateNumbers(inputs: Record<string, any>): any {

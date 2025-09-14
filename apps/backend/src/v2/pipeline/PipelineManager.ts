@@ -18,7 +18,10 @@ export class PipelineManager {
   private incrementalBuilder: IncrementalBuilder;
   private progressCallback?: (event: any) => void;
 
-  constructor(outputDir = "examples/output", progressCallback?: (event: any) => void) {
+  constructor(
+    outputDir = "examples/output",
+    progressCallback?: (event: any) => void,
+  ) {
     this.cache = new CacheManager();
     this.stepProcessor = new StepProcessor(this.cache);
     this.outputDir = outputDir;
@@ -127,7 +130,13 @@ export class PipelineManager {
   /**
    * Send progress event with stage/substep details
    */
-  private sendProgressEvent(stepId: string, status: "running" | "completed" | "failed" | "skipped", completed: Set<string>, totalSteps: number, additionalData?: any) {
+  private sendProgressEvent(
+    stepId: string,
+    status: "running" | "completed" | "failed" | "skipped",
+    completed: Set<string>,
+    totalSteps: number,
+    additionalData?: any,
+  ) {
     if (!this.progressCallback) return;
 
     const stageInfo = this.getStageInfo(stepId);
@@ -475,7 +484,13 @@ export class PipelineManager {
       try {
         // Send virtual style_check step as skipped for S3 completeness
         if (this.progressCallback) {
-          this.sendProgressEvent("style_check", "skipped", completed, steps.length, { skipped: true });
+          this.sendProgressEvent(
+            "style_check",
+            "skipped",
+            completed,
+            steps.length,
+            { skipped: true },
+          );
         }
 
         while (completed.size < steps.length) {
@@ -499,7 +514,12 @@ export class PipelineManager {
               state.cache_hits++;
 
               // Send progress event for skipped step
-              this.sendProgressEvent(step.id, "skipped", completed, steps.length);
+              this.sendProgressEvent(
+                step.id,
+                "skipped",
+                completed,
+                steps.length,
+              );
 
               // Load cached result for skipped steps
               // TODO: Implement proper cache loading for skipped steps
@@ -528,9 +548,23 @@ export class PipelineManager {
           }
 
           // SERIAL S2 EXECUTION: S2 section steps (problem -> financial_plan) run one at a time
-          const s2Steps = ["problem", "solution", "team", "market", "business_model", "competition", "status_quo", "gtm", "financial_plan"];
-          const s2ReadySteps = readySteps.filter((step) => s2Steps.includes(step.id));
-          const nonS2ReadySteps = readySteps.filter((step) => !s2Steps.includes(step.id));
+          const s2Steps = [
+            "problem",
+            "solution",
+            "team",
+            "market",
+            "business_model",
+            "competition",
+            "status_quo",
+            "gtm",
+            "financial_plan",
+          ];
+          const s2ReadySteps = readySteps.filter((step) =>
+            s2Steps.includes(step.id),
+          );
+          const nonS2ReadySteps = readySteps.filter(
+            (step) => !s2Steps.includes(step.id),
+          );
 
           let batch: PipelineStep[] = [];
 
@@ -630,13 +664,24 @@ export class PipelineManager {
               }
 
               // Send completed progress event
-              this.sendProgressEvent(step.id, "completed", completed, steps.length, { duration_ms: result.duration_ms });
-
+              this.sendProgressEvent(
+                step.id,
+                "completed",
+                completed,
+                steps.length,
+                { duration_ms: result.duration_ms },
+              );
             } else {
               state.steps[step.id].status = "failed";
               state.steps[step.id].error = result.error;
               // Send failed progress event
-              this.sendProgressEvent(step.id, "failed", completed, steps.length, { error: result.error });
+              this.sendProgressEvent(
+                step.id,
+                "failed",
+                completed,
+                steps.length,
+                { error: result.error },
+              );
               throw new Error(`Step ${step.id} failed: ${result.error}`);
             }
 
