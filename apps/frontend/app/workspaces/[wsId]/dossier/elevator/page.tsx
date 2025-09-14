@@ -361,12 +361,26 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [dryRunWarning, setDryRunWarning] = useState(false);
 
-  // Stage management for S-badges
+  // Stage management for S-badges with detailed substeps
   const [stages, setStages] = useState({
-    S1: "idle",
-    S2: "idle",
-    S3: "idle",
-    S4: "idle",
+    S1: { status: "idle", currentStep: "", steps: ["input", "evidence", "brief"] },
+    S2: {
+      status: "idle",
+      currentStep: "",
+      steps: [
+        "problem",
+        "solution",
+        "team",
+        "market",
+        "business_model",
+        "competition",
+        "status_quo",
+        "gtm",
+        "financial_plan",
+      ],
+    },
+    S3: { status: "idle", currentStep: "", steps: ["validate"] },
+    S4: { status: "idle", currentStep: "", steps: ["investor_score", "assembly"] },
   } as any);
 
   // Main dossier state
@@ -453,13 +467,22 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
       status: (evt) => {
         const status = evt?.payload?.status || evt?.status;
         if (status === "completed") {
-          setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
+          setStages((currentStages: any) => {
+            const newStages = { ...currentStages };
+            Object.keys(newStages).forEach((stageKey) => {
+              newStages[stageKey] = {
+                ...newStages[stageKey],
+                status: "done",
+              };
+            });
+            return newStages;
+          });
           setProgress(100);
           setTimeout(() => setProgress(0), 2000); // Hide after completion
         }
       },
       progress: (evt) => {
-        const { step, percentage, currentStep, totalSteps } =
+        const { step, percentage, currentStep, totalSteps, substep, stage, status } =
           evt.payload || evt;
 
         // Update progress bar - throttled
@@ -467,33 +490,62 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
           setProgress(percentage);
         }
 
-        // Update S-badges based on step - prevent unnecessary updates + NO URL UPDATES
+        // Enhanced stage updates with substep details
         if (step && STEP_TO_STAGE[step]) {
-          const stage = STEP_TO_STAGE[step];
+          const stageKey = STEP_TO_STAGE[step];
 
           setStages((currentStages: any) => {
-            // Only update if stage status is actually changing
-            if (currentStages[stage] === "running") {
-              return currentStages; // No change needed
+            const currentStage = currentStages[stageKey];
+
+            // Prevent unnecessary updates if status and substep are the same
+            if (
+              currentStage?.status === status &&
+              currentStage?.currentStep === step
+            ) {
+              return currentStages;
             }
 
-            const newStages = { ...currentStages, [stage]: "running" };
+            const newStages = { ...currentStages };
+            newStages[stageKey] = {
+              ...currentStage,
+              status: status || "running",
+              currentStep: step,
+              substep: substep || "",
+            };
 
             // Mark previous stages as done
             const stageOrder = ["S1", "S2", "S3", "S4"];
-            const currentIndex = stageOrder.indexOf(stage);
+            const currentIndex = stageOrder.indexOf(stageKey);
             if (currentIndex > 0) {
               for (let i = 0; i < currentIndex; i++) {
-                if (newStages[stageOrder[i]] !== "done") {
-                  newStages[stageOrder[i]] = "done";
+                const prevStageKey = stageOrder[i];
+                if (newStages[prevStageKey].status !== "done") {
+                  newStages[prevStageKey] = {
+                    ...newStages[prevStageKey],
+                    status: "done",
+                  };
                 }
               }
             }
 
             return newStages;
           });
+        }
 
-          // NO URL UPDATES - Keep URL completely stable during progress
+        // Handle explicit stage progress from new backend events
+        if (stage && status) {
+          setStages((currentStages: any) => {
+            const newStages = { ...currentStages };
+            if (newStages[stage]) {
+              newStages[stage] = {
+                ...newStages[stage],
+                status: status,
+                currentStep: substep || step || "",
+                substep: substep || "",
+              };
+            }
+            return newStages;
+          });
         }
       },
       artifact_written: async (evt) => {
@@ -602,11 +654,32 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
         setError(
           `Pipeline error: ${evt?.payload?.error || evt?.message || "Unknown error"}`,
         );
-        setStages((p: any) => ({ ...p, S2: "error" }));
+        setStages((p: any) => {
+          const newStages = { ...p };
+          // Mark current stage as error
+          Object.keys(newStages).forEach((stageKey) => {
+            if (newStages[stageKey].status === "running") {
+              newStages[stageKey] = {
+                ...newStages[stageKey],
+                status: "error",
+              };
+            }
+          });
+          return newStages;
+        });
         setProgress(0);
       },
       done: (evt) => {
-        setStages({ S1: "done", S2: "done", S3: "done", S4: "done" });
+        setStages((currentStages: any) => {
+          const newStages = { ...currentStages };
+          Object.keys(newStages).forEach((stageKey) => {
+            newStages[stageKey] = {
+              ...newStages[stageKey],
+              status: "done",
+            };
+          });
+          return newStages;
+        });
         setProgress(100);
         setTimeout(() => setProgress(0), 2000);
 
@@ -627,7 +700,15 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
 
   async function run() {
     setError(null);
-    setStages({ S1: "running", S2: "idle", S3: "idle", S4: "idle" });
+    setStages((currentStages: any) => {
+      const newStages = { ...currentStages };
+      newStages.S1.status = "running";
+      newStages.S1.currentStep = "input";
+      newStages.S2.status = "idle";
+      newStages.S3.status = "idle";
+      newStages.S4.status = "idle";
+      return newStages;
+    });
     setSecState({});
     setDossier({ sections: {} });
     setJobId(null);
@@ -651,14 +732,24 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
       });
 
       if (!jobRes.ok) {
-        setStages((p: any) => ({ ...p, S1: "error" }));
+        setStages((p: any) => {
+          const newStages = { ...p };
+          newStages.S1.status = "error";
+          return newStages;
+        });
         setError(`Job creation failed: ${jobRes.status}`);
         setProgress(0);
         return;
       }
 
       const { jobId: newJobId } = await jobRes.json();
-      setStages((p: any) => ({ ...p, S1: "done", S2: "running" }));
+      setStages((p: any) => {
+        const newStages = { ...p };
+        newStages.S1.status = "done";
+        newStages.S2.status = "running";
+        newStages.S2.currentStep = "evidence";
+        return newStages;
+      });
       setDossier({ meta: { jobId: newJobId }, sections: {} });
       setJobId(newJobId);
       setProgress(10);
@@ -666,7 +757,11 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
       // Update URL only ONCE when jobId is first available
       updateUrlIfNeeded(newJobId, false);
     } catch (error) {
-      setStages((p: any) => ({ ...p, S1: "error" }));
+      setStages((p: any) => {
+        const newStages = { ...p };
+        newStages.S1.status = "error";
+        return newStages;
+      });
       setError(
         `Error: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -753,7 +848,7 @@ function ElevatorPageComponent({ params }: { params: { wsId: string } }) {
 
           <button
             onClick={run}
-            disabled={stages.S1 === "running" || stages.S2 === "running"}
+            disabled={stages.S1.status === "running" || stages.S2.status === "running"}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors"
           >
             Generate (Auto)

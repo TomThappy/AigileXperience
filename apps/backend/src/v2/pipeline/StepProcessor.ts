@@ -81,16 +81,34 @@ export class StepProcessor {
   async executeStep(
     step: PipelineStep,
     inputs: Record<string, any>,
-    skipCache = false,
-    jobId?: string,
+    options: {
+      skipCache?: boolean;
+      forceRebuild?: boolean;
+      nonce?: string;
+      jobId?: string;
+    } = {},
   ): Promise<StepResult> {
+    const { skipCache = false, forceRebuild = false, nonce, jobId } = options;
     const startTime = Date.now();
 
     console.log(`📋 Executing step: ${step.name}`);
 
+    // Apply cache busting if requested
+    const effectiveSkipCache = skipCache || forceRebuild;
+    const cacheInputs = nonce ? { ...inputs, __cache_nonce: nonce } : inputs;
+
+    if (forceRebuild && nonce) {
+      console.log(
+        `🔄 Cache bust requested with nonce: ${nonce.substring(0, 8)}...`,
+      );
+    }
+
     // Check cache first
-    if (!skipCache) {
-      const cacheKey = await this.cache.createStepCacheKey(step.id, inputs);
+    if (!effectiveSkipCache) {
+      const cacheKey = await this.cache.createStepCacheKey(
+        step.id,
+        cacheInputs,
+      );
       const cached = await this.cache.get(cacheKey);
 
       if (cached?.data) {
@@ -107,8 +125,9 @@ export class StepProcessor {
         console.log(`❌ Cache miss for step: ${step.name} (cache_used=false)`);
       }
     } else {
+      const reason = forceRebuild ? "forceRebuild=true" : "skipCache=true";
       console.log(
-        `⏭️  Cache bypassed for step: ${step.name} (skipCache=true, cache_used=false)`,
+        `⏭️  Cache bypassed for step: ${step.name} (${reason}, cache_used=false)`,
       );
     }
 
@@ -628,24 +647,52 @@ export class StepProcessor {
   private assembleResults(inputs: Record<string, any>): any {
     const sections = inputs.sections || {};
 
-    // Collect charts from sections if present and de-duplicate by id
+    // Enhanced chart collection from both section.data.charts and section.charts
     const chartMap = new Map<string, any>();
+
     for (const [secKey, secVal] of Object.entries<any>(sections)) {
-      const charts = secVal?.data?.charts;
-      if (Array.isArray(charts)) {
-        for (const c of charts) {
-          if (c && c.id && !chartMap.has(c.id)) chartMap.set(c.id, c);
+      // Check both data.charts and direct charts property
+      const dataCharts = secVal?.data?.charts;
+      const directCharts = secVal?.charts;
+
+      const allCharts = [
+        ...(Array.isArray(dataCharts) ? dataCharts : []),
+        ...(Array.isArray(directCharts) ? directCharts : []),
+      ];
+
+      for (const chart of allCharts) {
+        if (chart && chart.id && !chartMap.has(chart.id)) {
+          // Ensure chart has proper structure
+          const normalizedChart = {
+            id: chart.id,
+            type: chart.type || "bar",
+            title: chart.title || `${secKey} Chart`,
+            x: Array.isArray(chart.x) ? chart.x : [],
+            series: Array.isArray(chart.series) ? chart.series : [],
+            ...chart,
+          };
+          chartMap.set(chart.id, normalizedChart);
         }
       }
     }
 
     const mergedCharts = Array.from(chartMap.values());
 
+    // Generate Executive Summary if not present
+    let executiveSummary = sections.executive_summary;
+    if (!executiveSummary && Object.keys(sections).length > 2) {
+      executiveSummary = this.generateExecutiveSummary(sections);
+    }
+
+    const finalSections = executiveSummary
+      ? { executive_summary: executiveSummary, ...sections }
+      : sections;
+
     return {
       pitch: inputs.pitch,
       sources: inputs.sources || { sources: [] },
       brief: inputs.brief,
-      sections,
+      sections: finalSections,
       investor_score: inputs.investor_score,
       charts: mergedCharts.length > 0 ? mergedCharts : undefined,
       meta: {
@@ -654,6 +701,41 @@ export class StepProcessor {
         total_duration_ms: inputs.total_duration_ms || 0,
       },
     };
+  }
+
+  /**
+   * Generate executive summary from existing sections
+   */
+  private generateExecutiveSummary(sections: any): any {
+    const parts = [];
+
+    if (sections.problem?.narrative) {
+      parts.push(sections.problem.narrative.split(".")[0] + ".");
+    }
+
+    if (sections.solution?.narrative) {
+      parts.push(sections.solution.narrative.split(".")[0] + ".");
+    }
+
+    if (sections.market?.data?.tam) {
+      parts.push(
+        `The total addressable market is ${sections.market.data.tam}.`,
+      );
+    }
+
+    const narrative = parts.slice(0, 3).join(" ");
+
+    return narrative
+      ? {
+          headline: "Executive Summary",
+          narrative,
+          bullets: [
+            "Innovative approach to solving market problems",
+            "Strong market opportunity with clear demand",
+            "Scalable business model with growth potential",
+          ],
+        }
+      : null;
   }
 
   private validateNumbers(inputs: Record<string, any>): any {

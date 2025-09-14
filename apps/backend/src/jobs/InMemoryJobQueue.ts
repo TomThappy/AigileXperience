@@ -77,6 +77,11 @@ export class InMemoryJobQueue {
       const result: PipelineResult = await pipelineManager.executePipeline(
         job.input,
         {
+          skipCache: job.options.skipCache || job.options.forceRebuild,
+          parallelLimit: job.options.parallelLimit,
+          timeoutMs: job.options.timeoutMs,
+          nonce: job.options.nonce,
+          pipelineId: jobId,
           onProgress: (step: string, percentage: number) => {
             job.progress = {
               ...job.progress,
@@ -97,7 +102,6 @@ export class InMemoryJobQueue {
                 .digest("hex"),
             });
           },
-          jobId,
         },
       );
 
