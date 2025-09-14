@@ -16,16 +16,137 @@ export class PipelineManager {
   private stepProcessor: StepProcessor;
   private outputDir: string;
   private incrementalBuilder: IncrementalBuilder;
+  private progressCallback?: (event: any) => void;
 
-  constructor(outputDir = "examples/output") {
+  constructor(outputDir = "examples/output", progressCallback?: (event: any) => void) {
     this.cache = new CacheManager();
     this.stepProcessor = new StepProcessor(this.cache);
     this.outputDir = outputDir;
     this.incrementalBuilder = new IncrementalBuilder();
+    this.progressCallback = progressCallback;
 
     // Initialize RateGate system for token budgeting
     initializeRateGate();
     console.log("🛡️ RateGate system initialized for token management");
+  }
+
+  /**
+   * Get stage and substep information for a given step ID
+   */
+  private getStageInfo(stepId: string): {
+    stage: "S1" | "S2" | "S3" | "S4";
+    substep: string;
+    substepIndex: number;
+    substepTotal: number;
+  } {
+    // S1: Input Processing, Evidence Harvesting, Brief Extraction
+    const s1Steps = [
+      { id: "input", name: "Input Processing" },
+      { id: "evidence", name: "Evidence Harvesting" },
+      { id: "brief", name: "Brief Extraction" },
+    ];
+
+    // S2: Problem, Solution, Team, Market, Business Model, Competition, Status Quo, Go-to-Market, Financial Plan
+    const s2Steps = [
+      { id: "problem", name: "Problem" },
+      { id: "solution", name: "Solution" },
+      { id: "team", name: "Team" },
+      { id: "market", name: "Market" },
+      { id: "business_model", name: "Business Model" },
+      { id: "competition", name: "Competition" },
+      { id: "status_quo", name: "Status Quo" },
+      { id: "gtm", name: "Go-to-Market" },
+      { id: "financial_plan", name: "Financial Plan" },
+    ];
+
+    // S3: Validation/Number Check, Style & Consistency Pass
+    const s3Steps = [
+      { id: "validate", name: "Validation / Number Check" },
+      { id: "style_check", name: "Style & Consistency Pass" }, // Virtual step - will be marked as skipped
+    ];
+
+    // S4: Final Assembly, Investment Score
+    const s4Steps = [
+      { id: "assemble", name: "Final Assembly" },
+      { id: "investor_score", name: "Investment Score" },
+    ];
+
+    // Find step in S1
+    const s1Index = s1Steps.findIndex((s) => s.id === stepId);
+    if (s1Index !== -1) {
+      return {
+        stage: "S1",
+        substep: s1Steps[s1Index].name,
+        substepIndex: s1Index + 1,
+        substepTotal: s1Steps.length,
+      };
+    }
+
+    // Find step in S2
+    const s2Index = s2Steps.findIndex((s) => s.id === stepId);
+    if (s2Index !== -1) {
+      return {
+        stage: "S2",
+        substep: s2Steps[s2Index].name,
+        substepIndex: s2Index + 1,
+        substepTotal: s2Steps.length,
+      };
+    }
+
+    // Find step in S3
+    const s3Index = s3Steps.findIndex((s) => s.id === stepId);
+    if (s3Index !== -1) {
+      return {
+        stage: "S3",
+        substep: s3Steps[s3Index].name,
+        substepIndex: s3Index + 1,
+        substepTotal: s3Steps.length,
+      };
+    }
+
+    // Find step in S4
+    const s4Index = s4Steps.findIndex((s) => s.id === stepId);
+    if (s4Index !== -1) {
+      return {
+        stage: "S4",
+        substep: s4Steps[s4Index].name,
+        substepIndex: s4Index + 1,
+        substepTotal: s4Steps.length,
+      };
+    }
+
+    // Default fallback
+    return {
+      stage: "S1",
+      substep: stepId,
+      substepIndex: 1,
+      substepTotal: 1,
+    };
+  }
+
+  /**
+   * Send progress event with stage/substep details
+   */
+  private sendProgressEvent(stepId: string, status: "running" | "completed" | "failed" | "skipped", completed: Set<string>, totalSteps: number, additionalData?: any) {
+    if (!this.progressCallback) return;
+
+    const stageInfo = this.getStageInfo(stepId);
+    const percentage = Math.round((completed.size / totalSteps) * 100);
+
+    const progressEvent = {
+      step: stepId,
+      stage: stageInfo.stage,
+      substep: stageInfo.substep,
+      substepIndex: stageInfo.substepIndex,
+      substepTotal: stageInfo.substepTotal,
+      percentage,
+      currentStep: completed.size,
+      totalSteps,
+      status,
+      ...additionalData,
+    };
+
+    this.progressCallback(progressEvent);
   }
 
   /**
@@ -208,6 +329,9 @@ export class PipelineManager {
       resumeFromCheckpoint?: boolean;
       // New: cache-busting nonce propagated to step cache keys (should be sanitized to [-A-Za-z0-9_] and <=64 chars)
       nonce?: string;
+      // Callbacks for job integration
+      onProgress?: (step: string, percentage: number) => void;
+      onArtifact?: (key: string, artifact: any) => void;
     } = {},
   ): Promise<{
     success: boolean;
@@ -349,6 +473,11 @@ export class PipelineManager {
       }, timeoutMs);
 
       try {
+        // Send virtual style_check step as skipped for S3 completeness
+        if (this.progressCallback) {
+          this.sendProgressEvent("style_check", "skipped", completed, steps.length, { skipped: true });
+        }
+
         while (completed.size < steps.length) {
           const readySteps = steps.filter(
             (step) =>
@@ -368,6 +497,9 @@ export class PipelineManager {
               state.steps[step.id].status = "skipped";
               state.steps[step.id].duration_ms = 0;
               state.cache_hits++;
+
+              // Send progress event for skipped step
+              this.sendProgressEvent(step.id, "skipped", completed, steps.length);
 
               // Load cached result for skipped steps
               // TODO: Implement proper cache loading for skipped steps
@@ -395,8 +527,21 @@ export class PipelineManager {
             );
           }
 
-          // Execute up to parallelLimit steps concurrently
-          const batch = readySteps.slice(0, parallelLimit);
+          // SERIAL S2 EXECUTION: S2 section steps (problem -> financial_plan) run one at a time
+          const s2Steps = ["problem", "solution", "team", "market", "business_model", "competition", "status_quo", "gtm", "financial_plan"];
+          const s2ReadySteps = readySteps.filter((step) => s2Steps.includes(step.id));
+          const nonS2ReadySteps = readySteps.filter((step) => !s2Steps.includes(step.id));
+
+          let batch: PipelineStep[] = [];
+
+          if (s2ReadySteps.length > 0) {
+            // For S2 steps, only process ONE at a time (serial execution)
+            batch = [s2ReadySteps[0]];
+          } else {
+            // For non-S2 steps, use normal parallelLimit
+            batch = nonS2ReadySteps.slice(0, parallelLimit);
+          }
+
           const promises = batch.map(async (step) => {
             if (timeoutController.signal.aborted) {
               throw new Error("Pipeline aborted due to timeout");
@@ -404,6 +549,9 @@ export class PipelineManager {
 
             state.steps[step.id].status = "running";
             state.steps[step.id].started_at = new Date().toISOString();
+
+            // Send running progress event
+            this.sendProgressEvent(step.id, "running", completed, steps.length);
 
             // Save checkpoint before starting critical steps
             if (
@@ -450,7 +598,12 @@ export class PipelineManager {
             const result = await this.stepProcessor.executeStep(
               step,
               inputsWithCtx,
-              skipCache,
+              {
+                skipCache: skipCache,
+                forceRebuild: false,
+                nonce: options.nonce,
+                jobId: pipelineId,
+              },
             );
 
             if (result.success) {
@@ -475,9 +628,15 @@ export class PipelineManager {
                   state.artifacts[outputKey] = result.data;
                 }
               }
+
+              // Send completed progress event
+              this.sendProgressEvent(step.id, "completed", completed, steps.length, { duration_ms: result.duration_ms });
+
             } else {
               state.steps[step.id].status = "failed";
               state.steps[step.id].error = result.error;
+              // Send failed progress event
+              this.sendProgressEvent(step.id, "failed", completed, steps.length, { error: result.error });
               throw new Error(`Step ${step.id} failed: ${result.error}`);
             }
 
